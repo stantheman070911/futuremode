@@ -1,3 +1,32 @@
+# PitchYourOwner — Agent Instructions
+
+## Read these first
+
+Before doing anything in this repository, read [`docs/README.md`](docs/README.md). It
+explains the five-document system, who owns which document, and the working loop.
+
+The short version:
+
+| Document | Question | May you edit it? |
+| --- | --- | --- |
+| `/README.md` | The original, frozen product memo | **Never** |
+| `docs/constitution.md` | Permanent rules | Propose only — never apply unasked |
+| `docs/product-brief.md` | Requirements + acceptance criteria | Propose only — PM approves |
+| `docs/plan.md` | Architecture + work queue | Yes, collaboratively |
+| `docs/log.md` | What is true right now | Yes, append-only |
+| `docs/runbook.md` | Deploy + demo procedure | Yes |
+
+**When a document and the code disagree, the code is right.**
+
+Never resolve a failing acceptance criterion by editing the acceptance criterion.
+Requirements live in `docs/product-brief.md`; whether they're met lives in
+`docs/log.md`. Keeping those separate is the point of the system.
+
+Pick one bounded task from `docs/plan.md` § 5, implement it, run the gate, verify
+against the criteria the task names, then update `docs/plan.md` and `docs/log.md`.
+
+---
+
 ### Rules for Coding
 
 #### Prime Directive
