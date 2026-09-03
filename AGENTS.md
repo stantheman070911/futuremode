@@ -13,15 +13,33 @@ The short version｜簡短版:
 | Document｜文件 | Question｜問題 | May you edit it?｜可以修改嗎？ |
 | --- | --- | --- |
 | `/README.md` | The original, frozen product memo｜原始且已凍結的產品備忘錄 | **Never｜絕不** |
+| `/PitchYourOwner App (offline).html` | **The design source of truth**｜**設計事實來源** | **Never — read it, follow it**｜**絕不；只讀取並遵循** |
 | `docs/constitution.md` | Permanent rules｜永久規則 | Propose only — never apply unasked｜只能建議，絕不自行套用 |
 | `docs/product-brief.md` | Requirements + acceptance criteria｜需求與驗收標準 | Propose only — PM approves｜只能建議，需 PM 核准 |
-| `docs/plan.md` | Architecture + work queue｜架構與工作佇列 | Yes, collaboratively｜可以，協作進行 |
+| `docs/design.md` | Design system + screen inventory｜設計系統與畫面清單 | Only to record what the HTML shows｜僅能記錄 HTML 已呈現的內容 |
+| `docs/plan.md` | Delivery sequence + work queue｜交付順序與工作佇列 | Yes, collaboratively｜可以，協作進行 |
 | `docs/log.md` | What is true right now｜現在的事實 | Yes, append-only｜可以，僅追加 |
-| `docs/runbook.md` | Deploy + demo procedure｜部署與展示程序 | Yes｜可以 |
+| `docs/runbook.md` | Demo procedure｜展示程序 | Yes｜可以 |
 
-**When a document and the code disagree, the code is right.**
+**When a document and the HTML disagree, the HTML is right.**
 
-**當文件與程式碼不一致時，以程式碼為準。**
+**當文件與 HTML 不一致時，以 HTML 為準。**
+
+## Implementation is out of scope｜實作不在範圍內
+
+**This project is in a product and design phase.** Do not add a framework, database,
+hosting, API, deployment, or infrastructure decision to any document — constitution Law
+IV-b. Write requirements as *what must be true for the user*, never as how it is built.
+
+**本專案處於產品與設計階段。** 不要在任何文件中加入框架、資料庫、託管、API、部署或
+基礎設施決策（憲法法則四之二）。需求一律寫成 *對使用者而言必須成立什麼*。
+
+Bad｜錯誤: "Store the submission and trigger a background job."
+Good｜正確: "When the user confirms, the profile is published and they see a confirmation."
+
+If you find yourself naming a technology, you have left the current scope. Stop and ask.
+
+若你發現自己正在指名某項技術，就已超出當前範圍。請停下並詢問。
 
 Never resolve a failing acceptance criterion by editing the acceptance criterion.
 Requirements live in `docs/product-brief.md`; whether they're met lives in
@@ -30,11 +48,11 @@ Requirements live in `docs/product-brief.md`; whether they're met lives in
 絕不透過修改驗收標準來解決未通過的驗收標準。需求存放於 `docs/product-brief.md`，
 是否達成則存放於 `docs/log.md`。將兩者分開正是這套系統的用意。
 
-Pick one bounded task from `docs/plan.md` § 5, implement it, run the gate, verify
-against the criteria the task names, then update `docs/plan.md` and `docs/log.md`.
+Pick one bounded task from `docs/plan.md` § 3, do it, verify against the criteria the
+task names, then update `docs/plan.md` and `docs/log.md`.
 
-從 `docs/plan.md` § 5 挑一項有界限的任務，實作它，執行檢查關卡，依該任務指名的標準
-驗證，然後更新 `docs/plan.md` 與 `docs/log.md`。
+從 `docs/plan.md` § 3 挑一項有界限的任務，執行它，依該任務指名的標準驗證，
+然後更新 `docs/plan.md` 與 `docs/log.md`。
 
 ## Language convention｜語言慣例
 
