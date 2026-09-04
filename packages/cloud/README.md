@@ -94,6 +94,8 @@ Browser
 CloudFront distribution
   ├── default origin: private S3 bucket through origin access control
   ├── /v1/* origin: API Gateway HTTP API
+  ├── /p/* origin: dynamic public-profile HTML
+  ├── /og/* origin: dynamic 1200×630 PNG social cards
   └── viewer-request function: extensionless GET routes → /index.html
            │
            ▼
@@ -121,18 +123,22 @@ TTL, point-in-time recovery, deletion protection, and `RETAIN`.
    atomically, then sends email through Resend or SES.
 2. Successful OTP confirmation deletes the challenge and creates a 30-day opaque session.
    Only the SHA-256 token hash is stored.
-3. Profile publication validates the strict envelope, creates a Cohere embedding, then
+3. Profile publication validates the strict envelope, creates one canonical and five
+   field-specific Cohere embeddings, assigns a stable public slug, then
    atomically writes the immutable version, current pointer, idempotency receipt, and
    archival update for the previous version.
 4. The browser calls `POST /v1/matching-runs`. The trigger invokes the matching worker
    asynchronously.
-5. The matching worker scans the active in-scope cohort, runs DynamoDB vector search for
-   each seed, hydrates immutable profile versions, applies active-state and language
-   filters, and asks Nova Pro to judge the candidates.
-6. A qualifying pair is written atomically as one match, two profile pointers, response
-   capability records, and optional email outbox records.
-7. Each owner records one immutable invitation decision. Contact email is returned only
-   after both sides accept.
+5. The matching worker scans the small active cohort, calculates each eligible unordered
+   pair once, and writes two directed versioned similarity edges. The stored composite is
+   30% interests, 25% active problems, 20% motivations, 15% recurring topics, and 10%
+   friend intent.
+6. Matches creates a 30-day immutable ordered result set and returns ten entries per
+   page. Pagination, reload, detail, and Back keep that set stable; only explicit Refresh
+   considers a newer graph revision.
+7. Invite transactionally creates one 14-day hashed token and one recipient outbox item.
+   The public token preview is read-only. Accept creates two connection records and two
+   connection-email outbox items; Not now reveals neither reason nor contact data.
 
 Publishing and starting matching are separate requests. A published profile remains
 published if the subsequent matching-trigger request fails.
@@ -149,17 +155,25 @@ All responses are JSON. Owner routes require
 | `POST /v1/profile-versions` | Owner session + `Idempotency-Key` | Validate, embed, and publish a profile version |
 | `GET /v1/profile-versions/{versionId}` | Owning session | Read one version belonging to the owner |
 | `GET /v1/profiles/me` | Owner session | Read the current profile and matching state |
-| `PATCH /v1/profiles/me` | Owner session | Set `matching_state` to `active` or `paused` |
+| `PATCH /v1/profiles/me` | Owner session | Set `visibility` to `public` or `private`; matching state follows automatically |
 | `DELETE /v1/profiles/me` | Owner session | Delete owner data; body must contain `{"confirm":"DELETE"}` |
 | `POST /v1/upload-sessions` | Owner session | Create a 24-hour, single-use draft capability |
 | `POST /v1/profile-drafts` | Upload capability | Create one draft; cannot read or publish |
 | `GET /v1/profile-drafts` | Owner session | List up to ten newest owner drafts |
 | `GET /v1/profile-drafts/{draftId}` | Owning session | Read one owner draft |
 | `POST /v1/matching-runs` | Owner session with current profile | Start the worker asynchronously |
-| `GET /v1/matches` | Owner session | Read at most 24 match views |
-| `GET /v1/matches/{matchId}` | Participating owner | Read one match view |
-| `POST /v1/matches/{matchId}/invitations` | Participating owner | Record `invite`, `accept`, or `not_now` |
+| `GET /v1/public-profiles/{slug}` | Public | Read the allowlisted public profile, or only `{visibility:"private"}` |
+| `GET /p/{slug}` | Public | Render crawler-friendly public profile HTML or a generic private notice |
+| `GET /og/{slug}` | Public | Render the generic social-card PNG (`site.png`) |
+| `GET /og/profile/{slug}` | Public profile only | Render a version-checked profile social-card PNG with QR |
+| `GET /v1/matches` | Public owner session | Read one stable, ten-per-page result set |
+| `POST /v1/matches/refresh` | Public owner session | Reuse or replace the set according to graph revision |
+| `GET /v1/matches/{matchId}` | Public owner session in the result set | Read one match detail |
+| `POST /v1/matches/{matchId}/invitations` | Public owner session | Explicitly send one idempotent invitation |
 | `GET /v1/invitations` | Owner session | Group incoming, outgoing, and connected matches |
+| `POST /v1/invitation-tokens/preview` | Public possession token | Read invitation preview without mutation |
+| `POST /v1/invitation-tokens/respond` | Public possession token | Explicitly Accept or Not now once |
+| `GET /v1/connections/{connectionId}` | Connected owner session | Read only that owner's peer snapshot and peer email |
 | `POST /v1/support-requests` | Public, IP-hash rate-limited | Store and forward a support request |
 
 ### Publish envelope
@@ -169,13 +183,14 @@ All responses are JSON. Owner routes require
   "schema": "pitchyourowner.profile-publish.v1",
   "display_name": "Ari C.",
   "profile": {
-    "history_scope": "Selected recent chats were available; deleted chats were not.",
-    "summary": "A concise owner pitch.",
-    "interests": ["A specific recurring interest"],
-    "motivations": ["Why it matters now"],
-    "active_problems": ["An unresolved problem"],
-    "recurring_topics": ["A recurring question"],
-    "friend_intent": "The person or conversation the owner hopes to find.",
+    "history_scope": "可使用選定的近期對話；無法使用已刪除對話。",
+    "animal_persona": "追著舞台光線的銀狐",
+    "summary": "精簡而具體的 owner pitch。",
+    "interests": ["反覆出現的具體興趣"],
+    "motivations": ["此刻為什麼重要"],
+    "active_problems": ["尚未解決的具體問題"],
+    "recurring_topics": ["反覆追問的主題"],
+    "friend_intent": "希望認識的人或想展開的對話。",
     "confidence": {
       "summary": "high",
       "interests": "high",
@@ -185,7 +200,7 @@ All responses are JSON. Owner routes require
       "friend_intent": "low"
     }
   },
-  "locale": "en",
+  "locale": "zh-Hant",
   "consent": {
     "approvedAt": "2026-09-04T08:00:00.000Z"
   }
@@ -221,7 +236,7 @@ Content-Type: application/json
 
 ```json
 {
-  "locale": "en",
+  "locale": "zh-Hant",
   "profile": {
     "...": "the exact configured profile object"
   }
@@ -246,18 +261,22 @@ The single table uses `pk` and `sk` string keys.
 | `PROFILE#<profileId> / CURRENT` | Current version, owner email, visibility, languages, matching state |
 | `PROFILE#<profileId> / VERSION#<id>` | Immutable profile, approval data, and embedding |
 | `PROFILE#<profileId> / DRAFT#<id>` | Seven-day Computer API draft |
-| `PROFILE#<profileId> / MATCH#<id>` | Owner-to-match pointer and cleanup keys |
+| `PROFILE#<profileId> / EDGE#<score>#<candidateId>` | Directed, versioned similarity edge |
+| `PROFILE#<profileId> / RESULT_SET_CURRENT` | Owner's current immutable result-set pointer |
 | `IDEMPOTENCY#<emailHash> / <key>` | 24-hour publish receipt |
 | `UPLOAD#<tokenHash> / META` | 24-hour draft capability |
-| `MATCH#<matchId> / META` | Explanation, participants, scores, and 30-day expiry |
-| `MATCH#<matchId> / RESPONSE#A|B` | Immutable invitation decision |
-| `MATCH_TOKEN#<tokenHash> / META` | Reserved email-response capability |
-| `OUTBOX#<eventId> / META` | Optional email message |
+| `PUBLIC_SLUG#<slug> / PROFILE` | Stable public-route pointer |
+| `MATCHING_GRAPH / REVISION` | Eligible-cohort revision |
+| `RESULT_SET#<id> / META` | Ordered candidate snapshot with 30-day expiry |
+| `INVITATION#<pairId> / META` | Sender consent, recipient and state |
+| `INVITE_TOKEN#<tokenHash> / META` | Hashed single-use 14-day response capability |
+| `PROFILE#<profileId> / CONNECTION#<pairId>` | Owner-specific peer snapshot and exchanged contact |
+| `OUTBOX#<eventId> / META` | Durable `PENDING`/`SENDING`/`SENT` email record |
 | `SUPPORT#<requestId> / META` | 90-day support request |
 
 Profile IDs are stable hashes derived from normalized verified-email hashes. Raw session,
-upload, and match-response tokens are never stored. The current browser application does
-not consume `MATCH_TOKEN` records; matching email delivery is disabled.
+upload, and invitation-response tokens are never stored. Matching email delivery remains
+disabled until the final real-inbox verification.
 
 Deleting a profile follows cleanup keys stored on its match pointers so the shared match,
 both pointers, responses, tokens, and related outbox records are removed together.
@@ -273,18 +292,15 @@ The matching document includes only:
 - `recurring_topics`
 - `friend_intent`
 
-`history_scope` and `confidence` are excluded from embeddings, judge input, and peer
-responses. Candidate retrieval uses cosine distance in the DynamoDB vector index. The
-judge applies 30% interest, 25% active problem, 20% motivation, 15% recurring topic, and
-10% friend-intent weighting.
+`history_scope`, `confidence`, and `animal_persona` are excluded from embeddings, ranking,
+and public match explanations. The worker persists every eligible pair as two directed
+edges with five cosine components, their weighted composite, both profile versions, and
+a deterministic tie-break key. Numeric scores never leave the backend API.
 
-The worker persists only `strong_match` decisions whose mutual score also meets
-`MATCH_JUDGE_MIN_MUTUAL_SCORE`. The judge prompt defines `strong_match` as 75–100, so
-the effective floor remains 75 when the model follows that contract even though the
-current CDK context sets the secondary numeric threshold to 65.
-
-Normal runs exclude test profiles. The worker intentionally scans and judges the small
-active cohort and is not a production-scale retrieval pipeline.
+Normal runs exclude test profiles. Production rejects `includeTestProfiles` even for a
+direct Lambda invocation; only `ENVIRONMENT=e2e` accepts the explicitly scoped fixture
+run. The current all-pairs pass is intentional for the small Hackathon cohort and is not
+a network-scale retrieval design.
 
 ## Authentication and rate limits
 
@@ -310,8 +326,8 @@ CDK context lives in `cdk.json`. These values are consumed by the application:
 | `region` | `ap-southeast-1` | Deployment region |
 | `embeddingModelId` | `global.cohere.embed-v4:0` | Bedrock embedding inference profile |
 | `embeddingDimensions` | `1024` | Embedding and vector-index dimensions |
-| `matchJudgeModelId` | `apac.amazon.nova-pro-v1:0` | Bedrock match judge |
-| `matchJudgeMinMutualScore` | `65` in `cdk.json` | Secondary persisted-match threshold |
+| `matchJudgeModelId` | Legacy setting | Retained for deploy compatibility; not used by pair-edge computation |
+| `matchJudgeMinMutualScore` | Legacy setting | Retained for deploy compatibility; no public score threshold |
 | `emailProvider` | `resend` | `resend` or `ses` |
 | `verificationEmailEnabled` | `true` | OTP delivery availability |
 | `matchingEmailDeliveryEnabled` | `false` | DynamoDB-stream and SQS email consumers |
@@ -368,30 +384,37 @@ The current manually deployed Hackathon environment is:
 There is no CI/CD workflow in this repository. A successful local commit is not proof
 that the manual environment contains the same static assets or Lambdas.
 
-## Synthetic cloud verification
+## Isolated cloud E2E verification
 
-The fixture uses reserved `.invalid` email addresses and fixed metadata:
-`isTestProfile=true`, `cleanupSafe=true`, and
-`testRunId=pitchyourowner-cross-profession-demo-v1`. Normal matching excludes it.
-
-After producing the deployment outputs file:
+Fixture mutation is allowed only in the exact `PitchYourOwner-e2e` stack and
+`pitchyourowner-e2e-profile-store` table. The seed verifies the CloudFormation
+`Environment=e2e` tag and fails closed if any target or confirmation variable is absent.
+It creates twelve cleanup-safe, 24-hour profiles; the three controlled addresses are read
+only from environment variables and are never written to source, logs, screenshots, or
+the sanitized report.
 
 ```bash
-npm run demo:seed
-npm run demo:match
-npm run demo:api
-npm run demo:clean
+export AWS_REGION=ap-southeast-1
+export PYO_E2E_STACK=PitchYourOwner-e2e
+export PYO_E2E_STACK_KEY=PitchYourOwner-e2e
+export PYO_E2E_ARTIFACT_FILE=/tmp/pyo-e2e-artifact.json
+export PYO_TEST_RUN_ID=<unique-run-id>
+export PYO_E2E_EMAIL_A=<controlled-address>
+export PYO_E2E_EMAIL_B=<controlled-address>
+export PYO_E2E_EMAIL_C=<controlled-address>
+
+PYO_E2E_CONFIRM=seed-isolated-e2e npm run e2e:seed
+PYO_E2E_CONFIRM=run-isolated-e2e npm run e2e:run
+PYO_E2E_CONFIRM=cleanup-isolated-e2e npm run e2e:cleanup
 ```
 
-- `demo:seed` refuses to replace a current record unless it belongs to the same
-  cleanup-safe fixture.
-- `demo:match` invokes the worker with explicit test scope and exercises list, detail,
-  invite, accept, and contact reveal.
-- `demo:api` exercises capability creation, draft upload, replay rejection, owner read,
-  reviewed publish, profile read, deletion, and exact cleanup.
-- `demo:clean` deletes only records carrying all three fixture markers.
-
-These commands call the deployed AWS environment and mutate its synthetic test records.
+The automated run covers 10+1 pagination, deterministic top two, stable result sets,
+detail allowlists, invitation idempotency, captured styled email, preview-without-mutation,
+Not now finality, Accept and two connection records/emails, owner-specific contact views,
+Public/Private behavior, stable unavailable placeholders, and a deployed 1200×630 PNG.
+External email delivery remains disabled. The artifact contains short-lived session tokens
+and must stay mode `0600` outside the repository; cleanup deletes only records carrying
+the exact run ID and `cleanupSafe=true`.
 
 ## Operations and troubleshooting
 
@@ -400,7 +423,8 @@ These commands call the deployed AWS environment and mutate its synthetic test r
 The CloudFront function rewrites extensionless **GET** routes such as `/matches` to
 `/index.html`. It intentionally does not rewrite `/v1/*` or paths containing a dot.
 A `HEAD` request to a clean SPA route may receive an S3 error even when browser `GET`
-works; test navigation with `GET`.
+works; test navigation with `GET`. `/p/*` and `/og/*` bypass the SPA rewrite and are
+served dynamically through the API origin.
 
 ### Vector-index deployment
 
@@ -416,8 +440,8 @@ retained PitchYourOwner table and bucket before cleanup; deletion protection and
 Publication and matching start are separate API calls. Confirm that
 `POST /v1/profile-versions` succeeded, then confirm `POST /v1/matching-runs` returned
 HTTP `202`. The worker runs asynchronously; the browser polls for three minutes. A
-successful run can still return no matches when no candidate satisfies active state,
-language compatibility, test scope, and the strong-match threshold.
+successful run can still return no matches when no current-version candidate satisfies
+Public status, language compatibility, and test scope.
 
 ### OTP delivery
 

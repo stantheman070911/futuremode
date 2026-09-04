@@ -17,10 +17,14 @@
     "demo:seed": "node scripts/demo/seed-profiles.mjs",
     "demo:match": "node scripts/demo/run-matching.mjs",
     "demo:api": "node scripts/demo/test-profile-api.mjs",
-    "demo:clean": "node scripts/demo/clean-profiles.mjs"
+    "demo:clean": "node scripts/demo/clean-profiles.mjs",
+    "e2e:seed": "node scripts/e2e/seed.mjs",
+    "e2e:run": "node scripts/e2e/run.mjs",
+    "e2e:cleanup": "node scripts/e2e/cleanup.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-bedrock-runtime": "3.1111.0",
+    "@aws-sdk/client-cloudformation": "^3.1111.0",
     "@aws-sdk/client-dynamodb": "3.1111.0",
     "@aws-sdk/client-lambda": "^3.1111.0",
     "@aws-sdk/client-sesv2": "3.1111.0",
@@ -28,14 +32,20 @@
     "@aws-sdk/client-sqs": "3.1111.0",
     "@aws-sdk/lib-dynamodb": "3.1111.0",
     "@aws-sdk/util-dynamodb": "3.996.9",
+    "@resvg/resvg-wasm": "^2.6.2",
     "aws-cdk-lib": "2.265.0",
-    "constructs": "10.8.1"
+    "constructs": "10.8.1",
+    "qrcode": "^1.5.4"
   },
   "devDependencies": {
     "@types/aws-lambda": "8.10.152",
     "@types/node": "24.3.0",
+    "@types/pngjs": "^6.0.5",
+    "@types/qrcode": "^1.5.5",
     "aws-cdk": "2.1136.0",
     "esbuild": "0.25.9",
+    "jsqr": "^1.4.0",
+    "pngjs": "^7.0.0",
     "tsx": "4.20.5",
     "typescript": "5.9.2"
   }

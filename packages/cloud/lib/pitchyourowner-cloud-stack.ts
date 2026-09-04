@@ -252,16 +252,38 @@ export class PitchYourOwnerCloudStack extends cdk.Stack {
       },
     });
     const accessProfile = functionFor("ProfileAccess", "profile-access");
+    const publicProfile = functionFor("PublicProfile", "public-profile", {
+      environment: { PUBLIC_SITE_ORIGIN: publicSiteOrigin },
+    });
+    const profileOgImage = functionFor("ProfileOgImage", "profile-og-image", {
+      timeout: cdk.Duration.seconds(30),
+      memorySize: 1_024,
+      bundling: {
+        minify: true,
+        sourceMap: true,
+        bundleAwsSDK: true,
+        nodeModules: ["@resvg/resvg-wasm"],
+        commandHooks: {
+          beforeBundling: () => [],
+          beforeInstall: () => [],
+          afterBundling: (_inputDir, outputDir) => [
+            `cp "${path.join(directory, "..", "assets", "fonts", "noto-sans-cjk-tc-bold.otf")}" "${outputDir}/og-font.otf"`,
+          ],
+        },
+      },
+      environment: { PUBLIC_SITE_ORIGIN: publicSiteOrigin },
+    });
     const profileDrafts = functionFor("ProfileDrafts", "profile-drafts", {
       environment: { PUBLIC_SITE_ORIGIN: publicSiteOrigin },
     });
-    const pairing = functionFor("Pairing", "pairing");
+    const pairing = functionFor("Pairing", "pairing", { environment: { PUBLIC_SITE_ORIGIN: publicSiteOrigin } });
     const runMatching = functionFor("MatchingRun", "matching-run", {
       timeout: cdk.Duration.minutes(10),
       memorySize: 1_024,
       environment: {
         VECTOR_INDEX_NAME: vectorIndexName,
         PUBLIC_SITE_ORIGIN: publicSiteOrigin,
+        ENVIRONMENT: environment,
         MATCH_JUDGE_MODEL_ID: matchJudgeModelId,
         MATCH_JUDGE_MIN_MUTUAL_SCORE: String(this.node.tryGetContext("matchJudgeMinMutualScore") ?? 70),
       },
@@ -287,6 +309,8 @@ export class PitchYourOwnerCloudStack extends cdk.Stack {
     for (const fn of [requestVerification, confirmVerification, publishProfile, accessProfile, profileDrafts, pairing, runMatching, dispatchEmail]) {
       table.grantReadWriteData(fn);
     }
+    table.grantReadData(publicProfile);
+    table.grantReadData(profileOgImage);
     table.grant(supportRequest, "dynamodb:PutItem", "dynamodb:UpdateItem");
     table.grantStreamRead(relayOutbox);
     outboxQueue.grantSendMessages(relayOutbox);
@@ -356,15 +380,23 @@ export class PitchYourOwnerCloudStack extends cdk.Stack {
     addRoute("/v1/profiles/me", apigwv2.HttpMethod.GET, accessProfile);
     addRoute("/v1/profiles/me", apigwv2.HttpMethod.PATCH, accessProfile);
     addRoute("/v1/profiles/me", apigwv2.HttpMethod.DELETE, accessProfile);
+    addRoute("/v1/public-profiles/{slug}", apigwv2.HttpMethod.GET, publicProfile);
+    addRoute("/p/{slug}", apigwv2.HttpMethod.GET, publicProfile);
+    addRoute("/og/{slug}", apigwv2.HttpMethod.GET, profileOgImage);
+    addRoute("/og/profile/{slug}", apigwv2.HttpMethod.GET, profileOgImage);
     addRoute("/v1/upload-sessions", apigwv2.HttpMethod.POST, profileDrafts);
     addRoute("/v1/profile-drafts", apigwv2.HttpMethod.POST, profileDrafts);
     addRoute("/v1/profile-drafts", apigwv2.HttpMethod.GET, profileDrafts);
     addRoute("/v1/profile-drafts/{draftId}", apigwv2.HttpMethod.GET, profileDrafts);
     addRoute("/v1/matching-runs", apigwv2.HttpMethod.POST, triggerMatching);
     addRoute("/v1/matches", apigwv2.HttpMethod.GET, pairing);
+    addRoute("/v1/matches/refresh", apigwv2.HttpMethod.POST, pairing);
     addRoute("/v1/matches/{matchId}", apigwv2.HttpMethod.GET, pairing);
     addRoute("/v1/matches/{matchId}/invitations", apigwv2.HttpMethod.POST, pairing);
     addRoute("/v1/invitations", apigwv2.HttpMethod.GET, pairing);
+    addRoute("/v1/invitation-tokens/preview", apigwv2.HttpMethod.POST, pairing);
+    addRoute("/v1/invitation-tokens/respond", apigwv2.HttpMethod.POST, pairing);
+    addRoute("/v1/connections/{connectionId}", apigwv2.HttpMethod.GET, pairing);
     addRoute("/v1/support-requests", apigwv2.HttpMethod.POST, supportRequest);
 
     const apiOrigin = new origins.HttpOrigin(cdk.Fn.select(2, cdk.Fn.split("/", api.apiEndpoint)), {
@@ -372,6 +404,21 @@ export class PitchYourOwnerCloudStack extends cdk.Stack {
     });
     distribution.addBehavior("/v1/*", apiOrigin, {
       allowedMethods: cloudfront.AllowedMethods.ALLOW_ALL,
+      cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED,
+      originRequestPolicy: cloudfront.OriginRequestPolicy.ALL_VIEWER_EXCEPT_HOST_HEADER,
+      viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+    });
+    distribution.addBehavior("/p/*", apiOrigin, {
+      allowedMethods: cloudfront.AllowedMethods.ALLOW_GET_HEAD_OPTIONS,
+      cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED,
+      originRequestPolicy: cloudfront.OriginRequestPolicy.ALL_VIEWER_EXCEPT_HOST_HEADER,
+      viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+    });
+    distribution.addBehavior("/og/*", apiOrigin, {
+      allowedMethods: cloudfront.AllowedMethods.ALLOW_GET_HEAD_OPTIONS,
+      // A private switch must revoke the social image immediately. The image
+      // Lambda is already inexpensive and performs a strongly consistent
+      // visibility check, so correctness wins over edge caching here.
       cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED,
       originRequestPolicy: cloudfront.OriginRequestPolicy.ALL_VIEWER_EXCEPT_HOST_HEADER,
       viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
@@ -443,6 +490,7 @@ export class PitchYourOwnerCloudStack extends cdk.Stack {
     new cdk.CfnOutput(this, "CloudFrontDomainName", { value: distribution.distributionDomainName });
     new cdk.CfnOutput(this, "ProfileTableName", { value: table.tableName });
     new cdk.CfnOutput(this, "VectorIndexName", { value: vectorIndexName });
+    new cdk.CfnOutput(this, "MatchingRunFunctionName", { value: runMatching.functionName });
     new cdk.CfnOutput(this, "MatchingScheduleState", { value: "DISABLED" });
     new cdk.CfnOutput(this, "EmailVerificationState", { value: verificationEmailEnabled ? "ENABLED" : "DISABLED" });
     new cdk.CfnOutput(this, "MatchingEmailDeliveryState", { value: matchingEmailDeliveryEnabled ? "ENABLED" : "DISABLED" });

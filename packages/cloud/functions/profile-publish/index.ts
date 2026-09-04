@@ -4,6 +4,7 @@ import { embedText } from "../../lib/reusable/bedrock.js";
 import { loadSession, profileIdForEmailHash } from "../shared/auth.js";
 import { canonicalMatchingDocument, payloadHash, PROFILE_SCHEMA, validatePublishPayload } from "../shared/contracts.js";
 import { json, parseJsonBody } from "../shared/http.js";
+import { randomOpaqueToken } from "../shared/security.js";
 import { documentDynamo, requiredEnvironment } from "../shared/storage.js";
 
 async function embed(document: string): Promise<number[]> {
@@ -12,6 +13,17 @@ async function embed(document: string): Promise<number[]> {
     modelId: requiredEnvironment("EMBEDDING_MODEL_ID"),
     dimensions: Number(requiredEnvironment("EMBEDDING_DIMENSIONS")),
   });
+}
+
+async function embedFields(profile: ReturnType<typeof validatePublishPayload>["profile"]): Promise<Record<string, number[]>> {
+  const entries: Array<[string, string]> = [
+    ["interests", profile.interests.join("\n")],
+    ["active_problems", profile.active_problems.join("\n")],
+    ["motivations", profile.motivations.join("\n")],
+    ["recurring_topics", profile.recurring_topics.join("\n")],
+    ["friend_intent", profile.friend_intent],
+  ];
+  return Object.fromEntries(await Promise.all(entries.map(async ([field, value]) => [field, await embed(value)])));
 }
 
 export async function handler(event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> {
@@ -63,8 +75,9 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
       }))
       : undefined;
     const versionId = crypto.randomUUID();
+    const publicSlug = typeof current.Item?.publicSlug === "string" ? current.Item.publicSlug : randomOpaqueToken(12);
     const matchingDocument = canonicalMatchingDocument(payload.profile);
-    const vector = await embed(matchingDocument);
+    const [vector, fieldEmbeddings] = await Promise.all([embed(matchingDocument), embedFields(payload.profile)]);
     const createdAt = new Date().toISOString();
     const expiresAt = Math.floor(Date.now() / 1_000) + 24 * 60 * 60;
     const transaction: ConstructorParameters<typeof TransactWriteCommand>[0]["TransactItems"] = [
@@ -85,6 +98,7 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
             payloadHash: digest,
             approvedAt: payload.consent.approvedAt,
             embedding: vector,
+            fieldEmbeddings,
             embedding_status: "READY",
             profile_scope: "ACTIVE",
             is_matchable: 1,
@@ -104,13 +118,28 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
             email: session.email,
             emailHash: session.emailHash,
             displayName: payload.display_name,
-            visibility: "matched-only",
+            publicSlug,
+            visibility: "public",
             matchingState: "active",
             matchLanguages: payload.locale === "zh-Hant" ? ["zh", "en"] : ["en"],
             updatedAt: createdAt,
           },
           ConditionExpression: current.Item ? "versionId = :expectedVersion" : "attribute_not_exists(pk)",
           ExpressionAttributeValues: current.Item ? { ":expectedVersion": current.Item.versionId } : undefined,
+        },
+      },
+      {
+        Put: {
+          TableName: tableName,
+          Item: {
+            pk: `PUBLIC_SLUG#${publicSlug}`,
+            sk: "PROFILE",
+            entityType: "PUBLIC_PROFILE_POINTER",
+            profileId,
+            createdAt,
+          },
+          ConditionExpression: current.Item?.publicSlug ? "profileId = :profileId" : "attribute_not_exists(pk)",
+          ...(current.Item?.publicSlug ? { ExpressionAttributeValues: { ":profileId": profileId } } : {}),
         },
       },
       {
@@ -144,6 +173,7 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
     return json(201, {
       profile_id: profileId,
       version_id: versionId,
+      public_slug: publicSlug,
       status: "published",
       matching_status: "queued",
       idempotent_replay: false,

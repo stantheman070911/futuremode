@@ -20,8 +20,8 @@ function provider(): "ses" | "resend" {
   throw new Error("unsupported email provider");
 }
 
-async function sendWithSes(message: EmailMessage): Promise<void> {
-  await ses.send(new SendEmailCommand({
+async function sendWithSes(message: EmailMessage): Promise<string> {
+  const result = await ses.send(new SendEmailCommand({
     FromEmailAddress: sender(),
     Destination: { ToAddresses: [message.to] },
     Content: {
@@ -36,9 +36,10 @@ async function sendWithSes(message: EmailMessage): Promise<void> {
       },
     },
   }));
+  return result.MessageId || "ses-accepted";
 }
 
-async function sendWithResend(message: EmailMessage): Promise<void> {
+async function sendWithResend(message: EmailMessage): Promise<string> {
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {
@@ -63,9 +64,11 @@ async function sendWithResend(message: EmailMessage): Promise<void> {
     }
     throw new Error(`resend_email_failed:${response.status}${detail ? `:${detail.slice(0, 240)}` : ""}`);
   }
+  const body = await response.json().catch(() => ({})) as { id?: string };
+  return body.id || "resend-accepted";
 }
 
-export async function sendEmail(message: EmailMessage): Promise<void> {
+export async function sendEmail(message: EmailMessage): Promise<string> {
   if (provider() === "resend") return sendWithResend(message);
   return sendWithSes(message);
 }

@@ -4,6 +4,7 @@ import { canonicalMatchingDocument, payloadHash, publicProfile, validateOwnerPit
 import { profileIdForEmailHash } from "../functions/shared/auth.js";
 
 const profile = {
+  animal_persona: "追著光線的銀狐",
   summary: "Portrait photographer exploring how subtle posture changes emotion in a frame.",
   interests: ["Subject direction", "Posture and tension"],
   motivations: ["Create portraits that feel natural"],
@@ -29,9 +30,10 @@ const payload = {
   consent: { approvedAt: "2026-09-04T08:00:00.000Z" },
 } as const;
 
-test("validates the seven core fields and owner-only confidence", () => {
+test("validates the public animal persona, seven matching fields, and owner-only confidence", () => {
   const parsed = validatePublishPayload(payload);
   assert.equal(parsed.profile.summary, profile.summary);
+  assert.equal(parsed.profile.animal_persona, profile.animal_persona);
   assert.equal(parsed.display_name, "Ari C.");
   assert.equal(parsed.profile.confidence.friend_intent, "low");
 });
@@ -48,6 +50,7 @@ test("matching document excludes scope and confidence", () => {
   assert.match(document, /Directing a stranger/);
   assert.doesNotMatch(document, /deleted and voice chats/);
   assert.doesNotMatch(document, /confidence|medium|low/i);
+  assert.doesNotMatch(document, /追著光線的銀狐/);
 });
 
 test("peer projection excludes scope and confidence", () => {

@@ -52,8 +52,9 @@ published profile resumes a local draft when one exists, otherwise goes to Choos
 
 ### Choose and hand off to an AI｜選擇並交接給 AI
 
-The owner selects ChatGPT, Claude, or another assistant and chooses English or Traditional
-Chinese. The website loads the complete locale-specific prompt and makes it visible.
+The owner selects ChatGPT, Claude, or another assistant. The Hackathon interface and
+deployed prompt are Traditional Chinese only. The website loads the complete prompt and
+makes it visible.
 
 - ChatGPT and Claude: the primary action attempts to copy the prompt, puts the full prompt
   in the destination URL's `q` parameter, and opens the provider.
@@ -61,8 +62,8 @@ Chinese. The website loads the complete locale-specific prompt and makes it visi
   the prompt.
 - A visible copy action remains available as the fallback.
 
-Owner 選擇 ChatGPT、Claude 或其他 AI，以及 English 或繁體中文。網站載入並顯示完整的
-對應語言 prompt。
+Owner 選擇 ChatGPT、Claude 或其他 AI。Hackathon 介面與部署的 prompt 只使用繁體中文；
+網站會載入並顯示完整 prompt。
 
 - ChatGPT／Claude：主要操作會嘗試複製 prompt，將全文放入目的網址的 `q` 參數後開啟
   provider。
@@ -84,27 +85,27 @@ The executable prompts are
 [`get_info_prompt_ch.md`](get_info_prompt_ch.md). They require the assistant to:
 
 1. use only context it can actually access and the owner authorized;
-2. produce a concise synthesis rather than a field-by-field questionnaire;
-3. scan the proposed transfer for concrete security, privacy, confidentiality, and
-   sharing-rights risks;
-4. list only detected issues, each as `S1`, `S2`, and so on, with directly selectable
-   handling options;
-5. wait until every issue is resolved in one owner reply containing the exact locale
-   confirmation phrase; and
+2. research the owner's field from accessible context and make the professional craft,
+   active problems, and recurring questions vivid without fabricating expertise;
+3. produce a concise synthesis rather than a field-by-field questionnaire;
+4. list the concrete potentially sensitive topics found in the proposed transfer;
+5. ask one consolidated exclusion question, accepting topic numbers or
+   `none`／`全部保留`; and
 6. then return exactly one profile JSON object with no prose or Markdown.
 
 可執行 prompts 要求 AI：
 
 1. 只使用實際可存取且 owner 已授權的脈絡；
-2. 先給精簡整體摘要，不進行逐欄問卷；
-3. 掃描擬傳輸內容中的具體安全、隱私、機密與分享權限風險；
-4. 只列出實際偵測到的問題，每項使用 `S1`、`S2` 等編號與可直接選擇的處理方式；
-5. 等 owner 在一則回覆中處理全部項目，並加入該語言的確切確認語；以及
+2. 從可存取脈絡研究 owner 的專業領域，具體呈現其 craft、正在解的問題與反覆追問，
+   但不捏造專業能力；
+3. 先給精簡整體摘要，不進行逐欄問卷；
+4. 列出擬傳輸內容中具體、可辨識的潛在敏感主題；
+5. 只問一次「哪些主題應該排除？」，接受編號或 `none`／`全部保留`；以及
 6. 接著只輸出一個 profile JSON object，不附 prose 或 Markdown。
 
-The exact phrases are `CONFIRM SECURITY AND GENERATE JSON` and
-`確認安全並產生 JSON`. AI-chat confirmation authorizes generation of the transfer
-payload; it does not publish anything.
+The exact interaction copy is: `哪些主題應該排除？若要排除，回覆編號，例如：2、4；若全部保留，回覆 none 或 全部保留。`
+This AI-chat answer authorizes generation of the transfer payload; it does not publish
+anything.
 
 ### Import, edit, and publish｜匯入、編輯與發布
 
@@ -159,14 +160,16 @@ ranking language.
 labels 會指出說明所依據的 profile 欄位。介面不顯示 embedding score、LLM score、
 confidence、追蹤者數、人氣或排名語言。
 
-An owner can choose Invite or Not now. The recipient sees the same match explanation and
-can Accept or choose Not now. Contact email appears only when both sides have accepted;
-simultaneous invitations therefore converge on the same connected state. A recorded
-decision cannot be changed for that match.
+The suggesting owner can press Invite. Only that explicit action creates one recipient
+email and one single-use 14-day token. Opening the email link is read-only; the recipient
+then explicitly chooses Accept or Not now on the dedicated page. The Invite click is the
+sender's consent, so Accept creates the mutual connection and two connection emails.
+Contact email appears only in each authenticated connection view after mutual consent.
 
-Owner 可選 Invite 或 Not now。接收者查看相同的 match explanation，再選 Accept 或 Not
-now。只有雙方都 accept 才顯示 contact email，因此同時邀請會收斂為同一個 connected
-狀態。對同一 match 做出的決定不可更改。
+建議方可按 Invite；只有這個明確操作才會建立一封收件者 Email 與一個 14 天、單次使用
+token。開啟 Email 連結只會預覽，收件者必須在專用頁明確選 Accept 或 Not now。Invite
+本身就是寄件者同意，因此收件者 Accept 後會建立雙向 connection 與兩封 connection
+Email。只有互相同意後，各自的 authenticated connection 頁才顯示對方 Email。
 
 ## 3. Profile contract｜Profile 契約
 
@@ -183,6 +186,7 @@ Do not duplicate field limits in prompts, UI code, or documentation.
 | `recurring_topics` | Matching and owner pitch | Owner and matched peers |
 | `friend_intent` | Matching and owner pitch | Owner and matched peers |
 | `history_scope` | Discloses accessible context | Owner only |
+| `animal_persona` | Memorable professional presentation metaphor | Public |
 | `confidence` | Qualitative extraction-review metadata | Edit and final review only |
 | `display_name` | Owner-supplied publication metadata | Owner and matched peers |
 
@@ -227,10 +231,9 @@ Authorized context
 
 ## 5. Matching contract｜配對契約
 
-The matching document contains `summary`, `interests`, `motivations`,
-`active_problems`, `recurring_topics`, and `friend_intent`. Cohere embeddings retrieve
-candidates; Nova Pro then judges both owners' likely interest using these internal
-weights:
+The matcher stores one field embedding for `interests`, `active_problems`, `motivations`,
+`recurring_topics`, and `friend_intent`. It materializes two directed edges per eligible
+pair and combines cosine similarity with these weights:
 
 - 30% specific-interest overlap
 - 25% active-problem overlap
@@ -238,13 +241,15 @@ weights:
 - 15% recurring-topic overlap
 - 10% friend-intent compatibility
 
-Only a Nova `strong_match` above the configured threshold is persisted. Current-profile
-state and shared matching language are filters. Normal matching excludes every record
-marked as a test profile. Match records expire after 30 days.
+Every eligible pair is persisted with both profile-version IDs, five component scores,
+the composite score, and deterministic explanations. Current profile status and version
+are checked again at read time. Numeric scores are internal and never displayed. Normal
+matching excludes all test profiles; isolated E2E is the only environment allowed to
+include them. Result-set snapshots expire after 30 days.
 
-只有高於設定門檻的 Nova `strong_match` 會寫入資料庫。Current-profile state 與共同
-matching language 是 filters；一般 matching 會排除所有標記為 test profile 的資料。
-Match record 於 30 天後到期。
+每個符合資格的 pair 都會保存雙方 profile version、五個分項分數、加權總分與確定性的
+三段說明；讀取時再檢查目前公開狀態與版本。數字分數只供內部排序，不顯示給使用者。
+一般 matching 排除所有 test profile，只有隔離 E2E 環境可明確納入；result set 30 天後到期。
 
 ## 6. Current interface ownership｜目前介面範圍
 
@@ -255,22 +260,22 @@ The signed-in application has four persistent areas:
 | Matches | Suggested, incoming, outgoing, connected, searching, and empty states |
 | Invitations | Incoming, outgoing, and connected matches |
 | My Pitch | Published owner profile without confidence; edit and regenerate entry points |
-| Settings | Language, Computer API capability, delete, sign out, Privacy, Terms, and Support |
+| Settings | Public/Private status, Computer API capability, delete, sign out, Privacy, Terms, and Support |
 
 Onboarding uses `/assistant`, `/handoff`, `/import`, and `/review` without the
 persistent navigation. The browser restores authentication progress, prompt handoff,
-draft edits, locale, display name, demo state, and recent matching progress from
+draft edits, display name, demo state, and recent matching progress from
 `localStorage`.
 
 Onboarding 使用 `/assistant`、`/handoff`、`/import` 與 `/review`，不顯示常駐
-navigation。瀏覽器會從 `localStorage` 復原登入進度、prompt handoff、草稿修改、語言、
+navigation。瀏覽器會從 `localStorage` 復原登入進度、prompt handoff、草稿修改、
 display name、demo state 與近期 matching 進度。
 
-The UI displays one selected language at a time. Layout is constrained to a 430px mobile
+The Hackathon UI is Traditional Chinese only. Layout is constrained to a 430px mobile
 column, includes a 320px compact breakpoint, exposes a skip link and live region, and
 supports reduced-motion preferences.
 
-介面一次只顯示使用者選定的一種語言。版面限制在 430px 手機欄寬，另有 320px compact
+Hackathon 介面只使用繁體中文。版面限制在 430px 手機欄寬，另有 320px compact
 breakpoint，並提供 skip link、live region 與 reduced-motion 支援。
 
 ## 7. Seeded demonstration｜Seeded 示範

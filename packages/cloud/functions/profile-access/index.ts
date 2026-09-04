@@ -1,8 +1,9 @@
-import { BatchWriteCommand, GetCommand, QueryCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
+import { BatchWriteCommand, GetCommand, PutCommand, QueryCommand, TransactWriteCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import type { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from "aws-lambda";
 import { loadSession, profileIdForEmailHash } from "../shared/auth.js";
 import { json, parseJsonBody } from "../shared/http.js";
 import { documentDynamo, requiredEnvironment } from "../shared/storage.js";
+import { randomOpaqueToken } from "../shared/security.js";
 
 interface DeletionKey { pk: string; sk: string }
 
@@ -47,6 +48,46 @@ async function deleteKeys(tableName: string, keys: DeletionKey[]): Promise<void>
   }
 }
 
+async function ensurePublicSlug(tableName: string, profileId: string, current: Record<string, unknown>): Promise<string> {
+  if (typeof current.publicSlug === "string" && current.publicSlug) return current.publicSlug;
+  const publicSlug = randomOpaqueToken(12);
+  await documentDynamo.send(new PutCommand({
+    TableName: tableName,
+    Item: { pk: `PUBLIC_SLUG#${publicSlug}`, sk: "PROFILE", entityType: "PUBLIC_PROFILE_POINTER", profileId, createdAt: new Date().toISOString() },
+    ConditionExpression: "attribute_not_exists(pk)",
+  }));
+  await documentDynamo.send(new UpdateCommand({
+    TableName: tableName,
+    Key: { pk: `PROFILE#${profileId}`, sk: "CURRENT" },
+    UpdateExpression: "SET publicSlug = if_not_exists(publicSlug, :slug), visibility = if_not_exists(visibility, :public)",
+    ExpressionAttributeValues: { ":slug": publicSlug, ":public": "public" },
+    ConditionExpression: "attribute_exists(pk)",
+  }));
+  return publicSlug;
+}
+
+async function revokePendingInvitations(tableName: string, profileId: string, now: string): Promise<void> {
+  const pointers = await documentDynamo.send(new QueryCommand({
+    TableName: tableName,
+    KeyConditionExpression: "pk = :pk AND begins_with(sk, :prefix)",
+    ExpressionAttributeValues: { ":pk": `PROFILE#${profileId}`, ":prefix": "INVITE#" },
+    ConsistentRead: true,
+  }));
+  for (const pointer of pointers.Items ?? []) {
+    if (!pointer.pairId) continue;
+    const invite = (await documentDynamo.send(new GetCommand({ TableName: tableName, Key: { pk: `INVITATION#${pointer.pairId}`, sk: "META" }, ConsistentRead: true }))).Item;
+    if (invite?.status !== "pending" || !invite.tokenHash) continue;
+    try {
+      await documentDynamo.send(new TransactWriteCommand({ TransactItems: [
+        { Update: { TableName: tableName, Key: { pk: `INVITATION#${pointer.pairId}`, sk: "META" }, UpdateExpression: "SET #status = :revoked, revokedAt = :now", ConditionExpression: "#status = :pending", ExpressionAttributeNames: { "#status": "status" }, ExpressionAttributeValues: { ":revoked": "revoked", ":pending": "pending", ":now": now } } },
+        { Update: { TableName: tableName, Key: { pk: `INVITE_TOKEN#${invite.tokenHash}`, sk: "META" }, UpdateExpression: "SET #status = :revoked, revokedAt = :now", ConditionExpression: "#status = :active", ExpressionAttributeNames: { "#status": "status" }, ExpressionAttributeValues: { ":revoked": "revoked", ":active": "active", ":now": now } } },
+      ] }));
+    } catch (error) {
+      if (!(error instanceof Error) || !/ConditionalCheckFailed|TransactionCanceled/.test(error.name + error.message)) throw error;
+    }
+  }
+}
+
 export async function handler(event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> {
   try {
     const session = await loadSession(event.headers.authorization);
@@ -62,6 +103,7 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
     const method = event.requestContext.http.method;
 
     if (method === "GET") {
+      const publicSlug = await ensurePublicSlug(tableName, profileId, current);
       const version = (await documentDynamo.send(new GetCommand({
         TableName: tableName,
         Key: { pk: profilePk, sk: `VERSION#${current.versionId}` },
@@ -75,22 +117,37 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
         display_name: version.displayName ?? current.displayName,
         profile: version.profile,
         locale: version.locale,
+        public_slug: publicSlug,
+        visibility: current.visibility === "private" || current.matchingState === "paused" ? "private" : "public",
         matching_state: current.matchingState ?? "active",
         updated_at: current.updatedAt,
       });
     }
 
     if (method === "PATCH") {
-      const body = parseJsonBody(event.body) as { matching_state?: unknown };
-      if (!['active', 'paused'].includes(String(body.matching_state))) return json(400, { error: "invalid_matching_state" });
-      await documentDynamo.send(new UpdateCommand({
-        TableName: tableName,
-        Key: { pk: profilePk, sk: "CURRENT" },
-        UpdateExpression: "SET matchingState = :state, updatedAt = :now",
-        ExpressionAttributeValues: { ":state": body.matching_state, ":now": new Date().toISOString() },
-        ConditionExpression: "attribute_exists(pk)",
-      }));
-      return json(200, { profile_id: profileId, matching_state: body.matching_state });
+      const body = parseJsonBody(event.body) as { visibility?: unknown };
+      if (!['public', 'private'].includes(String(body.visibility))) return json(400, { error: "invalid_profile_visibility" });
+      const visibility = String(body.visibility) as "public" | "private";
+      const matchingState = visibility === "public" ? "active" : "paused";
+      const now = new Date().toISOString();
+      const publicSlug = await ensurePublicSlug(tableName, profileId, current);
+      await documentDynamo.send(new TransactWriteCommand({ TransactItems: [
+        { Update: {
+          TableName: tableName,
+          Key: { pk: profilePk, sk: "CURRENT" },
+          UpdateExpression: "SET visibility = :visibility, matchingState = :state, updatedAt = :now ADD statusVersion :one",
+          ExpressionAttributeValues: { ":visibility": visibility, ":state": matchingState, ":now": now, ":one": 1 },
+          ConditionExpression: "attribute_exists(pk)",
+        } },
+        { Update: {
+          TableName: tableName,
+          Key: { pk: "MATCHING_GRAPH", sk: "REVISION" },
+          UpdateExpression: "SET updatedAt = :now ADD revision :one",
+          ExpressionAttributeValues: { ":one": 1, ":now": now },
+        } },
+      ] }));
+      if (visibility === "private") await revokePendingInvitations(tableName, profileId, now);
+      return json(200, { profile_id: profileId, public_slug: publicSlug, visibility, matching_state: matchingState });
     }
 
     if (method === "DELETE") {
@@ -107,6 +164,7 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
         .filter((value): value is string => typeof value === "string")
         .map((pk) => ({ pk, sk: "META" }));
       sessionKeys.push({ pk: session.pk, sk: "META" });
+      if (typeof current.publicSlug === "string") sessionKeys.push({ pk: `PUBLIC_SLUG#${current.publicSlug}`, sk: "PROFILE" });
       await deleteKeys(tableName, deletionKeys([...profileItems, ...idempotencyItems, ...ownerItems, ...rateItems, ...sessionKeys]));
       return json(200, { deleted: true, profile_id: profileId });
     }

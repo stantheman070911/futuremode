@@ -1,8 +1,9 @@
 {
-  "schema_version": "1.0.0-draft",
-  "description": "PitchYourOwner owner-approved profile contract. Core fields remain stable; owner-review metadata is controlled here rather than hard-coded in the prompt or UI. Confidence is enabled for owner review only and is never public or used in matching.",
+  "schema_version": "1.1.0-draft",
+  "description": "PitchYourOwner owner-approved profile contract. animal_persona is public presentation data; owner-review metadata is controlled here rather than hard-coded in the prompt or UI. Confidence is enabled for owner review only and is never public or used in matching.",
   "field_order": [
     "history_scope",
+    "animal_persona",
     "summary",
     "interests",
     "motivations",
@@ -12,6 +13,11 @@
     "confidence"
   ],
   "core_fields": {
+    "animal_persona": {
+      "type": "string",
+      "required": true,
+      "max_length": 80
+    },
     "summary": {
       "type": "string",
       "required": true,

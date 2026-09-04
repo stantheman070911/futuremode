@@ -19,20 +19,20 @@ test("ships the canonical owner-pitch prompts without runtime drift", async () =
   for (const [source, runtime] of pairs) assert.equal(await text(runtime), await text(source));
 });
 
-test("asks only concrete security/privacy decisions before JSON-only output", async () => {
+test("asks one concrete topic-exclusion question before JSON-only output", async () => {
   const [zh, en, app] = await Promise.all([
     text(resolve(repoDir, "docs/get_info_prompt_ch.md")),
     text(resolve(repoDir, "docs/get_info_prompt_en.md")),
     text(resolve(packageDir, "static/app.js")),
   ]);
   assert.match(zh, /第一則回答不要輸出 JSON/);
-  assert.match(zh, /S1.*S2/s);
-  assert.match(zh, /確認安全並產生 JSON/);
-  assert.match(zh, /唯一允許選項/);
-  assert.match(zh, /不得把上述八類掃描範圍變成/);
-  assert.match(zh, /output JSON only/i);
-  assert.match(zh, /根物件必須且只能包含以下八個 key/);
-  assert.match(zh, /不要加入 `schema`/);
+  assert.match(zh, /哪些主題應該排除/);
+  assert.match(zh, /none 或 全部保留/);
+  assert.match(zh, /Google 任職經歷/);
+  assert.match(zh, /animal_persona/);
+  assert.match(zh, /專業吸引力/);
+  assert.match(zh, /JSON only/i);
+  assert.match(zh, /根物件必須且只能依序包含/);
   assert.match(zh, /session、event、sender、timestamp、origin、URL/);
   assert.match(en, /Do not output JSON in the first response/);
   assert.match(en, /S1.*S2/s);
@@ -46,19 +46,18 @@ test("asks only concrete security/privacy decisions before JSON-only output", as
   assert.doesNotMatch(zh, /這份整體介紹是否準確代表/);
   assert.doesNotMatch(en, /Does this overall pitch accurately represent/);
   assert.doesNotMatch(`${zh}\n${en}`, /"status":\s*"review_required"/);
-  assert.match(app, /這不是最終 JSON/);
-  assert.match(app, /確認安全並產生 JSON/);
+  assert.match(app, /一次選擇要排除的主題/);
+  assert.match(app, /JSON 語法錯誤/);
   assert.doesNotMatch(app, /一次問完準確性/);
   assert.match(app, /json-guide/);
-  assert.match(app, /routec\.message_debug_info\.v1/);
-  assert.match(app, /除錯／傳輸資料，不是你的 Owner Pitch/);
+  assert.match(app, /ProfileJson\.normalizeJsonInput/);
   assert.match(app, /data-action="launch-ai-with-prompt"/);
   assert.match(app, /data-action="copy-prompt"/);
   assert.match(app, /target\.searchParams\.set\("q", prompt\)/);
   assert.match(app, /https:\/\/chatgpt\.com\//);
   assert.doesNotMatch(app, /data-action="open-ai"/);
   assert.match(app, /pitchyourowner\.handoff\.v1/);
-  assert.match(app, /owner-pitch-prompt-en\.txt/);
+  assert.match(app, /owner-pitch-prompt-zh-Hant\.txt/);
   assert.match(app, /display_name: runtime\.displayName/);
   assert.match(app, /Resume computer draft/);
   assert.match(app, /data-form="support-request"/);

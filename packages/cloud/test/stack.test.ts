@@ -46,6 +46,10 @@ test("exposes phone paste-back, draft API, pairing, and invitation routes", () =
   const routeKeys = Object.values(routes).map((resource) => resource.Properties.RouteKey).sort();
   assert.deepEqual(routeKeys, [
     "DELETE /v1/profiles/me",
+    "GET /og/profile/{slug}",
+    "GET /og/{slug}",
+    "GET /p/{slug}",
+    "GET /v1/connections/{connectionId}",
     "GET /v1/invitations",
     "GET /v1/matches",
     "GET /v1/matches/{matchId}",
@@ -53,9 +57,13 @@ test("exposes phone paste-back, draft API, pairing, and invitation routes", () =
     "GET /v1/profile-drafts/{draftId}",
     "GET /v1/profile-versions/{versionId}",
     "GET /v1/profiles/me",
+    "GET /v1/public-profiles/{slug}",
     "PATCH /v1/profiles/me",
     "POST /v1/email-verifications",
     "POST /v1/email-verifications/{challengeId}/confirm",
+    "POST /v1/invitation-tokens/preview",
+    "POST /v1/invitation-tokens/respond",
+    "POST /v1/matches/refresh",
     "POST /v1/matches/{matchId}/invitations",
     "POST /v1/matching-runs",
     "POST /v1/profile-drafts",
@@ -89,6 +97,12 @@ test("serves app and API through one CloudFront distribution", () => {
   template().hasResourceProperties("AWS::CloudFront::ResponseHeadersPolicy", {
     ResponseHeadersPolicyConfig: Match.objectLike({ Name: "pitchyourowner-dev-website-security" }),
   });
+  const distributions = Object.values(template().findResources("AWS::CloudFront::Distribution"));
+  const behaviors = distributions[0].Properties.DistributionConfig.CacheBehaviors as Array<Record<string, unknown>>;
+  const apiPolicy = behaviors.find((behavior) => behavior.PathPattern === "/v1/*")?.CachePolicyId;
+  assert.ok(apiPolicy);
+  assert.equal(behaviors.find((behavior) => behavior.PathPattern === "/p/*")?.CachePolicyId, apiPolicy);
+  assert.equal(behaviors.find((behavior) => behavior.PathPattern === "/og/*")?.CachePolicyId, apiPolicy);
 });
 
 test("grants matching trigger access only to the matching runner", () => {

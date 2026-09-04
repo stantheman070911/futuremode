@@ -5,8 +5,8 @@ import { BedrockRuntimeClient, InvokeModelCommand } from "@aws-sdk/client-bedroc
 
 export const REGION = process.env.AWS_REGION || process.env.AWS_DEFAULT_REGION || "ap-southeast-1";
 export const TEST_RUN_ID = "pitchyourowner-cross-profession-demo-v1";
-export const STACK_KEY = process.env.PYO_STACK_KEY || "PitchYourOwner-hackathon";
-export const STACK_ENVIRONMENT = process.env.PYO_STACK_ENVIRONMENT || "hackathon";
+export const STACK_KEY = process.env.PYO_STACK_KEY;
+export const STACK_ENVIRONMENT = process.env.PYO_STACK_ENVIRONMENT;
 export const EMBEDDING_MODEL_ID = "global.cohere.embed-v4:0";
 export const EMBEDDING_DIMENSIONS = 1024;
 
@@ -19,6 +19,12 @@ export function demoProfileId(email) {
 }
 
 export async function outputs() {
+  if (!STACK_KEY || !STACK_ENVIRONMENT || !process.env.PYO_OUTPUTS_FILE) {
+    throw new Error("PYO_STACK_KEY, PYO_STACK_ENVIRONMENT, and PYO_OUTPUTS_FILE are required; demo scripts never default to a deployed environment");
+  }
+  if (STACK_ENVIRONMENT !== "e2e" || !/^PitchYourOwner-e2e(?:-|$)/.test(STACK_KEY)) {
+    throw new Error(`refusing demo fixture access outside an isolated e2e stack: ${STACK_KEY}/${STACK_ENVIRONMENT}`);
+  }
   const path = resolve(process.cwd(), process.env.PYO_OUTPUTS_FILE || "cdk-outputs-hackathon.json");
   const parsed = JSON.parse(await readFile(path, "utf8"));
   if (!parsed[STACK_KEY]) throw new Error(`${STACK_KEY} outputs not found in ${path}`);

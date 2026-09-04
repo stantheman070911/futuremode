@@ -71,15 +71,61 @@ const COPY = {
   },
 };
 
-let activeLocale = navigator.language.toLowerCase().startsWith("zh") ? "zh-Hant" : "en";
+Object.assign(COPY["zh-Hant"], {
+  "handoff.explainer": "AI 會先整理一份專業亮點預覽，列出擬公開的具體主題，並一次問你哪些要排除。回覆編號，或回覆 none／全部保留；下一則就是可貼回的 JSON。",
+  "guide.1.title": "閱讀專業亮點預覽",
+  "guide.1.body": "AI 第一則先顯示介紹與擬公開主題，這一則不用複製。",
+  "guide.2.title": "一次選擇要排除的主題",
+  "guide.2.body": "回覆要排除的編號；若全部保留，回覆 none 或全部保留。",
+  "guide.3.title": "複製下一則 JSON",
+  "guide.3.body": "下一則只會有 JSON，從 { 開始、以 } 結束。",
+  "guide.4.title": "若格式有錯",
+  "guide.4.body": "依照欄位旁的語法或 schema 錯誤修正後再試，原始文字會保留。",
+  "import.intro": "貼上 AI 在你選好排除主題後產生的 JSON。網站會檢查格式，接著讓你編輯與最終確認。",
+  "field.animal_persona": "動物角色",
+  "hint.animal_persona": "用鮮明、尊重且與專業特質相關的動物隱喻讓人記住你",
+  "validation.syntax": "JSON 語法錯誤：{detail}",
+  "validation.smartQuotes": "偵測到智慧引號，已嘗試安全轉換；仍有語法錯誤：{detail}",
+  "validation.json": "內容必須是一個 JSON profile 物件。",
+  "validation.unknown": "JSON 含有 schema 未支援的欄位，請移除後再試。",
+  "validation.notJson": "無法解析 JSON，請依下方語法錯誤修正後再試。",
+  "validation.debug": "這是系統訊息物件，不是 profile schema。",
+  "validation.preview": "這是文字預覽，不是可解析的 profile JSON。",
+  "validation.duplicateKey": "JSON 有重複欄位：{key}",
+  "validation.trailing": "JSON 前後不能包含說明文字或第二個物件。",
+  "validation.duplicateItem": "{label} 不能包含重複項目。",
+  "matches.refresh": "重新整理配對",
+  "matches.page": "第 {page} / {total} 頁",
+  "matches.previous": "上一頁",
+  "matches.next": "下一頁",
+  "matches.total": "共 {count} 位可能值得認識的人",
+  "settings.visibility": "公開狀態",
+  "settings.public": "公開 — 可出現在建議配對",
+  "settings.private": "私人 — 只有我",
+  "settings.privateWarning": "切換為私人後會立即停止配對與新邀請；公開連結只顯示不公開通知。已分享至第三方的截圖或快取無法收回。",
+  "settings.publicLink": "公開介紹網址",
+  "landing.flow": "AI 整理介紹 → 你審核 → 看建議的人 → 發出邀請 → 雙方同意後交換 Email",
+  "landing.animals": "跳著舞的粉色羊駝 · 戴著眼鏡的專業老鷹 · 追著光線的銀狐",
+  "accept.loading": "正在載入邀請",
+  "accept.title": "有人想認識你",
+  "accept.accept": "接受這次介紹",
+  "accept.notNow": "現在不要",
+  "accept.note": "只有按下按鈕才會送出決定。開啟這一頁不會自動接受。",
+  "accept.done": "已記錄你的決定",
+  "connection.title": "你們都接受了",
+  "connection.email": "對方的 Email",
+  "connection.open": "查看聯絡方式"
+});
+
+let activeLocale = "zh-Hant";
 
 function t(key, variables = {}) {
-  const locale = activeLocale === "zh-Hant" ? "zh-Hant" : "en";
-  const template = COPY[locale][key] ?? COPY.en[key] ?? key;
+  const template = COPY["zh-Hant"][key] ?? key;
   return Object.entries(variables).reduce((value, [name, replacement]) => value.replaceAll(`{${name}}`, String(replacement)), template);
 }
 const FIELD_META = {
   history_scope: ["field.history_scope", "hint.history_scope"],
+  animal_persona: ["field.animal_persona", "hint.animal_persona"],
   summary: ["field.summary", "hint.summary"],
   interests: ["field.interests", "hint.interests"],
   motivations: ["field.motivations", "hint.motivations"],
@@ -87,11 +133,13 @@ const FIELD_META = {
   recurring_topics: ["field.recurring_topics", "hint.recurring_topics"],
   friend_intent: ["field.friend_intent", "hint.friend_intent"],
 };
-let FIELD_ORDER = ["history_scope", "summary", "interests", "motivations", "active_problems", "recurring_topics", "friend_intent"];
+let FIELD_ORDER = ["history_scope", "animal_persona", "summary", "interests", "motivations", "active_problems", "recurring_topics", "friend_intent"];
 const DEMO_MATCH_ID = "demo-ren-h";
+const genericAnimal = "帶著好奇心探索的水獺";
 
 function sampleProfile() {
   return {
+  animal_persona: "追著光線的銀狐",
   summary: t("demo.profile.summary"),
   interests: [t("demo.profile.interest1"), t("demo.profile.interest2"), t("demo.profile.interest3"), t("demo.profile.interest4")],
   motivations: [t("demo.profile.motivation")],
@@ -111,6 +159,7 @@ function demoMatch(saved = {}) {
     display_name: "Ren H.",
     ...(saved.peer?.contact_email ? { contact_email: saved.peer.contact_email } : {}),
     profile: {
+      animal_persona: "用腳尖讀懂情緒的粉色羊駝",
       summary: t("demo.peer.summary"),
       interests: [t("demo.peer.interest1"), t("demo.peer.interest2"), t("demo.peer.interest3")],
       motivations: [t("demo.peer.motivation")],
@@ -138,9 +187,7 @@ const SAVED_LAST_PUBLISH_AT = Number(readJson(LAST_PUBLISH_KEY)) || 0;
 const SAVED_HANDOFF = readJson(HANDOFF_KEY);
 const SAVED_AUTH_FLOW = readJson(AUTH_FLOW_KEY);
 const SAVED_LOCALE = readJson(LOCALE_KEY);
-const INITIAL_LOCALE = ["zh-Hant", "en"].includes(SAVED_LOCALE)
-  ? SAVED_LOCALE
-  : ["zh-Hant", "en"].includes(SAVED_HANDOFF?.locale) ? SAVED_HANDOFF.locale : navigator.language.toLowerCase().startsWith("zh") ? "zh-Hant" : "en";
+const INITIAL_LOCALE = "zh-Hant";
 activeLocale = INITIAL_LOCALE;
 
 const runtime = {
@@ -166,9 +213,13 @@ const runtime = {
   profile: (DEMO_QUERY_ENABLED || PERSISTED_DEMO_ENABLED) && SAVED_DEMO_PROFILE?.profile ? SAVED_DEMO_PROFILE : (DEMO_QUERY_ENABLED || PERSISTED_DEMO_ENABLED) && SAVED_LAST_PUBLISH_AT ? { profile: sampleProfile(), profile_id: "demo-owner", version_id: "demo-v1" } : null,
   profileLoaded: Boolean((DEMO_QUERY_ENABLED || PERSISTED_DEMO_ENABLED) && (SAVED_DEMO_PROFILE?.profile || SAVED_LAST_PUBLISH_AT)),
   matches: null,
+  matchResult: null,
   invitations: null,
   match: null,
   uploadSession: null,
+  invitationPreview: null,
+  invitationDecision: null,
+  connection: null,
   supportRequestId: null,
   demo: DEMO_QUERY_ENABLED || PERSISTED_DEMO_ENABLED,
   demoDraft: readJson(DEMO_DRAFT_KEY) === true,
@@ -229,11 +280,11 @@ function confidenceLabel(level) {
 
 function matchStateLabel(state) {
   const key = `state.${state}`;
-  return COPY[activeLocale][key] ?? COPY.en[key] ?? String(state || "").replace(/_/g, " ");
+  return COPY["zh-Hant"][key] ?? String(state || "").replace(/_/g, " ");
 }
 
-function useLocale(locale) {
-  runtime.locale = locale === "zh-Hant" ? "zh-Hant" : "en";
+function useLocale() {
+  runtime.locale = "zh-Hant";
   activeLocale = runtime.locale;
   writeJson(LOCALE_KEY, runtime.locale);
   document.documentElement.lang = runtime.locale;
@@ -261,32 +312,7 @@ function preserveVisibleFormState() {
 
 async function switchLocale() {
   preserveVisibleFormState();
-  useLocale(runtime.locale === "en" ? "zh-Hant" : "en");
-  runtime.error = "";
-  runtime.notice = "";
-  announce("");
-  runtime.demoMatch = demoMatch(runtime.demoMatch);
-  if (runtime.demo) {
-    runtime.matches = null;
-    runtime.invitations = null;
-    runtime.match = null;
-  }
-  if (runtime.demo && runtime.profile?.profile_id === "demo-owner" && !runtime.draft) {
-    runtime.profile = { ...runtime.profile, profile: sampleProfile() };
-  }
-  if (runtime.prompt) {
-    try {
-      const response = await fetch(promptFileForLocale(), { cache: "no-store" });
-      if (!response.ok) throw new Error(String(response.status));
-      runtime.prompt = await response.text();
-    } catch (error) {
-      console.error("Prompt locale refresh failed", error);
-      runtime.prompt = "";
-      setRuntimeError(userFacingError(t("error.prompt"), "retry", t("common.try")));
-    }
-    saveHandoff();
-  }
-  writeJson(DEMO_MATCH_KEY, runtime.demo ? runtime.demoMatch : null);
+  useLocale();
   render();
 }
 
@@ -438,12 +464,14 @@ function errorNotice() {
 }
 
 function navigate(path, { replace = false } = {}) {
-  if (path !== "/matches") stopMatchesPolling();
+  const target = new URL(path, location.origin);
+  if (target.pathname !== "/matches") stopMatchesPolling();
+  if (target.pathname === "/matches" && `${target.pathname}${target.search}` !== `${location.pathname}${location.search}`) runtime.matches = null;
   if (path !== "/signin") {
     clearInterval(otpCountdownTimer);
     otpCountdownTimer = null;
   }
-  history[replace ? "replaceState" : "pushState"]({}, "", path);
+  history[replace ? "replaceState" : "pushState"]({}, "", `${target.pathname}${target.search}${target.hash}`);
   runtime.error = "";
   runtime.notice = "";
   runtime.match = null;
@@ -503,7 +531,7 @@ async function api(path, options = {}) {
 }
 
 function shell(content, { nav = false, active = "", action = "" } = {}) {
-  const homeHref = runtime.session || runtime.demo ? "/matches" : "/";
+  const homeHref = runtime.session || runtime.demo ? (runtime.profile?.visibility === "private" ? "/pitch" : "/matches") : "/";
   return `<div class="app-shell"><section class="screen ${nav ? "" : "no-nav"}">
     <header class="wordmark"><a href="${homeHref}" data-link>PITCHYOUROWNER</a>${action}</header>
     ${errorNotice()}
@@ -518,7 +546,7 @@ function progressHeader(step, labelKey) {
 }
 
 function onboardingExit() {
-  return runtime.profile ? `<a href="/matches" data-link class="flow-exit">${esc(t("flow.leaveMatches"))}</a>` : "";
+  return runtime.profile ? `<a href="${runtime.profile.visibility === "private" ? "/pitch" : "/matches"}" data-link class="flow-exit">${esc(runtime.profile.visibility === "private" ? t("nav.pitch") : t("flow.leaveMatches"))}</a>` : "";
 }
 
 function flowNavigation(backPath, backLabelKey) {
@@ -558,7 +586,7 @@ function jsonGuide(includeRecoveryStep = false) {
 }
 
 function promptFileForLocale() {
-  return runtime.locale === "en" ? "/owner-pitch-prompt-en.txt" : "/owner-pitch-prompt-zh-Hant.txt";
+  return "/owner-pitch-prompt-zh-Hant.txt";
 }
 
 async function copyPromptBestEffort(prompt) {
@@ -700,9 +728,11 @@ function startScreen() {
     <div><strong>1</strong><span>${esc(t("start.check1"))}</span></div>
     <div><strong>2</strong><span>${esc(t("start.check2"))}</span></div>
   </div>
+  <p class="animal-showcase">${esc(t("landing.animals"))}</p>
+  <p class="subtle" style="text-align:center">${esc(t("landing.flow"))}</p>
   <button class="button primary" data-action="begin">${esc(t("start.begin"))}</button>
   ${DEMO_AVAILABLE ? `<button class="button quiet" style="margin-top:9px" data-action="demo-flow">${esc(t("start.demo"))}</button>` : ""}
-  <p class="subtle" style="text-align:center;margin:10px 0 0">${esc(t("start.duration"))}</p>`, { action: `<button class="language-toggle" data-action="switch-locale" aria-label="${esc(t("settings.language"))}">${esc(t("language.switch"))}</button>` });
+  <p class="subtle" style="text-align:center;margin:10px 0 0">${esc(t("start.duration"))}</p>`);
 }
 
 function signinScreen() {
@@ -757,21 +787,76 @@ function handoffScreen() {
     ${actions}`);
 }
 
+function normalizeJsonInput(value) {
+  let source = String(value ?? "").replace(/^\uFEFF/, "").replace(/^\u00a0+|\u00a0+$/g, "").trim();
+  const fence = source.match(/^```(?:json)?[\t ]*\r?\n([\s\S]*?)\r?\n```$/i);
+  if (fence) source = fence[1].trim();
+  let output = "";
+  let quote = null;
+  let escaped = false;
+  let smartQuotes = false;
+  for (let index = 0; index < source.length; index += 1) {
+    const character = source[index];
+    if (!quote && (character === "“" || character === "”")) {
+      quote = "smart"; smartQuotes = true; output += '"'; continue;
+    }
+    if (!quote && character === '"') { quote = "ascii"; output += character; continue; }
+    if (quote === "smart" && character === "”" && !escaped) { quote = null; output += '"'; continue; }
+    if (quote === "smart" && character === '"' && !escaped) { output += '\\"'; continue; }
+    if (quote === "ascii" && character === '"' && !escaped) { quote = null; output += character; continue; }
+    output += character;
+    escaped = Boolean(quote && character === "\\" && !escaped);
+    if (character !== "\\") escaped = false;
+  }
+  return { source: output, smartQuotes };
+}
+
+function duplicateJsonKey(source) {
+  const scopes = [];
+  let quote = false; let escaped = false; let start = -1;
+  for (let index = 0; index < source.length; index += 1) {
+    const character = source[index];
+    if (quote) {
+      if (character === '"' && !escaped) {
+        quote = false;
+        let next = index + 1;
+        while (/\s/.test(source[next] || "")) next += 1;
+        const scope = scopes[scopes.length - 1];
+        if (source[next] === ":" && scope instanceof Set) {
+          let key;
+          try { key = JSON.parse(source.slice(start, index + 1)); } catch { key = source.slice(start + 1, index); }
+          if (scope.has(key)) return key;
+          scope.add(key);
+        }
+      }
+      escaped = character === "\\" ? !escaped : false;
+      continue;
+    }
+    if (character === '"') { quote = true; escaped = false; start = index; }
+    else if (character === "{") scopes.push(new Set());
+    else if (character === "[") scopes.push(null);
+    else if (character === "}" || character === "]") scopes.pop();
+  }
+  return null;
+}
+
 function parseJsonCandidate(value) {
-  const cleaned = value.trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "");
+  const normalized = ProfileJson.normalizeJsonInput(value);
+  const duplicate = ProfileJson.duplicateJsonKey(normalized.source);
+  if (duplicate) throw new Error(t("validation.duplicateKey", { key: duplicate }));
   let parsed;
   try {
-    parsed = JSON.parse(cleaned);
-  } catch {
-    throw new Error(t("validation.notJson"));
+    parsed = JSON.parse(normalized.source);
+  } catch (error) {
+    const detail = String(error?.message || "格式不完整").replace(/^JSON\.parse:\s*/i, "");
+    throw new Error(t(normalized.smartQuotes ? "validation.smartQuotes" : "validation.syntax", { detail }));
   }
-  if (parsed?.schema === "routec.message_debug_info.v1" || parsed?.matrix_event_id || parsed?.host_session_id) {
-    throw new Error(t("validation.debug"));
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) throw new Error(t("validation.json"));
+  if (Object.hasOwn(parsed, "profile")) {
+    if (Object.keys(parsed).length !== 1) throw new Error(t("validation.unknown"));
+    parsed = parsed.profile;
   }
-  if (parsed?.status === "review_required") {
-    throw new Error(t("validation.preview"));
-  }
-  return parsed && typeof parsed === "object" && parsed.profile ? parsed.profile : parsed;
+  return parsed;
 }
 
 function validateProfileClient(profile) {
@@ -786,6 +871,8 @@ function validateProfileClient(profile) {
       if (!Array.isArray(profile[field]) || profile[field].some((item) => typeof item !== "string" || !item.trim())) throw new Error(t("validation.array", { label }));
       if (config?.max_items && profile[field].length > config.max_items) throw new Error(t("validation.maxItems", { label, count: config.max_items }));
       if (config?.item_max_length && profile[field].some((item) => item.trim().length > config.item_max_length)) throw new Error(t("validation.itemLong", { label }));
+      const folded = profile[field].map((item) => item.trim().toLocaleLowerCase());
+      if (new Set(folded).size !== folded.length) throw new Error(t("validation.duplicateItem", { label }));
     } else if (typeof profile[field] !== "string" || !profile[field].trim()) throw new Error(t("validation.required", { label }));
     else if (config?.max_length && profile[field].trim().length > config.max_length) throw new Error(t("validation.maxLength", { label, count: config.max_length }));
   }
@@ -859,10 +946,60 @@ function profileDocument(profile, showConfidence) {
     : `<p>${esc(profile[field])}</p>`;
   return `<div class="document">
     <section class="scope-block"><div class="field-label">${esc(t("profile.scope"))}</div><p>${esc(profile.history_scope)}</p></section>
+    <p class="animal-persona">${esc(profile.animal_persona || "帶著好奇心探索的水獺")}</p>
     <p class="doc-summary">${esc(profile.summary)}</p>
     ${["interests", "motivations", "active_problems", "recurring_topics", "friend_intent"].map((field) => `<section class="doc-field"><div class="doc-field-head"><span class="field-label">${esc(fieldLabel(field))}</span>${showConfidence ? `<span class="confidence">${esc(confidenceLabel(profile.confidence[field]))}</span>` : ""}</div>${listOrText(field)}</section>`).join("")}
     <div class="provenance"><span>${esc(t("profile.conversation"))}</span><span>${esc(t("profile.approved"))}</span><span>${esc(t("profile.exploring"))}</span></div>
   </div>`;
+}
+
+function publicProfileDocument(profile) {
+  if (!profile) return "";
+  const list = (field) => Array.isArray(profile[field]) && profile[field].length ? `<section class="doc-field"><span class="field-label">${esc(fieldLabel(field))}</span><div class="tag-list">${profile[field].map((item) => `<span class="tag">${esc(item)}</span>`).join("")}</div></section>` : "";
+  return `<div class="document"><p class="animal-persona">${esc(profile.animal_persona || genericAnimal)}</p><p class="doc-summary">${esc(profile.summary || "")}</p>${["interests", "motivations", "active_problems", "recurring_topics"].map(list).join("")}<section class="doc-field"><span class="field-label">${esc(fieldLabel("friend_intent"))}</span><p>${esc(profile.friend_intent || "")}</p></section></div>`;
+}
+
+function acceptScreen() {
+  if (runtime.invitationDecision) return shell(`<div class="hero"><h1>${esc(t("accept.done"))}</h1><p class="promise">${esc(runtime.invitationDecision === "connected" ? "你們都接受了。登入後可在邀請頁查看聯絡方式。" : "已選擇現在不要；對方不會看到拒絕理由。")}</p></div><a class="button primary" href="${runtime.session ? "/invitations" : "/signin"}" data-link>${esc(runtime.session ? "前往邀請" : "登入 PitchYourOwner")}</a>`);
+  if (!runtime.invitationPreview) {
+    loadInvitationPreview();
+    return shell(`<div class="loading">${esc(t("accept.loading"))}</div>`);
+  }
+  const preview = runtime.invitationPreview;
+  const inviter = preview.inviter || {};
+  return shell(`<p class="eyebrow">PitchYourOwner 邀請</p><h1 class="page-title">${esc(t("accept.title"))}</h1><p class="page-intro">${esc(inviter.display_name || "一位 owner")} 的 Agent 覺得你們現在值得聊聊。</p>${publicProfileDocument(inviter.profile)}<div class="question-card"><section class="question"><div class="step-label">為什麼值得聊</div><h2>${esc(preview.explanation?.whatWeBothCareAbout || "你們有一個具體的共同關注。")}</h2><p>${esc(preview.explanation?.whatWeCouldDiscuss || "可以從最近正在嘗試的方法開始交換。")}</p></section></div><p class="subtle">${esc(t("accept.note"))}</p><div class="button-row"><button class="button" data-action="respond-token" data-decision="not_now">${esc(t("accept.notNow"))}</button><button class="button primary" data-action="respond-token" data-decision="accept">${esc(t("accept.accept"))}</button></div>`);
+}
+
+async function loadInvitationPreview() {
+  try {
+    const token = new URLSearchParams(location.hash.slice(1)).get("token") || "";
+    if (!token) throw new Error("邀請連結不完整或已失效。");
+    runtime.invitationPreview = await api("/v1/invitation-tokens/preview", { method: "POST", body: JSON.stringify({ token }) });
+  } catch (error) { setRuntimeError(error); runtime.invitationPreview = { inviter: {}, explanation: {} }; }
+  render();
+}
+
+async function respondInvitation(decision) {
+  const token = new URLSearchParams(location.hash.slice(1)).get("token") || "";
+  const result = await api("/v1/invitation-tokens/respond", { method: "POST", body: JSON.stringify({ token, decision }) });
+  runtime.invitationDecision = result.state;
+  history.replaceState({}, "", "/accept");
+  render();
+}
+
+function connectionScreen(connectionId) {
+  if (!runtime.connection || runtime.connection.connection_id !== connectionId) {
+    loadConnection(connectionId);
+    return shell(`<div class="loading">正在載入聯絡方式</div>`, { nav: true, active: "invitations" });
+  }
+  const peer = runtime.connection.peer || {};
+  return shell(`<a href="/invitations" data-link class="eyebrow" style="text-decoration:none">← 返回邀請</a><h1 class="page-title">${esc(t("connection.title"))}</h1><p class="page-intro">你和 ${esc(peer.display_name || "另一位 owner")} 都明確接受了這次介紹。</p>${publicProfileDocument(peer.profile)}<div class="notice success"><span class="field-label">${esc(t("connection.email"))}</span><p><a href="mailto:${esc(peer.contact_email)}">${esc(peer.contact_email)}</a></p></div>`, { nav: true, active: "invitations" });
+}
+
+async function loadConnection(connectionId) {
+  try { runtime.connection = await api(`/v1/connections/${encodeURIComponent(connectionId)}`); }
+  catch (error) { setRuntimeError(error); }
+  render();
 }
 
 function evidenceLabel(field) {
@@ -956,7 +1093,10 @@ function matchesScreen() {
     return shell(`<div class="empty"><p class="eyebrow">${esc(t("matches.eyebrow"))}</p><h2>${esc(t("matches.emptyTitle"))}</h2><p>${esc(t("matches.emptyBody"))}</p><button class="button primary" data-action="refresh-matches">${esc(t("matches.check"))}</button></div>`, { nav: true, active: "matches" });
   }
   stopMatchesPolling();
-  return shell(`<h1 class="page-title">${esc(t("matches.title"))}</h1><p class="page-intro">${esc(t("matches.intro"))}</p><div class="match-list">${visible.map((match) => `<a class="match-card" href="/matches/${encodeURIComponent(match.match_id)}" data-link><div class="match-card-head"><h2>${esc(match.peer.display_name)}</h2><span class="status-label">${esc(matchStateLabel(match.state))}</span></div>${runtime.demo ? `<div class="evidence" style="margin-top:10px"><span class="evidence-label">${esc(t("demo.marker"))}</span></div>` : ""}<p>${esc(match.explanation.what_we_both_care_about)}</p><div class="evidence" style="margin-top:12px">${match.explanation.evidence_labels.map((label) => `<span class="evidence-label">${esc(evidenceLabel(label))}</span>`).join("")}</div></a>`).join("")}</div>`, { nav: true, active: "matches" });
+  const result = runtime.matchResult || { page: 1, total_pages: 1, total: visible.length, result_set_id: "" };
+  const context = result.result_set_id ? `?set=${encodeURIComponent(result.result_set_id)}&page=${result.page}` : "";
+  const pagination = result.total_pages > 1 ? `<nav class="pagination" aria-label="配對分頁"><a class="button quiet ${result.page <= 1 ? "disabled" : ""}" ${result.page > 1 ? `href="/matches?set=${encodeURIComponent(result.result_set_id)}&page=${result.page - 1}" data-link` : "aria-disabled=\"true\""}>${esc(t("matches.previous"))}</a><span>${esc(t("matches.page", { page: result.page, total: result.total_pages }))}</span><a class="button quiet ${result.page >= result.total_pages ? "disabled" : ""}" ${result.page < result.total_pages ? `href="/matches?set=${encodeURIComponent(result.result_set_id)}&page=${result.page + 1}" data-link` : "aria-disabled=\"true\""}>${esc(t("matches.next"))}</a></nav>` : "";
+  return shell(`<div class="match-title-row"><div><h1 class="page-title">${esc(t("matches.title"))}</h1><p class="page-intro">${esc(t("matches.total", { count: result.total }))}</p></div><button class="text-action" data-action="refresh-matches">${esc(t("matches.refresh"))}</button></div><div class="match-list">${visible.map((match) => match.unavailable ? `<div class="match-card unavailable"><h2>${esc(t("match.unavailable"))}</h2><p>${esc(t("match.unavailableBody"))}</p></div>` : `<a class="match-card" href="/matches/${encodeURIComponent(match.match_id)}${context}" data-link><p class="animal-persona compact">${esc(match.peer.animal_persona || "帶著好奇心探索的水獺")}</p><div class="match-card-head"><h2>${esc(match.peer.display_name)}</h2><span class="status-label">${esc(matchStateLabel(match.state))}</span></div><p>${esc(match.peer.summary || match.explanation.what_we_both_care_about)}</p><p class="shared-signal">共同訊號：${esc(match.strongest_shared_signal || match.explanation.what_we_both_care_about)}</p></a>`).join("")}</div>${pagination}`, { nav: true, active: "matches" });
 }
 
 async function loadMatches({ polling = false } = {}) {
@@ -971,7 +1111,13 @@ async function loadMatches({ polling = false } = {}) {
     return;
   }
   try {
-    runtime.matches = (await api("/v1/matches")).matches || [];
+    const query = new URLSearchParams(location.search);
+    const endpoint = `/v1/matches?${query.toString()}`;
+    runtime.matchResult = await api(endpoint);
+    runtime.matches = runtime.matchResult.matches || [];
+    if (!query.get("set") && runtime.matchResult.result_set_id) {
+      history.replaceState({}, "", `/matches?set=${encodeURIComponent(runtime.matchResult.result_set_id)}&page=${runtime.matchResult.page || 1}`);
+    }
     runtime.matchesPollError = false;
     if (wasSearching && runtime.matches.length) announce(t("matches.found", { count: runtime.matches.length, suffix: runtime.locale === "en" && runtime.matches.length !== 1 ? "es" : "" }));
   }
@@ -981,6 +1127,17 @@ async function loadMatches({ polling = false } = {}) {
     setRuntimeError(error);
     stopMatchesPolling();
   }
+  render();
+}
+
+async function refreshMatches() {
+  runtime.matchesPollError = false;
+  if (runtime.demo) { runtime.matches = null; render(); return; }
+  const currentSet = runtime.matchResult?.result_set_id;
+  const endpoint = `/v1/matches/refresh${currentSet ? `?set=${encodeURIComponent(currentSet)}` : ""}`;
+  runtime.matchResult = await api(endpoint, { method: "POST", body: "{}" });
+  runtime.matches = runtime.matchResult.matches || [];
+  history.replaceState({}, "", `/matches?set=${encodeURIComponent(runtime.matchResult.result_set_id)}&page=1`);
   render();
 }
 
@@ -1001,7 +1158,7 @@ function matchDetailScreen(matchId) {
   const connectedBlock = match.state === "connected" ? `<div class="notice success" style="margin-bottom:18px">
       ${runtime.demo ? `<div class="evidence"><span class="evidence-label">${esc(t("match.demoAcceptance"))}</span></div>` : ""}
       <h2 style="margin:10px 0 6px">${esc(t("match.connected"))}</h2>
-      <a href="mailto:${esc(match.peer.contact_email)}" style="overflow-wrap:anywhere">${esc(match.peer.contact_email)}</a>
+      ${runtime.demo ? `<a href="mailto:${esc(match.peer.contact_email)}" style="overflow-wrap:anywhere">${esc(match.peer.contact_email)}</a>` : `<a class="button primary" href="/connections/${encodeURIComponent(match.match_id)}" data-link>${esc(t("connection.open"))}</a>`}
       <div class="doc-field" style="margin-top:14px"><span class="field-label">${esc(t("match.start"))}</span><p>${esc(explanation.what_we_could_discuss)}</p></div>
     </div>` : "";
   let decisionArea;
@@ -1009,12 +1166,14 @@ function matchDetailScreen(matchId) {
   else if (match.state === "outgoing") decisionArea = `${runtime.demo ? `<div class="notice"><span class="evidence-label">${esc(t("demo.marker"))}</span><p style="margin:8px 0 0">${esc(t("match.waiting"))}</p></div><button class="button primary" style="margin-top:9px;width:100%" data-action="simulate-demo-accept">${esc(t("match.simulate"))}</button>` : `<div class="notice">${esc(t("match.sent"))}</div>`}`;
   else if (match.state === "not_now") decisionArea = `<div class="notice">${esc(t("match.passed"))}</div>`;
   else if (match.state === "unavailable") decisionArea = "";
-  else if (runtime.pendingMatchDecision?.matchId === matchId && runtime.pendingMatchDecision.decision === "not_now") decisionArea = `<div class="notice"><strong>${esc(t("match.passConfirmTitle", { name: match.peer.display_name }))}</strong><p>${esc(t("match.passConfirmBody"))}</p><div class="button-row"><button class="button" data-action="cancel-match-decision">${esc(t("common.cancel"))}</button><button class="button primary" data-action="confirm-match-decision" data-match-id="${esc(matchId)}">${esc(t("match.confirmPass"))}</button></div></div>`;
-  else decisionArea = `<div class="button-row"><button class="button" data-action="match-decision" data-decision="not_now" data-match-id="${esc(matchId)}">${esc(t("match.notNow"))}</button><button class="button primary" data-action="match-decision" data-decision="${match.state === "incoming" ? "accept" : "invite"}" data-match-id="${esc(matchId)}">${esc(match.state === "incoming" ? t("match.accept") : t("match.invite", { name: match.peer.display_name }))}</button></div>`;
-  return shell(`<a href="/matches" data-link class="eyebrow" style="text-decoration:none">${esc(t("match.back"))}</a>
+  else if (match.state === "incoming") decisionArea = `<div class="notice">請使用邀請 Email 裡的專用頁面選擇接受或現在不要。</div>`;
+  else decisionArea = `<button class="button primary" style="width:100%" data-action="match-decision" data-decision="invite" data-match-id="${esc(matchId)}">${esc(t("match.invite", { name: match.peer.display_name }))}</button>`;
+  const backQuery = location.search || (runtime.matchResult?.result_set_id ? `?set=${encodeURIComponent(runtime.matchResult.result_set_id)}&page=${runtime.matchResult.page}` : "");
+  return shell(`<a href="/matches${backQuery}" data-link class="eyebrow" style="text-decoration:none">${esc(t("match.back"))}</a>
     ${demoMarker}
-    <div class="person"><div class="initial">${esc(initial)}</div><div><h1>${esc(match.peer.display_name)}</h1><p>${esc(match.peer.profile.interests?.[0] || t("match.ownerPitch"))}</p></div></div>
+    <div class="person"><div class="initial">${esc(initial)}</div><div><p class="animal-persona compact">${esc(match.peer.animal_persona || match.peer.profile?.animal_persona || genericAnimal)}</p><h1>${esc(match.peer.display_name)}</h1><p>${esc(match.peer.profile?.interests?.[0] || t("match.ownerPitch"))}</p></div></div>
     ${connectedBlock}
+    ${publicProfileDocument(match.peer.profile)}
     <div class="question-card">${questions.map(([label, text]) => `<section class="question"><div class="step-label">${esc(label)}</div><h2>${esc(text)}</h2><div class="evidence">${explanation.evidence_labels.map((evidence) => `<span class="evidence-label">${esc(t("match.evidence", { label: evidenceLabel(evidence) }))}</span>`).join("")}</div></section>`).join("")}</div>
     <div class="provenance"><span>${esc(t("profile.conversation"))}</span><span>${esc(t("profile.approved"))}</span><span>${esc(t("profile.notVerified"))}</span></div>
     ${decisionArea}`, { nav: true, active: "matches" });
@@ -1022,7 +1181,7 @@ function matchDetailScreen(matchId) {
 
 async function loadMatch(matchId) {
   if (runtime.demo && matchId === DEMO_MATCH_ID) { runtime.match = structuredClone(runtime.demoMatch); queueMicrotask(render); return; }
-  try { runtime.match = await api(`/v1/matches/${encodeURIComponent(matchId)}`); }
+  try { runtime.match = await api(`/v1/matches/${encodeURIComponent(matchId)}${location.search}`); }
   catch (error) { setRuntimeError(error); runtime.match = { match_id: matchId, peer: { display_name: t("match.unavailable"), profile: {} }, explanation: { what_we_both_care_about: t("match.unavailableBody"), why_it_matters_now: "", what_we_could_discuss: "", evidence_labels: [] }, state: "unavailable" }; }
   render();
 }
@@ -1033,7 +1192,7 @@ function invitationsScreen() {
     return shell(`<div class="loading">${esc(t("invites.loading"))}</div>`, { nav: true, active: "invitations" });
   }
   const sections = [["invites.incoming", runtime.invitations.incoming], ["invites.outgoing", runtime.invitations.outgoing], ["invites.connected", runtime.invitations.connected]];
-  return shell(`<h1 class="page-title">${esc(t("invites.title"))}</h1><p class="page-intro">${esc(t("invites.intro"))}</p>${sections.map(([label, items]) => `<div class="divider-label">${esc(t(label))} · ${items.length}</div><div class="match-list">${items.length ? items.map((match) => `<a class="match-card" href="/matches/${encodeURIComponent(match.match_id)}" data-link><div class="match-card-head"><h2>${esc(match.peer.display_name)}</h2><span class="status-label">${esc(matchStateLabel(match.state))}</span></div>${runtime.demo ? `<div class="evidence" style="margin-top:10px"><span class="evidence-label">${esc(t("demo.simulated"))}</span></div>` : ""}<p>${esc(match.explanation.what_we_both_care_about)}</p></a>`).join("") : `<div class="notice">${esc(t("invites.empty"))}</div>`}</div>`).join("")}`, { nav: true, active: "invitations" });
+  return shell(`<h1 class="page-title">${esc(t("invites.title"))}</h1><p class="page-intro">${esc(t("invites.intro"))}</p>${sections.map(([label, items]) => `<div class="divider-label">${esc(t(label))} · ${items.length}</div><div class="match-list">${items.length ? items.map((match) => `<a class="match-card" href="${match.state === "connected" ? `/connections/${encodeURIComponent(match.connection_id)}` : `/matches/${encodeURIComponent(match.match_id)}`}" data-link><p class="animal-persona compact">${esc(match.peer?.animal_persona || genericAnimal)}</p><div class="match-card-head"><h2>${esc(match.peer?.display_name || "另一位 owner")}</h2><span class="status-label">${esc(matchStateLabel(match.state))}</span></div><p>${esc(match.explanation?.what_we_both_care_about || match.peer?.summary || "")}</p></a>`).join("") : `<div class="notice">${esc(t("invites.empty"))}</div>`}</div>`).join("")}`, { nav: true, active: "invitations" });
 }
 
 async function loadInvitations() {
@@ -1050,7 +1209,7 @@ async function loadInvitations() {
 
 function settingsScreen() {
   return shell(`<h1 class="page-title">${esc(t("settings.title"))}</h1><p class="page-intro">${esc(t("settings.intro"))}</p>
-    <div class="settings-group"><div class="divider-label">${esc(t("settings.language"))}</div><div class="settings-row"><span>${esc(t("language.current"))}</span><button data-action="switch-locale">${esc(t("language.switch"))}</button></div></div>
+    ${runtime.profile ? `<div class="settings-group"><div class="divider-label">${esc(t("settings.visibility"))}</div><div class="visibility-options"><button class="button ${runtime.profile.visibility !== "private" ? "primary" : "quiet"}" data-action="set-visibility" data-visibility="public">${esc(t("settings.public"))}</button><button class="button ${runtime.profile.visibility === "private" ? "primary" : "quiet"}" data-action="set-visibility" data-visibility="private">${esc(t("settings.private"))}</button></div><p class="subtle">${esc(t("settings.privateWarning"))}</p>${runtime.profile.public_slug ? `<a href="/p/${encodeURIComponent(runtime.profile.public_slug)}" class="text-action">${esc(t("settings.publicLink"))}</a>` : ""}</div>` : ""}
     <div class="settings-group"><div class="divider-label">${esc(t("settings.computer"))}</div><div class="settings-row"><div><strong>${esc(t("settings.upload"))}</strong><div class="subtle">${esc(t("settings.uploadHint"))}</div></div><button data-action="create-upload-session">${esc(t("settings.create"))}</button></div></div>
     ${runtime.uploadSession ? `<div class="notice">${esc(t("settings.submitUrl"))}</div><div class="api-token">${esc(runtime.uploadSession.submit_url)}</div><div class="notice" style="margin-top:8px">${esc(t("settings.token", { expires: runtime.uploadSession.expires_at }))}</div><div class="api-token">${esc(runtime.uploadSession.upload_token)}</div><p class="subtle">${esc(t("settings.tokenHint"))} <code>{"profile": {…}, "locale": "${esc(runtime.locale)}"}</code></p>` : ""}
     <div class="settings-group"><div class="divider-label">${esc(t("settings.data"))}</div><div class="settings-row"><span>${esc(t("settings.delete"))}</span><button data-action="delete-profile">${esc(t("settings.deleteAction"))}</button></div><div class="settings-row"><span>${esc(t("settings.signout"))}</span><button data-action="signout">${esc(t("settings.signoutAction"))}</button></div></div>
@@ -1076,19 +1235,26 @@ function render() {
   const skipLink = document.querySelector(".skip-link");
   if (skipLink) skipLink.textContent = t("skip");
   let path = location.pathname.replace(/\/$/, "") || "/";
-  if (!runtime.session && !runtime.demo && !["/", "/signin", "/privacy", "/terms", "/support"].includes(path)) {
+  if (!runtime.session && !runtime.demo && !["/", "/signin", "/privacy", "/terms", "/support", "/accept"].includes(path)) {
     history.replaceState({}, "", "/signin");
     app.innerHTML = signinScreen();
     return;
   }
-  if (runtime.session && ["/assistant", "/handoff", "/import", "/review"].includes(path) && !runtime.profileLoaded) {
+  const needsProfileBootstrap = ["/assistant", "/handoff", "/import", "/review", "/pitch", "/matches", "/invitations", "/settings"].includes(path)
+    || path.startsWith("/matches/") || path.startsWith("/connections/");
+  if (runtime.session && needsProfileBootstrap && !runtime.profileLoaded) {
     app.innerHTML = shell(`<div class="loading" role="status">${esc(t("common.loading"))}</div>`);
     if (!runtime.profileLoading) queueMicrotask(loadProfile);
     return;
   }
+  if (runtime.session && runtime.profileLoaded && (path === "/matches" || path.startsWith("/matches/")) && (!runtime.profile || runtime.profile.visibility === "private")) {
+    path = "/pitch";
+    history.replaceState({}, "", path);
+    runtime.notice = runtime.profile ? "你的介紹目前是私人狀態；改為公開後才會顯示配對。" : "請先發布介紹，才能查看配對。";
+  }
   if (path === "/" && (runtime.session || runtime.demo)) {
     if (runtime.demo || runtime.profileLoaded) {
-      path = runtime.profile || (runtime.demo && runtime.lastPublishAt) ? "/matches" : runtime.draft ? "/import" : "/assistant";
+      path = runtime.profile ? (runtime.profile.visibility === "private" ? "/pitch" : "/matches") : (runtime.demo && runtime.lastPublishAt) ? "/matches" : runtime.draft ? "/import" : "/assistant";
       history.replaceState({}, "", path);
     } else {
       app.innerHTML = shell(`<div class="loading">${esc(t("common.loading"))}</div>`);
@@ -1117,13 +1283,15 @@ function render() {
   else if (/^\/matches\/[^/]+$/.test(path)) app.innerHTML = matchDetailScreen(decodeURIComponent(path.split("/").pop()));
   else if (path === "/invitations") app.innerHTML = invitationsScreen();
   else if (path === "/settings") app.innerHTML = settingsScreen();
+  else if (path === "/accept") app.innerHTML = acceptScreen();
+  else if (/^\/connections\/[^/]+$/.test(path)) app.innerHTML = connectionScreen(decodeURIComponent(path.split("/").pop()));
   else if (["/privacy", "/terms", "/support"].includes(path)) app.innerHTML = infoScreen(path.slice(1));
   else { history.replaceState({}, "", "/"); render(); }
 }
 
 document.addEventListener("click", async (event) => {
   const link = event.target.closest("a[data-link]");
-  if (link) { event.preventDefault(); navigate(new URL(link.href).pathname); return; }
+  if (link) { event.preventDefault(); const target = new URL(link.href); navigate(`${target.pathname}${target.search}${target.hash}`); return; }
   const button = event.target.closest("[data-action]");
   if (!button) return;
   const action = button.dataset.action;
@@ -1159,7 +1327,7 @@ document.addEventListener("click", async (event) => {
     if (action === "cancel-edit-choice") { runtime.pendingPitchEdit = false; render(); }
     if (action === "cancel-pitch-edit") { clearDraftState(); runtime.demoDraft = false; writeJson(DEMO_DRAFT_KEY, null); navigate("/pitch"); }
     if (action === "create-new-pitch") { clearDraftState(); runtime.demoDraft = false; writeJson(DEMO_DRAFT_KEY, null); navigate("/assistant"); }
-    if (action === "refresh-matches") { runtime.matchesPollError = false; runtime.matches = null; render(); }
+    if (action === "refresh-matches") await refreshMatches();
     if (action === "retry-matches") { runtime.error = ""; runtime.matchesPollError = false; runtime.matches = null; render(); }
     if (action === "error-retry") await retryCurrentScreen();
     if (action === "error-dismiss") { runtime.error = ""; render(); }
@@ -1177,6 +1345,8 @@ document.addEventListener("click", async (event) => {
     if (action === "confirm-match-decision") { runtime.pendingMatchDecision = null; await decideMatch(button.dataset.matchId, "not_now"); }
     if (action === "simulate-demo-accept") connectDemoMatch();
     if (action === "create-upload-session") { runtime.uploadSession = await api("/v1/upload-sessions", { method: "POST", body: "{}" }); render(); }
+    if (action === "respond-token") await respondInvitation(button.dataset.decision);
+    if (action === "set-visibility") await setProfileVisibility(button.dataset.visibility);
     if (action === "delete-profile") await deleteProfile();
     if (action === "signout") signout();
     if (action === "new-support-request") { runtime.supportRequestId = null; render(); }
@@ -1328,7 +1498,7 @@ async function publishProfile() {
   });
   await api("/v1/matching-runs", { method: "POST", body: "{}" });
   runtime.busy = false;
-  runtime.profile = { profile: runtime.draft, profile_id: result.profile_id, version_id: result.version_id };
+  runtime.profile = { profile: runtime.draft, profile_id: result.profile_id, version_id: result.version_id, public_slug: result.public_slug, visibility: "public", matching_state: "active" };
   runtime.profileLoaded = true;
   clearDraftState();
   runtime.demoDraft = false;
@@ -1362,10 +1532,11 @@ async function decideMatch(matchId, decision) {
     }
     return;
   }
-  runtime.match = await api(`/v1/matches/${encodeURIComponent(matchId)}/invitations`, { method: "POST", body: JSON.stringify({ decision }) });
+  const result = await api(`/v1/matches/${encodeURIComponent(matchId)}/invitations`, { method: "POST", body: JSON.stringify({ decision: "invite" }) });
+  runtime.match = { ...runtime.match, state: result.state || "outgoing", can_invite: false };
   runtime.matches = null;
   runtime.invitations = null;
-  runtime.notice = decision === "not_now" ? t("notice.decisionPassed") : runtime.match.state === "connected" ? t("notice.connected") : t("notice.invited");
+  runtime.notice = t("notice.invited");
   render();
 }
 
@@ -1386,6 +1557,20 @@ async function deleteProfile() {
   if (!window.confirm(t("confirm.delete"))) return;
   try { await api("/v1/profiles/me", { method: "DELETE", body: JSON.stringify({ confirm: "DELETE" }) }); } catch (error) { if (error.status !== 404) throw error; }
   signout();
+}
+
+async function setProfileVisibility(visibility) {
+  if (!['public', 'private'].includes(visibility) || !runtime.profile) return;
+  const result = await api("/v1/profiles/me", { method: "PATCH", body: JSON.stringify({ visibility }) });
+  runtime.profile = { ...runtime.profile, visibility: result.visibility, matching_state: result.matching_state, public_slug: result.public_slug || runtime.profile.public_slug };
+  runtime.matches = null;
+  runtime.matchResult = null;
+  if (visibility === "public") {
+    try { await api("/v1/matching-runs", { method: "POST", body: "{}" }); }
+    catch (error) { setRuntimeError(error); }
+  }
+  runtime.notice = visibility === "public" ? "介紹已公開，配對已恢復。" : "介紹已設為私人，配對與新邀請已暫停。";
+  render();
 }
 
 function signout() {
@@ -1425,7 +1610,7 @@ async function routeReturningOwner({ replace = false } = {}) {
     runtime.profileLoaded = true;
     runtime.displayName = runtime.profile.display_name || runtime.displayName;
     if (runtime.displayName) writeJson(DISPLAY_NAME_KEY, runtime.displayName);
-    navigate("/matches", { replace });
+    navigate(runtime.profile.visibility === "private" ? "/pitch" : "/matches", { replace });
   } catch (error) {
     if (error.status !== 404) throw error;
     runtime.profile = null;
@@ -1469,6 +1654,7 @@ async function loadProfileSchemaConfig() {
 
 window.addEventListener("popstate", () => {
   if (location.pathname !== "/matches") stopMatchesPolling();
+  if (location.pathname === "/matches") runtime.matches = null;
   render();
 });
 document.addEventListener("visibilitychange", () => {

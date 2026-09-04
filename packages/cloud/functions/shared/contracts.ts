@@ -9,9 +9,10 @@ export const CONFIDENCE_FIELDS = profileSchemaConfig.optional_fields.confidence.
 export const CONFIDENCE_LEVELS = profileSchemaConfig.optional_fields.confidence.allowed_values as ConfidenceLevel[];
 
 export type ConfidenceLevel = "high" | "medium" | "low";
-export type ConfidenceField = Exclude<CoreProfileField, "history_scope">;
+export type ConfidenceField = Exclude<CoreProfileField, "history_scope" | "animal_persona">;
 
 export interface OwnerPitchProfile {
+  animal_persona: string;
   summary: string;
   interests: string[];
   motivations: string[];
@@ -76,6 +77,7 @@ export function validateOwnerPitchProfile(value: unknown): OwnerPitchProfile {
   const raw = objectRecord(value, "profile");
   rejectUnknownKeys(raw, PROFILE_KEYS, "profile");
   return {
+    animal_persona: requiredString(raw.animal_persona, "profile.animal_persona", profileSchemaConfig.core_fields.animal_persona.max_length),
     summary: requiredString(raw.summary, "profile.summary", profileSchemaConfig.core_fields.summary.max_length),
     interests: stringArray(raw.interests, "profile.interests", profileSchemaConfig.core_fields.interests.max_items, profileSchemaConfig.core_fields.interests.item_max_length),
     motivations: stringArray(raw.motivations, "profile.motivations", profileSchemaConfig.core_fields.motivations.max_items, profileSchemaConfig.core_fields.motivations.item_max_length),
@@ -121,6 +123,14 @@ export function canonicalMatchingDocument(profile: OwnerPitchProfile): string {
 export function publicProfile(profile: OwnerPitchProfile): Omit<OwnerPitchProfile, "history_scope" | "confidence"> {
   const { history_scope: _scope, confidence: _confidence, ...shareable } = profile;
   return shareable;
+}
+
+export const LEGACY_ANIMAL_PERSONA = "帶著好奇心探索的水獺";
+
+export function profileAnimalPersona(profile: Partial<OwnerPitchProfile> | undefined): string {
+  return typeof profile?.animal_persona === "string" && profile.animal_persona.trim()
+    ? profile.animal_persona.trim()
+    : LEGACY_ANIMAL_PERSONA;
 }
 
 export function payloadHash(payload: PublishPayload | OwnerPitchProfile): string {

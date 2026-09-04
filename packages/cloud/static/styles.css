@@ -25,6 +25,7 @@ button{cursor:pointer}
 .hero h1{margin:0;font-size:42px;line-height:1.01;letter-spacing:-.045em;font-weight:650}
 .hero h1 span{display:block;color:var(--blue)}
 .promise{margin:28px 0 0;padding-top:20px;border-top:1px solid var(--line);font-size:16px;line-height:1.6}
+.animal-showcase{margin:6px 0 12px;padding:12px;border:1px solid var(--line);background:var(--white);color:var(--blue);font-weight:700;text-align:center}
 .subtle{color:var(--muted);font-size:13px;line-height:1.65}
 .checkpoint{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--line);margin:18px 0 14px}
 .checkpoint div{padding:14px;min-width:0}
@@ -93,6 +94,8 @@ button{cursor:pointer}
 .scope-block .field-label{color:#a9a9a2}
 .scope-block p{margin:9px 0 0;font:13px/1.6 ui-monospace,SFMono-Regular,Menlo,monospace}
 .doc-summary{font-size:18px;line-height:1.48;margin:14px 0 20px}
+.animal-persona{margin:16px 0 8px;color:var(--blue);font-size:18px;font-weight:750;line-height:1.35}
+.animal-persona.compact{margin:0 0 8px;font-size:13px}
 .doc-field{padding:14px 0 17px;border-top:1px solid var(--line)}
 .doc-field-head{display:flex;justify-content:space-between;gap:12px;align-items:baseline}
 .confidence{font:600 10px ui-monospace,SFMono-Regular,Menlo,monospace;text-transform:uppercase;color:var(--blue)}
@@ -109,6 +112,12 @@ button{cursor:pointer}
 .match-card h2{margin:0;font-size:18px}
 .match-card p{margin:12px 0 0;line-height:1.5}
 .match-card .status-label{color:var(--blue)}
+.match-card.unavailable{color:var(--muted)}
+.shared-signal{padding-top:10px;border-top:1px solid var(--line);color:var(--blue);font-size:13px}
+.match-title-row{display:flex;justify-content:space-between;align-items:flex-start;gap:14px}
+.match-title-row .text-action{border:0;background:transparent;padding:22px 0 10px;font-weight:700;white-space:nowrap}
+.pagination{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;margin-top:18px;text-align:center;font-size:12px}
+.pagination .button{min-height:44px;padding:9px}.pagination .disabled{opacity:.45}
 .evidence{display:flex;flex-wrap:wrap;gap:6px}
 .person{display:flex;gap:12px;align-items:center;margin:16px 0 18px}
 .initial{width:40px;height:40px;display:flex;align-items:center;justify-content:center;background:var(--ink);color:#fff;font-weight:700}
@@ -127,6 +136,7 @@ button{cursor:pointer}
 .loading{min-height:240px;display:flex;align-items:center;justify-content:center;color:var(--muted);font:600 11px ui-monospace,SFMono-Regular,Menlo,monospace;text-transform:uppercase}
 .api-token{word-break:break-all;background:var(--ink);color:#fff;padding:14px;font:11px/1.6 ui-monospace,SFMono-Regular,Menlo,monospace;user-select:all}
 .settings-group{margin:18px 0}
+.visibility-options{display:grid;gap:8px}.visibility-options .button{width:100%}
 .settings-row{min-height:58px;background:var(--white);border:1px solid var(--line);padding:14px;display:flex;align-items:center;justify-content:space-between;gap:12px}
 .settings-row+.settings-row{border-top:0}
 .settings-row button{border:0;background:transparent;color:var(--blue);font-weight:700;padding:10px}

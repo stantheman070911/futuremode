@@ -17,6 +17,7 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
       ConsistentRead: true,
     }));
     if (!current.Item) return json(409, { error: "publish_profile_before_matching" });
+    if (current.Item.visibility === "private" || current.Item.matchingState === "paused") return json(409, { error: "public_profile_required" });
     await lambda.send(new InvokeCommand({
       FunctionName: requiredEnvironment("MATCHING_RUN_FUNCTION_NAME"),
       InvocationType: "Event",
