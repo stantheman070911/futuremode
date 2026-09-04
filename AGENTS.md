@@ -59,8 +59,7 @@ Never compromise these to simplify implementation:
 
 不得為了簡化實作而犧牲以下原則：
 
-1. Raw conversation history never enters PitchYourOwner.｜原始對話紀錄永不進入 PitchYourOwner。
-2. The owner reviews and explicitly approves every published pitch.｜每份發布的介紹皆由 owner 完整審核並明確核准。
-3. Every shown match explains the concrete shared attention behind it.｜每個呈現的配對都要說明背後具體的共同關注。
-4. Introductions require mutual consent.｜引介需要雙方同意。
-5. No engagement loops, swipe decks, popularity signals, or public scores.｜不得加入互動誘導循環、滑動卡片、人氣訊號或公開分數。
+1. The owner reviews and explicitly approves every published pitch.｜每份發布的介紹皆由 owner 完整審核並明確核准。
+2. Every shown match explains the concrete shared attention behind it.｜每個呈現的配對都要說明背後具體的共同關注。
+3. Introductions require mutual consent.｜引介需要雙方同意。
+4. No engagement loops, swipe decks, popularity signals, or public scores.｜不得加入互動誘導循環、滑動卡片、人氣訊號或公開分數。

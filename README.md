@@ -36,9 +36,9 @@ Two people may select “photography” while pursuing entirely different questi
 
 兩個人都可能選擇「攝影」，但關心的問題完全不同。一人可能研究低光源街頭攝影；另一人可能專注於姿勢、膚色與被攝者引導。同時，一位人像攝影師與一位現代舞者，也可能共同關注姿勢與張力如何傳達情緒。這類連結往往無法由廣泛標籤捕捉。
 
-Public content reflects what people choose to present publicly. Private AI conversations can reveal a different layer: recurring questions, evolving goals, attempts, uncertainties, and sustained attention. That signal must be handled with care. It should be abstracted, reviewed by the owner, and never transferred as raw conversation content.
+Public content reflects what people choose to present publicly. Private AI conversations can reveal a different layer: recurring questions, evolving goals, attempts, uncertainties, and sustained attention. That signal must be handled with care and reviewed by the owner.
 
-公開內容反映的是人們選擇公開呈現的樣貌。私人 AI 對話則可能呈現另一層訊號：反覆出現的問題、發展中的目標、嘗試、不確定性與持續的關注。這類訊號必須被謹慎處理：先抽象化、由 owner 審核，且絕不以原始對話內容的形式傳輸。
+公開內容反映的是人們選擇公開呈現的樣貌。私人 AI 對話則可能呈現另一層訊號：反覆出現的問題、發展中的目標、嘗試、不確定性與持續的關注。這類訊號必須被謹慎處理，並由 owner 審核。
 
 ## Why This Is Feasible｜可行性基礎
 
@@ -121,10 +121,6 @@ The assistant returns one structured proposal containing:
 - `confidence` — confidence for each claim｜每項描述的信心程度
 - `omitted_sensitive_data` — data that was removed or generalized｜已移除或概括化的敏感內容
 
-Raw conversations and verbatim excerpts are excluded from the output.
-
-輸出不得包含原始對話或逐字引用。
-
 ### 4. Check Sensitive Data｜檢查敏感資料
 
 Before asking for approval, the assistant flags or generalizes names, credentials, private repositories, exact locations, customer details, confidential relationships, internal metrics, health information, and proprietary identifiers. Any uncertainty about whether a fact is safe appears in the same review.
@@ -166,9 +162,9 @@ The product should feel like an agent-mediated introduction rather than a dating
 
 ### Start Screen｜開始頁
 
-Show the product promise, supported AI choices, estimated time, and the statement “Raw chats are not uploaded.” The primary action is **Let my agent pitch me**.
+Show the product promise, supported AI choices, estimated time, and the two owner-review checkpoints. The primary action is **Let my agent pitch me**.
 
-顯示產品承諾、支援的 AI、預估所需時間，以及「不會上傳原始對話」。主要按鈕為 **Let my agent pitch me**。
+顯示產品承諾、支援的 AI、預估所需時間，以及兩個 owner review 關卡。主要按鈕為 **Let my agent pitch me**。
 
 ### Prompt Handoff｜提示詞交接頁
 
@@ -246,9 +242,9 @@ The product supports a hybrid submission model: a direct agent tool where availa
 
 產品支援混合式提交模式：可用時採用 Agent 直接工具，同時保留任何手機都能使用的複製與分享替代流程。
 
-The phone app creates a short-lived upload session containing a random single-use session ID, a write-only capability token, an expiration time, and a callback or app deep link. The token can create one draft profile only. It cannot read profiles, list users, change settings, or upload raw history.
+The phone app creates a short-lived upload session containing a random single-use session ID, a write-only capability token, an expiration time, and a callback or app deep link. The token can create one draft profile only. It cannot read profiles, list users, or change settings.
 
-手機 App 建立短期上傳工作階段，其中包含隨機且一次性的 session ID、僅可寫入的 capability token、到期時間，以及回呼或 App 深層連結。該 token 只能建立一份草稿檔案，不能讀取個人檔案、列出使用者、修改設定或上傳原始紀錄。
+手機 App 建立短期上傳工作階段，其中包含隨機且一次性的 session ID、僅可寫入的 capability token、到期時間，以及回呼或 App 深層連結。該 token 只能建立一份草稿檔案，不能讀取個人檔案、列出使用者或修改設定。
 
 ### Tool Contract｜工具契約
 
@@ -271,9 +267,9 @@ The phone app creates a short-lived upload session containing a random single-us
 }
 ```
 
-The server rejects expired sessions, duplicate submissions, missing confirmation, unknown fields, raw conversation content, and oversized payloads.
+The server rejects expired sessions, duplicate submissions, missing confirmation, unknown fields, and oversized payloads.
 
-伺服器應拒絕過期工作階段、重複提交、缺少確認、未知欄位、包含原始對話的內容，以及過大的 payload。
+伺服器應拒絕過期工作階段、重複提交、缺少確認、未知欄位與過大的 payload。
 
 Profile submission needs only a narrowly authenticated HTTP or MCP tool. Agent sandboxes may run code, but the upload path does not require a persistent environment for each subscriber.
 
@@ -293,8 +289,6 @@ The system follows this sequence:
 
 Core safeguards include:
 
-- Raw histories never enter PitchYourOwner｜原始紀錄永不進入 PitchYourOwner
-- Verbatim excerpts are excluded by default｜預設不包含逐字引用
 - Every field appears in the consolidated review｜每個欄位都會出現在整合式審核中
 - Sensitive facts are omitted or generalized｜敏感資訊會被移除或概括化
 - Upload requires explicit confirmation｜上傳需要明確確認
@@ -396,4 +390,3 @@ The long-term opportunity is a network in which agents do more than answer quest
 
 > What does this owner’s agent know they care about, and whose agent should receive that pitch?  
 > 這位 owner 的 Agent 知道他關心什麼，而這份介紹應該傳給誰的 Agent？
-

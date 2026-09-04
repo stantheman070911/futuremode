@@ -1,0 +1,111 @@
+{
+  "schema": "pitchyourowner.test-fixture.v1",
+  "testRunId": "20260822_accounting_match_pair_001",
+  "testScenario": "accounting-ai-workflow",
+  "name": "Accounting workflow matching pair",
+  "approvedAt": "2026-08-22T00:00:00.000Z",
+  "profiles": [
+    {
+      "id": "voice-first-accounting-product",
+      "label": "Fake accounting product founder",
+      "email": "accounting-founder@fixture.pitchyourowner.invalid",
+      "profile": {
+        "headline": "Designing voice-first AI workflows for small accounting teams",
+        "locale": "en",
+        "promptVersion": "fixture-accounting-v1",
+        "markdown": "# Voice-first accounting workflow designer\n\nThis profile represents a product builder exploring how small accounting teams can use voice to capture messy work instructions, turn them into structured accounting tasks, and keep human review in the loop before anything reaches a ledger or client-facing report.\n\nThe work focuses on practical adoption: accountants should be able to dictate invoice exceptions, client follow-up notes, reconciliation questions, or tax-preparation reminders without learning a complex automation tool. The product direction combines speech UX, workflow design, AI task extraction, and review screens that make every automated step understandable.\n\nThe owner is most interested in collaborators who understand accounting operations, AI workflow orchestration, compliance-aware product design, or infrastructure for turning unstructured office work into reliable back-office systems."
+      },
+      "skills": [
+        "Voice input UX",
+        "Accounting workflow design",
+        "AI task extraction",
+        "Human-in-the-loop review",
+        "SMB product discovery",
+        "Workflow automation"
+      ],
+      "stories": [
+        {
+          "id": "voice-capture-to-ledger-review",
+          "title": "Turning spoken accounting instructions into reviewable tasks",
+          "summary": "Explores how accountants can speak messy work instructions and receive structured tasks that are safe to review before ledger or client-report updates.",
+          "markdown": "The product direction is to let accounting professionals speak naturally while the system extracts the intent, entities, deadlines, and required review steps. The key product challenge is trust: users need to see what the AI understood, correct it quickly, and decide what is allowed to move forward."
+        },
+        {
+          "id": "accounting-team-adoption",
+          "title": "Making automation usable for accounting teams that do not want another complex tool",
+          "summary": "Focuses on low-friction workflows for small accounting teams that need automation but cannot afford heavy setup or fragile scripts.",
+          "markdown": "The story is about reducing adoption friction. The system should fit into the way accounting teams already work: spoken notes, client reminders, invoice exceptions, and review queues. The matching value is strongest for people building operational AI products for professional service teams."
+        },
+        {
+          "id": "safe-ai-accounting-actions",
+          "title": "Keeping AI accounting actions explainable before they affect records",
+          "summary": "Frames safety as a product surface: every extracted accounting task needs a visible reason, source context, and explicit owner approval.",
+          "markdown": "Accounting automation fails when users cannot understand what changed or why. This story focuses on review states, visible provenance, and clear approval steps so AI can speed up work without hiding risk."
+        }
+      ],
+      "activity": {
+        "periodStart": "2026-08-01",
+        "periodEnd": "2026-08-22",
+        "tokenTotal": 185000,
+        "estimation": "Synthetic fixture for matching HP"
+      },
+      "preferences": {
+        "matchIntervalDays": 1,
+        "matchLanguages": ["zh", "en"],
+        "visibility": "public",
+        "animalSlug": "otter"
+      }
+    },
+    {
+      "id": "accounting-automation-infrastructure",
+      "label": "Fake accounting infrastructure builder",
+      "email": "accounting-builder@fixture.pitchyourowner.invalid",
+      "profile": {
+        "headline": "Building reliable AI infrastructure for invoice and accounting automation",
+        "locale": "en",
+        "promptVersion": "fixture-accounting-v1",
+        "markdown": "# Accounting automation infrastructure builder\n\nThis profile represents an engineer building the backend systems needed for AI-powered accounting products: invoice ingestion, document parsing, exception routing, audit trails, approval workflows, and integrations with bookkeeping or ERP systems.\n\nThe work is not only about extracting data from invoices. It is about making an accounting automation system reliable enough for real teams: every decision must be traceable, every automated step must be reversible, and every workflow needs clear ownership when the AI is uncertain.\n\nThe owner is interested in meeting product builders, accounting operators, and AI workflow designers who are turning finance back-office pain points into tools that can be trusted by non-technical teams."
+      },
+      "skills": [
+        "Invoice data pipelines",
+        "Accounting automation",
+        "AI workflow orchestration",
+        "Audit trails",
+        "ERP integration",
+        "Compliance-aware systems"
+      ],
+      "stories": [
+        {
+          "id": "invoice-exception-routing",
+          "title": "Routing invoice exceptions from AI extraction to accountable human review",
+          "summary": "Builds the infrastructure layer that decides when invoice automation is confident enough and when a human needs to review the exception.",
+          "markdown": "The story focuses on the operational backbone behind accounting AI: ingesting documents, extracting fields, identifying uncertainty, and routing exceptions to the right reviewer. It complements product work around voice-first capture and human-in-the-loop accounting workflows."
+        },
+        {
+          "id": "audit-ready-automation",
+          "title": "Making AI accounting automation audit-ready instead of opaque",
+          "summary": "Emphasizes logs, provenance, and reversible actions so automated accounting workflows can be trusted by real teams.",
+          "markdown": "The infrastructure must preserve why an AI suggested an action, what source document supported it, who approved it, and how to reverse it. This makes the system useful for finance operations rather than a fragile demo."
+        },
+        {
+          "id": "finance-backoffice-integrations",
+          "title": "Connecting AI workflow systems to the finance tools teams already use",
+          "summary": "Covers integration work across bookkeeping, ERP, document storage, and review queues for practical accounting automation.",
+          "markdown": "The matching signal is a shared product space: both profiles care about making AI usable in accounting operations. This profile contributes backend reliability and integration depth while the peer profile contributes voice-first workflow and user-facing product design."
+        }
+      ],
+      "activity": {
+        "periodStart": "2026-08-01",
+        "periodEnd": "2026-08-22",
+        "tokenTotal": 172000,
+        "estimation": "Synthetic fixture for matching HP"
+      },
+      "preferences": {
+        "matchIntervalDays": 1,
+        "matchLanguages": ["zh", "en"],
+        "visibility": "public",
+        "animalSlug": "panda"
+      }
+    }
+  ]
+}

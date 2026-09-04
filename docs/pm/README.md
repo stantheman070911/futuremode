@@ -51,3 +51,36 @@ appear where they are necessary to verify the current implementation.
 
 本資料包不包含任何 credential、upload token、session token、password 或私人對話內容；
 僅在驗證現行實作所需時保留 operational URL 與非機密部署識別資料。
+
+## `To-the-pm` implementation map｜`To-the-pm` 實作導覽
+
+The `To-the-pm` branch adds the complete reproducible Hackathon application source to
+this reading pack. Generated dependencies, CDK outputs, deployment-output JSON, test-run
+manifests, and credentials are intentionally excluded.
+
+`To-the-pm` branch 在本資料包之外，加入可重建的完整 Hackathon application source；
+產生式 dependencies、CDK outputs、部署輸出 JSON、測試 run manifests 與 credentials
+刻意不納入版本控制。
+
+- [`packages/cloud/README.md`](../../packages/cloud/README.md) — implementation and
+  deployment orientation.｜實作與部署入口。
+- [`packages/cloud/lib/pitchyourowner-cloud-stack.ts`](../../packages/cloud/lib/pitchyourowner-cloud-stack.ts)
+  — AWS CDK infrastructure.｜AWS CDK 基礎設施。
+- [`packages/cloud/functions/`](../../packages/cloud/functions/) — authentication,
+  profile, matching, invitation, email, support, and public-profile Lambdas.｜驗證、
+  profile、matching、invitation、email、support 與 public-profile Lambdas。
+- [`packages/cloud/static/`](../../packages/cloud/static/) — phone-first website and
+  runtime prompt/schema copies.｜手機優先網站及 runtime prompt／schema copies。
+- [`packages/cloud/config/pitchyourowner-profile-schema.json`](../../packages/cloud/config/pitchyourowner-profile-schema.json)
+  — runtime profile contract.｜Runtime profile 契約。
+- [`packages/cloud/test/`](../../packages/cloud/test/) — contract, matching, security,
+  and stack regression tests.｜契約、matching、安全與 stack regression tests。
+
+Reproduce the verified checks with:
+
+```bash
+cd packages/cloud
+npm ci
+npm test
+npm run build
+```
