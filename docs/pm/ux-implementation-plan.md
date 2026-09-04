@@ -1295,11 +1295,11 @@ includes sensitive values.
 
 ## Phase 2 — Flow and Usability
 
-- [ ] 2.1 Make My Pitch "Edit" open the prefilled editable form; keep the live version until publish
-- [ ] 2.2 Rename "Refresh my pitch" and state its consequence
-- [ ] 2.3 Route the wordmark and `/` by session state
-- [ ] 2.4 Add back controls to `/handoff` and `/import`; add a safe exit for owners with a pitch
-- [ ] 2.5 Apply one step-counter + progress-bar pattern to all four onboarding screens; fix handoff to 2/4
+- [x] 2.1 Make My Pitch "Edit" open the prefilled editable form; keep the live version until publish
+- [x] 2.2 Rename "Refresh my pitch" and state its consequence
+- [x] 2.3 Route the wordmark and `/` by session state
+- [x] 2.4 Add back controls to `/handoff` and `/import`; add a safe exit for owners with a pitch
+- [x] 2.5 Apply one step-counter + progress-bar pattern to all four onboarding screens; fix handoff to 2/4
 - [ ] 2.6 Require confirmation for "Not now" (it is irreversible), add a collapsed Passed section, keep neutral framing
 - [ ] 2.7 Add an inline confirmation for Invite and Accept naming exactly what is shared
 - [ ] 2.8 Build the Connected block: contact with copy, opening question, report link

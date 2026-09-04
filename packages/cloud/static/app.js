@@ -1,5 +1,6 @@
 const STORAGE_KEY = "pitchyourowner.session.v1";
 const DRAFT_KEY = "pitchyourowner.draft.v1";
+const DRAFT_MODE_KEY = "pitchyourowner.draft-mode.v1";
 const HANDOFF_KEY = "pitchyourowner.handoff.v1";
 const DISPLAY_NAME_KEY = "pitchyourowner.display-name.v1";
 const AUTH_FLOW_KEY = "pitchyourowner.auth-flow.v1";
@@ -7,6 +8,7 @@ const LOCALE_KEY = "pitchyourowner.locale.v1";
 const DEMO_KEY = "pitchyourowner.demo.v1";
 const DEMO_DRAFT_KEY = "pitchyourowner.demo-draft.v1";
 const DEMO_MATCH_KEY = "pitchyourowner.demo-match.v1";
+const DEMO_PROFILE_KEY = "pitchyourowner.demo-profile.v1";
 const LAST_PUBLISH_KEY = "pitchyourowner.last-publish.v1";
 const MATCH_SEARCH_WINDOW_MS = 3 * 60 * 1000;
 const MATCH_POLL_INTERVAL_MS = 6 * 1000;
@@ -21,13 +23,14 @@ const COPY = {
     "start.title": "Your agent<br>knows you.<span>Let it pitch you.</span>", "start.promise": "Meet someone who cares about the same thing, for the same reason, right now.", "start.checkpoints": "Two owner approval gates", "start.check1": "Resolve privacy risks in your AI", "start.check2": "Approve publishing on this site", "start.begin": "Let my agent pitch me", "start.demo": "Preview seeded flow", "start.duration": "Complete on your phone · about 3 minutes",
     "signin.step1": "STEP 1 / 2 · SIGN IN", "signin.step2": "STEP 2 / 2 · VERIFY", "signin.title": "Start with your email", "signin.verifyTitle": "Check your email", "signin.intro": "Sign in so one owner controls the prompt, draft, pitch, and invitations.", "signin.sentTo": "A six-digit code was sent to", "signin.email": "Email", "signin.code": "Verification code", "signin.send": "Send verification code", "signin.verify": "Verify and continue", "signin.resend": "Resend code", "signin.change": "Change email", "signin.resendIn": "Resend available in {seconds}s", "signin.resendNow": "You can resend the code now", "signin.codeShort": "Enter the complete six-digit code.", "signin.codeWrong": "That code is incorrect. Edit it and try again; this verification is still active.", "signin.codeExpired": "This code expired. Send a new code.", "signin.sent": "Verification code sent", "signin.resent": "New verification code sent",
     "assistant.step": "STEP 1 / 4 · CHOOSE AI", "assistant.title": "Who knows you best?", "assistant.intro": "Choose the AI you think with most often and that can access the relevant context.", "assistant.selected": "Selected", "assistant.choose": "Choose", "assistant.create": "Create my prompt",
+    "flow.backToAi": "Back to choose AI", "flow.backToHandoff": "Back to handoff", "flow.leaveMatches": "Leave and go to Matches", "flow.cancelEdit": "Cancel editing",
     "handoff.step": "STEP 2 / 4 · HAND OFF", "handoff.change": "Change AI", "handoff.beforeTitle": "Hand this to {ai}", "handoff.afterTitle": "Bring your pitch back", "handoff.ready": "Extraction prompt ready", "handoff.show": "Show full prompt", "handoff.hide": "Hide full prompt", "handoff.return": "Back from {ai}? Paste the JSON it gave you.", "handoff.paste": "Paste final JSON", "handoff.openAgain": "Open {ai} again", "handoff.copyAgain": "Copy prompt again", "handoff.loading": "Loading prompt…", "handoff.loadError": "The prompt is not ready. Go back and try again.", "handoff.explainer": "Your AI first shows a short preview and the security or privacy items it actually found. Answer every numbered item and add “Confirm safety and generate JSON,” then copy its next JSON-only reply.", "handoff.launchHelp": "Opens {ai} with the full prompt and also tries to copy it as a fallback.", "handoff.copy": "Copy prompt", "handoff.openChatgpt": "Open ChatGPT with my prompt", "handoff.openClaude": "Open Claude with my prompt", "handoff.share": "Share prompt to my AI", "handoff.promptCopied": "Prompt copied. Open your AI and paste it to continue.",
     "guide.1.title": "Read the short preview", "guide.1.body": "Your AI first replies with a short preview — do not copy this one.", "guide.2.title": "Answer the privacy items", "guide.2.body": "It lists only the privacy items it actually found. Answer them all in one message and add “Confirm safety and generate JSON.”", "guide.3.title": "Copy the next reply", "guide.3.body": "Copy the next reply — it will be only JSON, starting with {.", "guide.4.title": "If the site shows an error", "guide.4.body": "Return to your AI, finish every safety choice, and copy its next JSON-only reply.",
-    "import.stepPaste": "STEP 3 / 4 · PASTE JSON", "import.stepEdit": "STEP 3 / 4 · EDIT FIELDS", "import.title": "Bring your pitch back", "import.intro": "The first AI preview is not the content to paste. Finish the security and privacy decisions, then paste the final JSON.", "import.jsonLabel": "Owner pitch JSON", "import.render": "Render editable fields", "import.demo": "Load demo pitch", "import.demoCaption": "Sample data for demonstration.", "import.resume": "Resume computer draft", "import.editTitle": "Make it sound like you", "import.editIntro": "Every field is editable. Continue opens a read-only review; it does not publish.", "import.pasteAgain": "Paste again", "import.continue": "Continue to review",
-    "review.step": "STEP 4 / 4 · REVIEW & PUBLISH", "review.title": "Publish this pitch?", "review.intro": "This is the complete version PitchYourOwner will store. This page is read-only; go back to make changes.", "review.name": "Display name", "review.nameHint": "Shown to a match before you connect. Use a first name or handle.", "review.back": "Back to edit", "review.publish": "Confirm & upload", "review.publishing": "Publishing…",
+    "import.stepPaste": "STEP 3 / 4 · PASTE JSON", "import.stepEdit": "STEP 3 / 4 · EDIT FIELDS", "import.editingEyebrow": "EDITING YOUR PUBLISHED PITCH", "import.title": "Bring your pitch back", "import.intro": "The first AI preview is not the content to paste. Finish the security and privacy decisions, then paste the final JSON.", "import.jsonLabel": "Owner pitch JSON", "import.render": "Render editable fields", "import.demo": "Load demo pitch", "import.demoCaption": "Sample data for demonstration.", "import.resume": "Resume computer draft", "import.editTitle": "Make it sound like you", "import.editIntro": "Every field is editable. Continue opens a read-only review; it does not publish.", "import.pasteAgain": "Paste again", "import.continue": "Continue to review",
+    "review.step": "STEP 4 / 4 · REVIEW & PUBLISH", "review.title": "Publish this pitch?", "review.intro": "This is the complete version PitchYourOwner will store. This page is read-only; go back to make changes.", "review.name": "Display name", "review.nameHint": "Shown to a match before you connect. Use a first name or handle.", "review.back": "Back to edit", "review.publish": "Confirm & upload", "review.publishChanges": "Publish changes", "review.publishing": "Publishing…",
     "field.history_scope": "History scope", "field.summary": "Summary", "field.interests": "Interests", "field.motivations": "Motivations", "field.active_problems": "Active problems", "field.recurring_topics": "Recurring topics", "field.friend_intent": "Friend intent", "hint.history_scope": "What the AI could and could not access", "hint.summary": "One concrete owner pitch", "hint.interests": "One specific, sustained interest per line", "hint.motivations": "One current motivation per line", "hint.active_problems": "One problem still in progress per line", "hint.recurring_topics": "One recurring discussion topic per line", "hint.friend_intent": "Who you hope to meet and what you want to discuss", "field.confidence": "confidence",
     "profile.scope": "History scope", "profile.conversation": "Conversation-derived", "profile.approved": "Owner-approved", "profile.exploring": "Currently exploring", "profile.notVerified": "Not verified",
-    "pitch.loading": "Loading your pitch", "pitch.title": "My Pitch", "pitch.approved": "Owner-approved introduction", "pitch.emptyEyebrow": "MY PITCH", "pitch.emptyTitle": "No pitch yet", "pitch.emptyBody": "Ask your AI to create an owner pitch, then bring it back and publish it.", "pitch.create": "Create my pitch", "pitch.refresh": "Refresh my pitch", "pitch.edit": "Edit",
+    "pitch.loading": "Loading your pitch", "pitch.title": "My Pitch", "pitch.approved": "Owner-approved introduction", "pitch.emptyEyebrow": "MY PITCH", "pitch.emptyTitle": "No pitch yet", "pitch.emptyBody": "Ask your AI to create an owner pitch, then bring it back and publish it.", "pitch.create": "Create my pitch", "pitch.new": "Create a new pitch", "pitch.newHint": "Your agent writes a fresh pitch. Your current pitch stays live until you publish the new one.", "pitch.edit": "Edit", "pitch.draftChoiceTitle": "You already have a draft", "pitch.draftChoiceBody": "Resume it, or replace it with your currently published pitch.", "pitch.resumeDraft": "Resume your draft", "pitch.editPublished": "Edit published pitch",
     "matches.loading": "Looking for specific overlap", "matches.eyebrow": "MATCHES", "matches.searchingEyebrow": "MATCHES · SEARCHING", "matches.searchingTitle": "Your agent is looking", "matches.searchingBody": "It is comparing your pitch with other owners. This usually takes under a minute.", "matches.checking": "Checking again in {seconds}s", "matches.paused": "Matching paused", "matches.pausedBody": "We cannot check for new matches right now. Your pitch is safely saved.", "matches.emptyTitle": "No filler.", "matches.emptyBody": "There is no match with a concrete reason yet. Matching runs again whenever a new owner publishes.", "matches.check": "Check again", "matches.title": "Matches", "matches.intro": "A small number of specific, explainable friend matches.", "matches.found": "{count} match{suffix} found", "matches.demoPassed": "Demo match passed", "matches.demoPassedBody": "This decision is recorded and cannot be undone. Ren H. is not notified and will not be suggested again.",
     "match.back": "Back to matches", "match.loading": "Opening match reason", "match.ownerPitch": "Owner pitch", "match.q1": "01 · What we both care about", "match.q2": "02 · Same reason, right now", "match.q3": "03 · What we could discuss today", "match.evidence": "Evidence · {label}", "match.connected": "You are connected", "match.start": "Start with this", "match.waiting": "Waiting for Ren H.", "match.simulate": "Demo · Simulate Ren accepting", "match.sent": "Invitation sent. Contact appears only after mutual acceptance.", "match.passed": "Passed. This decision is recorded and cannot be undone; they are not told.", "match.passConfirmTitle": "Pass on {name}?", "match.passConfirmBody": "This cannot be undone. They are not told.", "match.confirmPass": "Confirm pass", "match.notNow": "Not now", "match.accept": "Accept", "match.invite": "Invite {name}", "match.unavailable": "Unavailable", "match.unavailableBody": "Match unavailable", "match.demoData": "Demo · simulated data", "match.demoAcceptance": "Demo · simulated acceptance", "match.demoSent": "Demo invitation sent", "match.demoAccepted": "Demo · Ren H. simulated acceptance", "match.passNotice": "Passed. They are not told.",
     "invites.loading": "Loading invitations", "invites.title": "Invitations", "invites.intro": "Introductions require mutual consent. A Not now reason is never sent to the other person.", "invites.incoming": "Incoming", "invites.outgoing": "Outgoing", "invites.connected": "Connected", "invites.empty": "No items yet", "demo.marker": "Demo", "demo.simulated": "Demo · simulated",
@@ -36,7 +39,7 @@ const COPY = {
     "error.session": "Your session ended. Sign in again; your draft is safely saved on this device.", "error.rateVerification": "Too many code requests. Try again in {wait}, or use another email.", "error.rateGeneric": "That happened too often. Please wait and try again.", "error.supportLimit": "You have reached today’s support-request limit. Please try later.", "error.matchMissing": "This match cannot be found and may have expired.", "error.peerMissing": "This match cannot be opened and may have expired.", "error.matchExpired": "This match expired and can no longer be answered.", "error.decisionRecorded": "You already made a decision for this match. It cannot be changed.", "error.invitation": "This invitation action could not be completed. Return to Matches and try again.", "error.publishFirst": "Publish an owner pitch before starting matching.", "error.profileMissing": "You have not published an owner pitch yet.", "error.versionMissing": "This pitch version cannot be found.", "error.publish": "Your pitch could not be published. The draft is safe; please try again.", "error.publishPayload": "This pitch is not ready to publish. Go back, check the fields, and try again.", "error.pairing": "Matches cannot be loaded right now. Please try again.", "error.matching": "Matching could not start. Your pitch is saved; please try again.", "error.codeSend": "The verification code could not be sent. Please try again.", "error.codeConfirm": "This code could not be verified. Please try again.", "error.codeCombined": "The code is incorrect or expired. Check it or send a new one.", "error.emailDisabled": "Verification email is unavailable right now. Please try later.", "error.profileLoad": "Your pitch cannot be loaded right now. Please try again.", "error.draftLoad": "Your computer draft cannot be loaded right now. Please try again.", "error.matchingUnavailable": "New matches cannot be checked right now. Please try again.", "error.generic": "Something went wrong. Please try again.", "error.offline": "PitchYourOwner cannot be reached; this device may be offline.", "error.prompt": "The prompt could not be loaded. Go back and try again.", "action.signin": "Sign in again", "action.matches": "Back to matches", "action.createPitch": "Create my pitch", "action.changeEmail": "Change email", "action.backForm": "Back to form", "action.resend": "Resend code",
     "validation.json": "JSON must contain one profile object.", "validation.unknown": "The JSON contains unsupported fields. Paste only the final owner pitch JSON from your AI.", "validation.array": "{label} must contain at least one text item.", "validation.maxItems": "{label} can contain at most {count} items.", "validation.itemLong": "One {label} item is too long.", "validation.required": "{label} cannot be blank.", "validation.maxLength": "{label} can contain at most {count} characters.", "validation.confidenceMissing": "Field confidence data is missing.", "validation.confidence": "{label} confidence must be {levels}.", "validation.name": "Display name must be 1–40 characters with no line break.", "validation.notJson": "This is not the final JSON. Return to your AI, answer every numbered security or privacy choice, add “Confirm safety and generate JSON,” and copy its next reply.", "validation.debug": "This looks like debug or transport data, not your Owner Pitch. Return to your AI, finish the security and privacy confirmation, and copy its final JSON-only reply.", "validation.preview": "This is still a preview awaiting confirmation. Finish every numbered security or privacy choice, add “Confirm safety and generate JSON,” and paste the next JSON-only reply.",
     "confirm.delete": "Delete this pitch, its matches, and account data?", "notice.published": "Pitch published. Matching started.", "notice.decisionPassed": "Passed. They are not told.", "notice.connected": "You both accepted. Contact details are now available.", "notice.invited": "Invitation sent.", "notice.computerNone": "No computer draft is available yet.", "notice.computerLoaded": "Computer draft loaded. Review every field before publishing.", "notice.clipboardUnavailable": "This browser cannot share or copy the prompt. Long-press the prompt to copy it manually.", "notice.promptMissing": "The prompt is not ready. Please try again.", "notice.copyUnavailable": "This browser cannot copy the prompt. Long-press it to copy manually.", "notice.shareCopied": "Prompt copied. Paste it into the AI you chose.",
-    "error.challengeMissing": "This verification ended. Send a new code.", "error.invalidCode": "Enter the complete six-digit code.", "profile.fieldFallback": "Profile field", "time.hour": "{count} hr", "time.minute": "{count} min", "time.second": "{count} sec", "confidence.high": "High", "confidence.medium": "Medium", "confidence.low": "Low", "state.suggested": "Suggested", "state.incoming": "Incoming", "state.outgoing": "Waiting", "state.connected": "Connected", "state.not_now": "Passed", "state.unavailable": "Unavailable", "assistant.other": "Other AI", "prompt.aria": "Full extraction prompt", "progress.aria": "Step 2 of 4", "support.help": "Something not working?", "json.placeholder": "{ \"summary\": \"...\" }", "handoff.shareTitle": "PitchYourOwner profile prompt",
+    "error.challengeMissing": "This verification ended. Send a new code.", "error.invalidCode": "Enter the complete six-digit code.", "profile.fieldFallback": "Profile field", "time.hour": "{count} hr", "time.minute": "{count} min", "time.second": "{count} sec", "confidence.high": "High", "confidence.medium": "Medium", "confidence.low": "Low", "state.suggested": "Suggested", "state.incoming": "Incoming", "state.outgoing": "Waiting", "state.connected": "Connected", "state.not_now": "Passed", "state.unavailable": "Unavailable", "assistant.other": "Other AI", "prompt.aria": "Full extraction prompt", "progress.aria": "Step {step} of 4", "support.help": "Something not working?", "json.placeholder": "{ \"summary\": \"...\" }", "handoff.shareTitle": "PitchYourOwner profile prompt",
     "demo.profile.summary": "Portrait photographer exploring how subtle posture and direction change the emotion of a frame.", "demo.profile.interest1": "Subject direction", "demo.profile.interest2": "Posture and tension", "demo.profile.interest3": "Low-light portraiture", "demo.profile.interest4": "Film emulation", "demo.profile.motivation": "Create portraits that feel natural without leaving the subject unsupported", "demo.profile.problem": "Directing a stranger clearly in under 90 seconds", "demo.profile.topic1": "Shoulder-line cues", "demo.profile.topic2": "Skin tone under mixed light", "demo.profile.topic3": "Pre-shoot briefing", "demo.profile.intent": "Someone who practises the same problem weekly, such as a dancer, director, or photographer.", "demo.profile.scope": "Recent ChatGPT conversations and saved memory were available; voice chats and deleted conversations were not available.",
     "demo.peer.summary": "Contemporary dancer studying how small changes in posture and tension alter emotional expression.", "demo.peer.interest1": "Posture and tension", "demo.peer.interest2": "Choreographic direction", "demo.peer.interest3": "Movement under low light", "demo.peer.motivation": "Help performers communicate emotion without over-directing them", "demo.peer.problem": "Giving a useful physical cue without breaking a performer’s momentum", "demo.peer.topic1": "Shoulder-line cues", "demo.peer.topic2": "Breath before movement", "demo.peer.topic3": "Gesture intensity", "demo.peer.intent": "Someone testing how small cues change what an audience feels.", "demo.match.shared": "How posture and tension carry emotion — yours through a lens, Ren’s through a body.", "demo.match.now": "You are both trying to direct a person clearly without over-directing them.", "demo.match.discuss": "Ren is testing shoulder-line cues in low light while you are rewriting a 90-second pre-shoot brief.",
   },
@@ -46,13 +49,14 @@ const COPY = {
     "start.title": "你的 Agent<br>了解你。<span>讓它介紹你。</span>", "start.promise": "認識一位此刻因相同理由、關心相同事情的人。", "start.checkpoints": "兩個 owner 確認關卡", "start.check1": "在 AI 處理隱私風險", "start.check2": "在網站授權發布", "start.begin": "讓我的 Agent 介紹我", "start.demo": "預覽示範流程", "start.duration": "手機可完成 · 約 3 分鐘",
     "signin.step1": "步驟 1 / 2 · 登入", "signin.step2": "步驟 2 / 2 · 驗證", "signin.title": "先用 Email 登入", "signin.verifyTitle": "查看你的 Email", "signin.intro": "登入後，prompt、草稿、介紹與邀請都由同一位 owner 控制。", "signin.sentTo": "六位數驗證碼已寄到", "signin.email": "Email", "signin.code": "驗證碼", "signin.send": "寄送驗證碼", "signin.verify": "驗證並繼續", "signin.resend": "重新寄送驗證碼", "signin.change": "更改 Email", "signin.resendIn": "{seconds} 秒後可重新寄送", "signin.resendNow": "現在可以重新寄送驗證碼", "signin.codeShort": "請輸入完整的六位數驗證碼。", "signin.codeWrong": "驗證碼不正確。請修改後再試；這次驗證仍然有效。", "signin.codeExpired": "這組驗證碼已到期。請重新寄送一組新的代碼。", "signin.sent": "驗證碼已寄出", "signin.resent": "新的驗證碼已寄出",
     "assistant.step": "步驟 1 / 4 · 選擇 AI", "assistant.title": "哪個 AI 最了解你？", "assistant.intro": "選擇平常最常一起思考、且能存取相關脈絡的 AI。", "assistant.selected": "已選擇", "assistant.choose": "選擇", "assistant.create": "建立我的 Prompt",
+    "flow.backToAi": "返回選擇 AI", "flow.backToHandoff": "返回交接 Prompt", "flow.leaveMatches": "離開並前往配對", "flow.cancelEdit": "取消編輯",
     "handoff.step": "步驟 2 / 4 · 交給 AI", "handoff.change": "更改 AI", "handoff.beforeTitle": "把這份 Prompt 交給 {ai}", "handoff.afterTitle": "把介紹帶回來", "handoff.ready": "擷取 Prompt 已準備好", "handoff.show": "顯示完整 Prompt", "handoff.hide": "收合完整 Prompt", "handoff.return": "從 {ai} 回來了嗎？貼上它給你的 JSON。", "handoff.paste": "貼上最終 JSON", "handoff.openAgain": "再次開啟 {ai}", "handoff.copyAgain": "再次複製 Prompt", "handoff.loading": "正在載入 Prompt…", "handoff.loadError": "Prompt 尚未完成載入，請返回上一步再試。", "handoff.explainer": "AI 會先顯示簡短預覽與實際發現的安全或隱私項目。回答所有編號項目並加上「確認安全並產生 JSON」後，再複製下一則純 JSON。", "handoff.launchHelp": "將完整 Prompt 帶入 {ai} 並開啟，也會嘗試複製到剪貼簿作為備援。", "handoff.copy": "複製 Prompt", "handoff.openChatgpt": "用我的 Prompt 開啟 ChatGPT", "handoff.openClaude": "用我的 Prompt 開啟 Claude", "handoff.share": "把 Prompt 分享到我的 AI", "handoff.promptCopied": "Prompt 已複製，請開啟 AI 並貼上以繼續。",
     "guide.1.title": "先閱讀簡短預覽", "guide.1.body": "AI 會先回一段簡短預覽 — 這一則不要複製。", "guide.2.title": "回答隱私項目", "guide.2.body": "它只列出實際發現的隱私項目。在同一則訊息回答全部，並加上「確認安全並產生 JSON」。", "guide.3.title": "複製下一則回答", "guide.3.body": "複製下一則回答 — 它只會是 JSON，以 { 開頭。", "guide.4.title": "如果網站顯示錯誤", "guide.4.body": "回到 AI 完成所有安全選項，再複製它輸出的下一則純 JSON。",
-    "import.stepPaste": "步驟 3 / 4 · 貼上 JSON", "import.stepEdit": "步驟 3 / 4 · 編輯欄位", "import.title": "把你的介紹帶回來", "import.intro": "AI 的第一則預覽不是要貼的內容。先完成安全與隱私決定，再貼上最終 JSON。", "import.jsonLabel": "Owner Pitch JSON", "import.render": "顯示可編輯欄位", "import.demo": "載入示範介紹", "import.demoCaption": "示範用資料。", "import.resume": "接續電腦草稿", "import.editTitle": "把它改得更像你", "import.editIntro": "每一個欄位都可編輯。繼續只會打開唯讀審核，不會直接發布。", "import.pasteAgain": "重新貼上", "import.continue": "繼續審核",
-    "review.step": "步驟 4 / 4 · 審核與發布", "review.title": "要發布這份介紹嗎？", "review.intro": "這是 PitchYourOwner 將儲存的完整版本。本頁只能閱讀；若要修改請返回。", "review.name": "顯示名稱", "review.nameHint": "連結前會顯示給配對對象。請使用名字或暱稱。", "review.back": "返回編輯", "review.publish": "確認並上傳", "review.publishing": "發布中…",
+    "import.stepPaste": "步驟 3 / 4 · 貼上 JSON", "import.stepEdit": "步驟 3 / 4 · 編輯欄位", "import.editingEyebrow": "編輯已發布的介紹", "import.title": "把你的介紹帶回來", "import.intro": "AI 的第一則預覽不是要貼的內容。先完成安全與隱私決定，再貼上最終 JSON。", "import.jsonLabel": "Owner Pitch JSON", "import.render": "顯示可編輯欄位", "import.demo": "載入示範介紹", "import.demoCaption": "示範用資料。", "import.resume": "接續電腦草稿", "import.editTitle": "把它改得更像你", "import.editIntro": "每一個欄位都可編輯。繼續只會打開唯讀審核，不會直接發布。", "import.pasteAgain": "重新貼上", "import.continue": "繼續審核",
+    "review.step": "步驟 4 / 4 · 審核與發布", "review.title": "要發布這份介紹嗎？", "review.intro": "這是 PitchYourOwner 將儲存的完整版本。本頁只能閱讀；若要修改請返回。", "review.name": "顯示名稱", "review.nameHint": "連結前會顯示給配對對象。請使用名字或暱稱。", "review.back": "返回編輯", "review.publish": "確認並上傳", "review.publishChanges": "發布修改", "review.publishing": "發布中…",
     "field.history_scope": "歷史範圍", "field.summary": "摘要", "field.interests": "興趣", "field.motivations": "動機", "field.active_problems": "目前問題", "field.recurring_topics": "反覆主題", "field.friend_intent": "交友意圖", "hint.history_scope": "AI 實際使用與無法存取的資料範圍", "hint.summary": "一句具體的 owner pitch", "hint.interests": "每行一個具體、持續關注的興趣", "hint.motivations": "每行一個目前重要的動機", "hint.active_problems": "每行一個仍在處理的問題", "hint.recurring_topics": "每行一個反覆討論的主題", "hint.friend_intent": "希望認識怎樣的人，以及想聊什麼", "field.confidence": "信心",
     "profile.scope": "歷史範圍", "profile.conversation": "源自對話", "profile.approved": "Owner 已核准", "profile.exploring": "目前正在探索", "profile.notVerified": "未經驗證",
-    "pitch.loading": "正在載入你的介紹", "pitch.title": "我的介紹", "pitch.approved": "我的介紹 · owner 已核准", "pitch.emptyEyebrow": "我的介紹", "pitch.emptyTitle": "尚未建立介紹", "pitch.emptyBody": "先讓你的 AI 產生 owner pitch，再貼回並發布。", "pitch.create": "建立我的介紹", "pitch.refresh": "重新產生介紹", "pitch.edit": "編輯",
+    "pitch.loading": "正在載入你的介紹", "pitch.title": "我的介紹", "pitch.approved": "我的介紹 · owner 已核准", "pitch.emptyEyebrow": "我的介紹", "pitch.emptyTitle": "尚未建立介紹", "pitch.emptyBody": "先讓你的 AI 產生 owner pitch，再貼回並發布。", "pitch.create": "建立我的介紹", "pitch.new": "建立新的介紹", "pitch.newHint": "你的 Agent 會重新撰寫一份介紹。在你發布新版之前，目前的介紹仍會繼續運作。", "pitch.edit": "編輯", "pitch.draftChoiceTitle": "你已有一份草稿", "pitch.draftChoiceBody": "你可以接續草稿，或改用目前已發布的介紹開始編輯。", "pitch.resumeDraft": "接續草稿", "pitch.editPublished": "編輯已發布的介紹",
     "matches.loading": "正在尋找具體重疊", "matches.eyebrow": "配對", "matches.searchingEyebrow": "配對 · 搜尋中", "matches.searchingTitle": "你的 Agent 正在尋找", "matches.searchingBody": "正在把你的介紹與其他 owners 比較。通常一分鐘內就能完成。", "matches.checking": "{seconds} 秒後再次檢查", "matches.paused": "配對已暫停", "matches.pausedBody": "目前無法檢查新配對。你的介紹已安全保存。", "matches.emptyTitle": "不湊數。", "matches.emptyBody": "目前還沒有能具體說明理由的配對。每當有新的 owner 發布介紹，系統會再次進行配對。", "matches.check": "再次檢查", "matches.title": "配對", "matches.intro": "少量、具體、可以解釋的朋友配對。", "matches.found": "找到 {count} 個配對", "matches.demoPassed": "已略過示範配對", "matches.demoPassedBody": "這個決定已記錄且無法復原；Ren H. 不會收到通知，也不會再次被推薦。",
     "match.back": "返回配對", "match.loading": "正在開啟配對理由", "match.ownerPitch": "Owner 介紹", "match.q1": "01 · 我們都關心什麼", "match.q2": "02 · 此刻出於相同理由", "match.q3": "03 · 今天可以聊什麼", "match.evidence": "依據 · {label}", "match.connected": "你們已連結", "match.start": "可以這樣開場", "match.waiting": "等待 Ren H. 回覆", "match.simulate": "Demo · 模擬 Ren 接受", "match.sent": "邀請已送出。只有雙方接受後才會顯示聯絡方式。", "match.passed": "已略過。此決定已記錄且無法復原；對方不會收到通知。", "match.passConfirmTitle": "略過 {name}？", "match.passConfirmBody": "此決定無法復原，對方不會收到通知。", "match.confirmPass": "確認略過", "match.notNow": "現在不要", "match.accept": "接受", "match.invite": "邀請 {name}", "match.unavailable": "無法使用", "match.unavailableBody": "配對目前無法使用", "match.demoData": "Demo · 模擬資料", "match.demoAcceptance": "Demo · 模擬接受", "match.demoSent": "Demo 邀請已送出", "match.demoAccepted": "Demo · Ren H. 已模擬接受", "match.passNotice": "已略過，對方不會收到通知。",
     "invites.loading": "正在載入邀請", "invites.title": "邀請", "invites.intro": "引介需要雙方同意；現在不要的理由不會傳給對方。", "invites.incoming": "收到的邀請", "invites.outgoing": "送出的邀請", "invites.connected": "已連結", "invites.empty": "目前沒有項目", "demo.marker": "Demo", "demo.simulated": "Demo · 模擬",
@@ -61,7 +65,7 @@ const COPY = {
     "error.session": "登入階段已結束。請重新登入；你的草稿仍安全保存在這台裝置上。", "error.rateVerification": "驗證碼請求太頻繁。請在 {wait}後再試，或改用另一個 Email。", "error.rateGeneric": "操作太頻繁。請稍候再試。", "error.supportLimit": "今天送出的支援請求已達上限。請稍後再試。", "error.matchMissing": "找不到這個配對，可能已經失效。", "error.peerMissing": "這個配對目前無法開啟，可能已經失效。", "error.matchExpired": "這個配對已經到期，無法再回覆。", "error.decisionRecorded": "你已經對這個配對做過決定，無法再次更改。", "error.invitation": "這個邀請操作無法完成。請返回配對後再試。", "error.publishFirst": "請先發布 owner pitch，才能開始配對。", "error.profileMissing": "你還沒有發布 owner pitch。", "error.versionMissing": "找不到這個 pitch 版本。", "error.publish": "目前無法發布你的介紹。草稿仍在，請再試一次。", "error.publishPayload": "這份介紹還不能發布。請返回檢查欄位後再試。", "error.pairing": "目前無法載入配對，請再試一次。", "error.matching": "目前無法開始配對。你的介紹已保存，請再試一次。", "error.codeSend": "目前無法寄出驗證碼，請再試一次。", "error.codeConfirm": "目前無法驗證這組代碼，請再試一次。", "error.codeCombined": "驗證碼不正確或已到期。請檢查代碼，或重新寄送。", "error.emailDisabled": "目前無法寄送驗證信。請稍後再試。", "error.profileLoad": "目前無法載入你的介紹，請再試一次。", "error.draftLoad": "目前無法載入電腦草稿，請再試一次。", "error.matchingUnavailable": "目前無法檢查新配對，請再試一次。", "error.generic": "發生問題，請再試一次。", "error.offline": "無法連上 PitchYourOwner；這台裝置可能已離線。", "error.prompt": "無法載入 Prompt。請返回上一步再試。", "action.signin": "重新登入", "action.matches": "返回配對", "action.createPitch": "建立我的介紹", "action.changeEmail": "更改 Email", "action.backForm": "返回表單", "action.resend": "重新寄送驗證碼",
     "validation.json": "JSON 必須包含一個 profile object。", "validation.unknown": "JSON 包含不支援的欄位。請只貼上 AI 最後輸出的 owner pitch JSON。", "validation.array": "{label} 必須包含至少一項文字。", "validation.maxItems": "{label} 最多 {count} 項。", "validation.itemLong": "{label} 有一項文字過長。", "validation.required": "{label} 不可空白。", "validation.maxLength": "{label} 最多 {count} 字元。", "validation.confidenceMissing": "缺少欄位信心資料。", "validation.confidence": "{label} 的信心只能是 {levels}。", "validation.name": "顯示名稱必須是 1–40 字元，而且不能換行。", "validation.notJson": "這不是最終 JSON。請回到 AI，回答每個編號的安全或隱私選項，加上「確認安全並產生 JSON」，再複製下一則回答。", "validation.debug": "這看起來是除錯／傳輸資料，不是你的 Owner Pitch。請回到 AI 完成安全與隱私確認，再複製最後一則純 JSON。", "validation.preview": "這仍是待確認預覽。請完成每個編號的安全或隱私選項，加上「確認安全並產生 JSON」，再貼上下一則純 JSON。",
     "confirm.delete": "要刪除這份介紹、相關配對與帳號資料嗎？", "notice.published": "介紹已發布，配對已開始。", "notice.decisionPassed": "已略過，對方不會收到通知。", "notice.connected": "雙方已接受，聯絡方式已開放。", "notice.invited": "邀請已送出。", "notice.computerNone": "目前沒有可接續的電腦草稿。", "notice.computerLoaded": "電腦草稿已載入。發布前請審核每個欄位。", "notice.clipboardUnavailable": "這個瀏覽器無法分享或複製 Prompt，請長按 Prompt 手動複製。", "notice.promptMissing": "Prompt 尚未完成載入，請稍後再試。", "notice.copyUnavailable": "這個瀏覽器無法複製 Prompt，請長按手動複製。", "notice.shareCopied": "Prompt 已複製，請貼到你選擇的 AI。",
-    "error.challengeMissing": "這次驗證已結束，請重新寄送驗證碼。", "error.invalidCode": "請輸入完整的六位數驗證碼。", "profile.fieldFallback": "介紹欄位", "time.hour": "{count} 小時", "time.minute": "{count} 分鐘", "time.second": "{count} 秒", "confidence.high": "高", "confidence.medium": "中", "confidence.low": "低", "state.suggested": "建議認識", "state.incoming": "收到邀請", "state.outgoing": "等待回覆", "state.connected": "已連結", "state.not_now": "已略過", "state.unavailable": "無法使用", "assistant.other": "其他 AI", "prompt.aria": "完整擷取 Prompt", "progress.aria": "步驟 2 / 4", "support.help": "遇到問題？", "json.placeholder": "{ \"summary\": \"...\" }", "handoff.shareTitle": "PitchYourOwner 個人介紹 Prompt",
+    "error.challengeMissing": "這次驗證已結束，請重新寄送驗證碼。", "error.invalidCode": "請輸入完整的六位數驗證碼。", "profile.fieldFallback": "介紹欄位", "time.hour": "{count} 小時", "time.minute": "{count} 分鐘", "time.second": "{count} 秒", "confidence.high": "高", "confidence.medium": "中", "confidence.low": "低", "state.suggested": "建議認識", "state.incoming": "收到邀請", "state.outgoing": "等待回覆", "state.connected": "已連結", "state.not_now": "已略過", "state.unavailable": "無法使用", "assistant.other": "其他 AI", "prompt.aria": "完整擷取 Prompt", "progress.aria": "步驟 {step} / 4", "support.help": "遇到問題？", "json.placeholder": "{ \"summary\": \"...\" }", "handoff.shareTitle": "PitchYourOwner 個人介紹 Prompt",
     "demo.profile.summary": "人像攝影師，正在探索細微姿勢與引導如何改變畫面情緒。", "demo.profile.interest1": "人物引導", "demo.profile.interest2": "姿勢與張力", "demo.profile.interest3": "低光人像", "demo.profile.interest4": "底片色彩模擬", "demo.profile.motivation": "拍出自然的人像，同時不讓被攝者失去明確引導", "demo.profile.problem": "在 90 秒內清楚引導第一次見面的人", "demo.profile.topic1": "肩線提示", "demo.profile.topic2": "混合光源下的膚色", "demo.profile.topic3": "拍攝前說明", "demo.profile.intent": "每週都在練習同類問題的人，例如舞者、導演或攝影師。", "demo.profile.scope": "可使用近期 ChatGPT 對話與已儲存記憶；無法使用語音聊天與已刪除對話。",
     "demo.peer.summary": "當代舞者，研究細微姿勢與張力變化如何改變情緒表達。", "demo.peer.interest1": "姿勢與張力", "demo.peer.interest2": "編舞引導", "demo.peer.interest3": "低光下的動作", "demo.peer.motivation": "協助表演者傳達情緒，同時避免過度指導", "demo.peer.problem": "給出有用的肢體提示，同時不打斷表演者的動勢", "demo.peer.topic1": "肩線提示", "demo.peer.topic2": "動作前的呼吸", "demo.peer.topic3": "手勢強度", "demo.peer.intent": "正在測試細微提示如何改變觀眾感受的人。", "demo.match.shared": "你們都關注姿勢與張力如何承載情緒——你透過鏡頭，Ren 透過身體。", "demo.match.now": "你們此刻都在嘗試清楚引導一個人，同時避免過度指導。", "demo.match.discuss": "Ren 正在低光下測試肩線提示，而你正在重寫 90 秒拍攝前說明。",
   },
@@ -128,6 +132,9 @@ const SAVED_DEMO_MATCH = readJson(DEMO_MATCH_KEY);
 const DEMO_QUERY_ENABLED = new URLSearchParams(location.search).has("demo");
 const PERSISTED_DEMO_ENABLED = readJson(DEMO_KEY)?.enabled === true;
 const DEMO_AVAILABLE = ["127.0.0.1", "localhost"].includes(location.hostname) || DEMO_QUERY_ENABLED || PERSISTED_DEMO_ENABLED;
+const SAVED_DRAFT = readJson(DRAFT_KEY);
+const SAVED_DEMO_PROFILE = readJson(DEMO_PROFILE_KEY);
+const SAVED_LAST_PUBLISH_AT = Number(readJson(LAST_PUBLISH_KEY)) || 0;
 const SAVED_HANDOFF = readJson(HANDOFF_KEY);
 const SAVED_AUTH_FLOW = readJson(AUTH_FLOW_KEY);
 const SAVED_LOCALE = readJson(LOCALE_KEY);
@@ -138,7 +145,8 @@ activeLocale = INITIAL_LOCALE;
 
 const runtime = {
   session: readJson(STORAGE_KEY),
-  draft: readJson(DRAFT_KEY),
+  draft: SAVED_DRAFT,
+  draftMode: SAVED_DRAFT && readJson(DRAFT_MODE_KEY) === "edit-published" ? "edit-published" : SAVED_DRAFT ? "new" : null,
   selectedAi: ["ChatGPT", "Claude", "Other AI"].includes(SAVED_HANDOFF?.selectedAi) ? SAVED_HANDOFF.selectedAi : "ChatGPT",
   locale: INITIAL_LOCALE,
   displayName: readJson(DISPLAY_NAME_KEY) || "",
@@ -155,8 +163,8 @@ const runtime = {
   busy: false,
   error: "",
   notice: "",
-  profile: null,
-  profileLoaded: false,
+  profile: (DEMO_QUERY_ENABLED || PERSISTED_DEMO_ENABLED) && SAVED_DEMO_PROFILE?.profile ? SAVED_DEMO_PROFILE : (DEMO_QUERY_ENABLED || PERSISTED_DEMO_ENABLED) && SAVED_LAST_PUBLISH_AT ? { profile: sampleProfile(), profile_id: "demo-owner", version_id: "demo-v1" } : null,
+  profileLoaded: Boolean((DEMO_QUERY_ENABLED || PERSISTED_DEMO_ENABLED) && (SAVED_DEMO_PROFILE?.profile || SAVED_LAST_PUBLISH_AT)),
   matches: null,
   invitations: null,
   match: null,
@@ -166,7 +174,9 @@ const runtime = {
   demoDraft: readJson(DEMO_DRAFT_KEY) === true,
   demoMatch: demoMatch(SAVED_DEMO_MATCH?.match_id === DEMO_MATCH_ID ? SAVED_DEMO_MATCH : {}),
   pendingMatchDecision: null,
-  lastPublishAt: Number(readJson(LAST_PUBLISH_KEY)) || 0,
+  pendingPitchEdit: false,
+  homeRouting: false,
+  lastPublishAt: SAVED_LAST_PUBLISH_AT,
   matchesPollError: false,
 };
 
@@ -182,6 +192,17 @@ function readJson(key) {
 function writeJson(key, value) {
   if (value === null) localStorage.removeItem(key);
   else localStorage.setItem(key, JSON.stringify(value));
+}
+
+function setDraftMode(mode) {
+  runtime.draftMode = mode === "edit-published" ? "edit-published" : mode ? "new" : null;
+  writeJson(DRAFT_MODE_KEY, runtime.draftMode);
+}
+
+function clearDraftState() {
+  runtime.draft = null;
+  setDraftMode(null);
+  writeJson(DRAFT_KEY, null);
 }
 
 function resetDemoMatch() {
@@ -415,13 +436,13 @@ function errorNotice() {
   return `<div class="notice error" role="alert" tabindex="-1"><div>${esc(error.message)}</div>${error.action ? `<button class="button quiet" style="margin-top:10px" data-action="error-${esc(error.action)}">${esc(error.actionLabel)}</button>` : ""}<a class="support-link" href="/support" data-link>${esc(t("support.help"))}</a></div>`;
 }
 
-function navigate(path) {
+function navigate(path, { replace = false } = {}) {
   if (path !== "/matches") stopMatchesPolling();
   if (path !== "/signin") {
     clearInterval(otpCountdownTimer);
     otpCountdownTimer = null;
   }
-  history.pushState({}, "", path);
+  history[replace ? "replaceState" : "pushState"]({}, "", path);
   runtime.error = "";
   runtime.notice = "";
   runtime.match = null;
@@ -481,12 +502,27 @@ async function api(path, options = {}) {
 }
 
 function shell(content, { nav = false, active = "", action = "" } = {}) {
+  const homeHref = runtime.session || runtime.demo ? "/matches" : "/";
   return `<div class="app-shell"><section class="screen ${nav ? "" : "no-nav"}">
-    <header class="wordmark"><a href="/" data-link>PITCHYOUROWNER</a>${action}</header>
+    <header class="wordmark"><a href="${homeHref}" data-link>PITCHYOUROWNER</a>${action}</header>
     ${errorNotice()}
     ${runtime.notice ? `<div class="notice success">${esc(runtime.notice)}</div>` : ""}
     ${content}
   </section>${nav ? bottomNav(active) : ""}</div>`;
+}
+
+function progressHeader(step, labelKey) {
+  return `<p class="eyebrow">${esc(t(labelKey))}</p>
+    <div class="progress" aria-label="${esc(t("progress.aria", { step }))}">${[1, 2, 3, 4].map((segment) => `<span class="${segment <= step ? "active" : ""}"></span>`).join("")}</div>`;
+}
+
+function onboardingExit() {
+  if (runtime.session && !runtime.profileLoaded) queueMicrotask(loadProfile);
+  return runtime.profile ? `<a href="/matches" data-link class="flow-exit">${esc(t("flow.leaveMatches"))}</a>` : "";
+}
+
+function flowNavigation(backPath, backLabelKey) {
+  return `<div class="flow-navigation"><a href="${backPath}" data-link class="flow-back">← ${esc(t(backLabelKey))}</a>${onboardingExit()}</div>`;
 }
 
 function focusErrorNotice() {
@@ -687,11 +723,11 @@ function signinScreen() {
 
 function assistantScreen() {
   const aiOptions = [["ChatGPT", "ChatGPT"], ["Claude", "Claude"], ["Other AI", t("assistant.other")]];
-  return shell(`<p class="eyebrow">${esc(t("assistant.step"))}</p>
+  return shell(`${progressHeader(1, "assistant.step")}
     <h1 class="page-title">${esc(t("assistant.title"))}</h1>
     <p class="page-intro">${esc(t("assistant.intro"))}</p>
     <div class="assistant-grid">${aiOptions.map(([value, label]) => `<button class="assistant-card" data-action="select-ai" data-ai="${value}" aria-pressed="${runtime.selectedAi === value}"><strong>${esc(label)}</strong><span>${esc(t(runtime.selectedAi === value ? "assistant.selected" : "assistant.choose"))}</span></button>`).join("")}</div>
-    <div style="margin-top:auto;padding-top:28px"><button class="button primary" style="width:100%" data-action="create-prompt">${esc(t("assistant.create"))}</button></div>`, { action: `<a href="/settings" data-link class="text-action">${esc(t("account"))}</a>` });
+    <div style="margin-top:auto;padding-top:28px"><button class="button primary" style="width:100%" data-action="create-prompt">${esc(t("assistant.create"))}</button>${onboardingExit()}</div>`, { action: `<a href="/settings" data-link class="text-action">${esc(t("account"))}</a>` });
 }
 
 function handoffScreen() {
@@ -712,10 +748,10 @@ function handoffScreen() {
   const collapsedPrompt = afterHandoff
     ? `<div class="settings-row"><span>${esc(t("handoff.ready"))}</span><button data-action="toggle-full-prompt">${esc(t(runtime.showFullPrompt ? "handoff.hide" : "handoff.show"))}</button></div>${runtime.showFullPrompt ? prompt : ""}`
     : "";
-  return shell(`<p class="eyebrow">${esc(t("handoff.step"))}</p>
-    <div class="prompt-meta"><a href="/assistant" data-link>${esc(t("handoff.change"))}</a><span>${esc(t("language.current"))}</span></div>
+  return shell(`${flowNavigation("/assistant", "flow.backToAi")}
+    ${progressHeader(2, "handoff.step")}
+    <div class="prompt-meta"><span>${esc(runtime.selectedAi)}</span><span>${esc(t("language.current"))}</span></div>
     <h1 class="page-title">${esc(afterHandoff ? t("handoff.afterTitle") : t("handoff.beforeTitle", { ai: runtime.selectedAi }))}</h1>
-    <div class="progress" aria-label="${esc(t("progress.aria"))}"><span></span><span class="active"></span><span></span><span></span></div>
     ${!promptReady ? `<div class="notice error">${esc(t("handoff.loadError"))}</div>` : ""}
     ${collapsedPrompt}
     ${actions}`);
@@ -759,8 +795,10 @@ function validateProfileClient(profile) {
 }
 
 function importScreen() {
+  const editingPublished = runtime.draftMode === "edit-published";
   if (!runtime.draft) {
-    return shell(`<p class="eyebrow">${esc(t("import.stepPaste"))}</p>
+    return shell(`${flowNavigation("/handoff", "flow.backToHandoff")}
+      ${progressHeader(3, "import.stepPaste")}
       <h1 class="page-title">${esc(t("import.title"))}</h1>
       <p class="page-intro">${esc(t("import.intro"))}</p>
       ${jsonGuide(true)}
@@ -771,12 +809,12 @@ function importScreen() {
       ${DEMO_AVAILABLE && runtime.demo && !runtime.session ? `<button class="button quiet" style="margin-top:9px" data-action="load-sample">${esc(t("import.demo"))}</button><p class="subtle" style="margin:7px 0 0">${esc(t("import.demoCaption"))}</p>` : ""}
       ${runtime.session && !runtime.demo ? `<button class="button quiet" style="margin-top:9px" data-action="resume-computer-draft">${esc(t("import.resume"))}</button>` : ""}`);
   }
-  return shell(`<p class="eyebrow">${esc(t("import.stepEdit"))}</p>
+  return shell(`${editingPublished ? `<div class="flow-navigation"><button class="flow-back" data-action="cancel-pitch-edit">← ${esc(t("flow.cancelEdit"))}</button></div><p class="eyebrow">${esc(t("import.editingEyebrow"))}</p>` : `${flowNavigation("/handoff", "flow.backToHandoff")}${progressHeader(3, "import.stepEdit")}`}
     <h1 class="page-title">${esc(t("import.editTitle"))}</h1>
     <p class="page-intro">${esc(t("import.editIntro"))}</p>
     <form data-form="review-profile">
       ${editableFields(runtime.draft)}
-      <div class="button-row"><button type="button" class="button" data-action="replace-json">${esc(t("import.pasteAgain"))}</button><button class="button primary">${esc(t("import.continue"))}</button></div>
+      <div class="button-row"><button type="button" class="button" data-action="${editingPublished ? "cancel-pitch-edit" : "replace-json"}">${esc(t(editingPublished ? "flow.cancelEdit" : "import.pasteAgain"))}</button><button class="button primary">${esc(t("import.continue"))}</button></div>
     </form>`);
 }
 
@@ -803,14 +841,16 @@ function profileFromForm(form) {
 
 function reviewScreen() {
   if (!runtime.draft) return importScreen();
-  return shell(`<p class="eyebrow">${esc(t("review.step"))}</p>
+  const editingPublished = runtime.draftMode === "edit-published";
+  return shell(`${editingPublished ? `<p class="eyebrow">${esc(t("import.editingEyebrow"))}</p>` : progressHeader(4, "review.step")}
     <h1 class="page-title">${esc(t("review.title"))}</h1>
     <p class="page-intro">${esc(t("review.intro"))}</p>
     ${profileDocument(runtime.draft, true)}
     <form class="form" data-form="publish-profile">
       <label class="field"><span class="field-label">${esc(t("review.name"))}</span><span class="field-hint">${esc(t("review.nameHint"))}</span><input name="display_name" autocomplete="nickname" minlength="1" maxlength="40" required value="${esc(runtime.displayName)}"></label>
-      <div class="button-row"><button type="button" class="button" data-action="back-edit">${esc(t("review.back"))}</button><button class="button primary" ${runtime.busy ? "disabled" : ""}>${esc(t(runtime.busy ? "review.publishing" : "review.publish"))}</button></div>
-    </form>`);
+      <div class="button-row"><button type="button" class="button" data-action="back-edit">${esc(t("review.back"))}</button><button class="button primary" ${runtime.busy ? "disabled" : ""}>${esc(t(runtime.busy ? "review.publishing" : editingPublished ? "review.publishChanges" : "review.publish"))}</button></div>
+    </form>
+    ${editingPublished ? `<button class="flow-exit" data-action="cancel-pitch-edit">${esc(t("flow.cancelEdit"))}</button>` : onboardingExit()}`);
 }
 
 function profileDocument(profile, showConfidence) {
@@ -832,10 +872,32 @@ function evidenceLabel(field) {
 function pitchScreen() {
   if (!runtime.profileLoaded) {
     loadProfile();
-    return shell(`<div class="loading">${esc(t("pitch.loading"))}</div>`, { nav: true, active: "pitch" });
+    return shell(`<div class="loading">${esc(t("pitch.loading"))}</div>`, { nav: true, active: "pitch", action: `<button class="text-action" disabled>${esc(t("pitch.edit"))}</button>` });
   }
   if (!runtime.profile) return shell(`<div class="empty"><p class="eyebrow">${esc(t("pitch.emptyEyebrow"))}</p><h2>${esc(t("pitch.emptyTitle"))}</h2><p>${esc(t("pitch.emptyBody"))}</p><a class="button primary" href="/assistant" data-link>${esc(t("pitch.create"))}</a></div>`, { nav: true, active: "pitch" });
-  return shell(`<h1 class="page-title">${esc(t("pitch.title"))}</h1><p class="page-intro">${esc(t("pitch.approved"))}</p>${profileDocument(runtime.profile.profile, false)}<button class="button" style="width:100%" data-action="refresh-pitch">${esc(t("pitch.refresh"))}</button>`, { nav: true, active: "pitch", action: `<a href="/settings" data-link class="text-action">${esc(t("pitch.edit"))}</a>` });
+  const draftChoice = runtime.pendingPitchEdit ? `<div class="draft-choice" role="dialog" aria-labelledby="draft-choice-title" tabindex="-1">
+    <strong id="draft-choice-title">${esc(t("pitch.draftChoiceTitle"))}</strong>
+    <p>${esc(t("pitch.draftChoiceBody"))}</p>
+    <div class="button-stack"><button class="button primary" data-action="resume-pitch-draft">${esc(t("pitch.resumeDraft"))}</button><button class="button" data-action="confirm-edit-published">${esc(t("pitch.editPublished"))}</button><button class="button quiet" data-action="cancel-edit-choice">${esc(t("common.cancel"))}</button></div>
+  </div>` : "";
+  return shell(`<h1 class="page-title">${esc(t("pitch.title"))}</h1><p class="page-intro">${esc(t("pitch.approved"))}</p>${draftChoice}${profileDocument(runtime.profile.profile, false)}<div class="pitch-new-action"><button class="button" data-action="create-new-pitch">${esc(t("pitch.new"))}</button><p class="subtle">${esc(t("pitch.newHint"))}</p></div>`, { nav: true, active: "pitch", action: `<button class="text-action" data-action="edit-pitch">${esc(t("pitch.edit"))}</button>` });
+}
+
+function startPublishedPitchEdit({ replaceDraft = false } = {}) {
+  if (!runtime.profile?.profile) return;
+  if (runtime.draft && runtime.draftMode !== "edit-published" && !replaceDraft) {
+    runtime.pendingPitchEdit = true;
+    render();
+    requestAnimationFrame(() => document.querySelector(".draft-choice")?.focus?.());
+    return;
+  }
+  if (!runtime.draft || runtime.draftMode !== "edit-published" || replaceDraft) {
+    runtime.draft = structuredClone(runtime.profile.profile);
+    setDraftMode("edit-published");
+    writeJson(DRAFT_KEY, runtime.draft);
+  }
+  runtime.pendingPitchEdit = false;
+  navigate("/import");
 }
 
 async function loadProfile() {
@@ -993,11 +1055,31 @@ function render() {
   document.documentElement.lang = runtime.locale;
   const skipLink = document.querySelector(".skip-link");
   if (skipLink) skipLink.textContent = t("skip");
-  const path = location.pathname.replace(/\/$/, "") || "/";
+  let path = location.pathname.replace(/\/$/, "") || "/";
   if (!runtime.session && !runtime.demo && !["/", "/signin", "/privacy", "/terms", "/support"].includes(path)) {
     history.replaceState({}, "", "/signin");
     app.innerHTML = signinScreen();
     return;
+  }
+  if (path === "/" && (runtime.session || runtime.demo)) {
+    if (runtime.demo || runtime.profileLoaded) {
+      path = runtime.profile || (runtime.demo && runtime.lastPublishAt) ? "/matches" : runtime.draft ? "/import" : "/assistant";
+      history.replaceState({}, "", path);
+    } else {
+      app.innerHTML = shell(`<div class="loading">${esc(t("common.loading"))}</div>`);
+      if (!runtime.homeRouting) {
+        runtime.homeRouting = true;
+        queueMicrotask(async () => {
+          try { await routeReturningOwner({ replace: true }); }
+          catch (error) {
+            setRuntimeError(error);
+            navigate(runtime.draft ? "/import" : "/assistant", { replace: true });
+          }
+          finally { runtime.homeRouting = false; }
+        });
+      }
+      return;
+    }
   }
   if (path === "/") app.innerHTML = startScreen();
   else if (path === "/signin") app.innerHTML = signinScreen();
@@ -1011,7 +1093,7 @@ function render() {
   else if (path === "/invitations") app.innerHTML = invitationsScreen();
   else if (path === "/settings") app.innerHTML = settingsScreen();
   else if (["/privacy", "/terms", "/support"].includes(path)) app.innerHTML = infoScreen(path.slice(1));
-  else { history.replaceState({}, "", "/"); app.innerHTML = startScreen(); }
+  else { history.replaceState({}, "", "/"); render(); }
 }
 
 document.addEventListener("click", async (event) => {
@@ -1023,7 +1105,7 @@ document.addEventListener("click", async (event) => {
   try {
     runtime.error = "";
     if (action === "begin") runtime.session ? await routeReturningOwner() : navigate("/signin");
-    if (action === "demo-flow") { runtime.demo = true; runtime.draft = null; runtime.demoDraft = false; runtime.profile = null; runtime.profileLoaded = false; runtime.matches = null; runtime.invitations = null; runtime.match = null; runtime.displayName = "Ari C."; resetDemoMatch(); writeJson(DEMO_KEY, { enabled: true }); writeJson(DRAFT_KEY, null); writeJson(DEMO_DRAFT_KEY, null); writeJson(DISPLAY_NAME_KEY, runtime.displayName); navigate("/assistant"); }
+    if (action === "demo-flow") { runtime.demo = true; clearDraftState(); runtime.demoDraft = false; runtime.profile = null; runtime.profileLoaded = false; runtime.matches = null; runtime.invitations = null; runtime.match = null; runtime.displayName = "Ari C."; runtime.lastPublishAt = 0; resetDemoMatch(); writeJson(DEMO_KEY, { enabled: true }); writeJson(DEMO_DRAFT_KEY, null); writeJson(DEMO_PROFILE_KEY, null); writeJson(LAST_PUBLISH_KEY, null); writeJson(DISPLAY_NAME_KEY, runtime.displayName); navigate("/assistant"); }
     if (action === "change-email") { clearAuthFlow(); render(); }
     if (action === "resend-code") await resendVerificationCode();
     if (action === "select-ai") { runtime.selectedAi = button.dataset.ai; render(); }
@@ -1035,9 +1117,9 @@ document.addEventListener("click", async (event) => {
     if (action === "copy-prompt") await copyPrompt();
     if (action === "toggle-full-prompt") { runtime.showFullPrompt = !runtime.showFullPrompt; render(); }
     if (action === "go-import") navigate("/import");
-    if (action === "load-sample") { runtime.draft = sampleProfile(); runtime.demoDraft = true; writeJson(DRAFT_KEY, runtime.draft); writeJson(DEMO_DRAFT_KEY, true); render(); }
+    if (action === "load-sample") { runtime.draft = sampleProfile(); setDraftMode("new"); runtime.demoDraft = true; writeJson(DRAFT_KEY, runtime.draft); writeJson(DEMO_DRAFT_KEY, true); render(); }
     if (action === "resume-computer-draft") await resumeComputerDraft();
-    if (action === "replace-json") { runtime.draft = null; runtime.demoDraft = false; writeJson(DRAFT_KEY, null); writeJson(DEMO_DRAFT_KEY, null); render(); }
+    if (action === "replace-json") { clearDraftState(); runtime.demoDraft = false; writeJson(DEMO_DRAFT_KEY, null); render(); }
     if (action === "back-edit") {
       const displayName = String(document.querySelector('input[name="display_name"]')?.value || "").trim();
       if (displayName && displayName.length <= 40 && !/[\r\n]/.test(displayName)) {
@@ -1046,7 +1128,12 @@ document.addEventListener("click", async (event) => {
       }
       navigate("/import");
     }
-    if (action === "refresh-pitch") { runtime.draft = null; writeJson(DRAFT_KEY, null); navigate("/assistant"); }
+    if (action === "edit-pitch") startPublishedPitchEdit();
+    if (action === "confirm-edit-published") startPublishedPitchEdit({ replaceDraft: true });
+    if (action === "resume-pitch-draft") { runtime.pendingPitchEdit = false; setDraftMode(runtime.draftMode || "new"); navigate("/import"); }
+    if (action === "cancel-edit-choice") { runtime.pendingPitchEdit = false; render(); }
+    if (action === "cancel-pitch-edit") { clearDraftState(); runtime.demoDraft = false; writeJson(DEMO_DRAFT_KEY, null); navigate("/pitch"); }
+    if (action === "create-new-pitch") { clearDraftState(); runtime.demoDraft = false; writeJson(DEMO_DRAFT_KEY, null); navigate("/assistant"); }
     if (action === "refresh-matches") { runtime.matchesPollError = false; runtime.matches = null; render(); }
     if (action === "retry-matches") { runtime.error = ""; runtime.matchesPollError = false; runtime.matches = null; render(); }
     if (action === "error-retry") await retryCurrentScreen();
@@ -1140,12 +1227,14 @@ document.addEventListener("submit", async (event) => {
         runtime.displayName = "";
         writeJson(DEMO_KEY, null);
         writeJson(DEMO_MATCH_KEY, null);
+        writeJson(DEMO_PROFILE_KEY, null);
+        writeJson(LAST_PUBLISH_KEY, null);
+        runtime.lastPublishAt = 0;
         writeJson(DISPLAY_NAME_KEY, null);
       }
       if (runtime.demoDraft) {
-        runtime.draft = null;
+        clearDraftState();
         runtime.demoDraft = false;
-        writeJson(DRAFT_KEY, null);
         writeJson(DEMO_DRAFT_KEY, null);
       }
       runtime.session = { accessToken: result.accessToken, email: confirmedEmail };
@@ -1155,6 +1244,7 @@ document.addEventListener("submit", async (event) => {
       await routeReturningOwner();
     } else if (form.dataset.form === "parse-json") {
       runtime.draft = validateProfileClient(parseJsonCandidate(String(formData.get("json") || "")));
+      setDraftMode("new");
       runtime.demoDraft = false;
       writeJson(DRAFT_KEY, runtime.draft);
       writeJson(DEMO_DRAFT_KEY, null);
@@ -1193,13 +1283,13 @@ async function publishProfile() {
   if (runtime.demo) {
     runtime.profile = { profile: structuredClone(runtime.draft), profile_id: "demo-owner", version_id: "demo-v1" };
     runtime.profileLoaded = true;
-    runtime.draft = null;
+    writeJson(DEMO_PROFILE_KEY, runtime.profile);
+    clearDraftState();
     runtime.demoDraft = false;
     resetDemoMatch();
     runtime.matches = null;
     runtime.lastPublishAt = Date.now();
     writeJson(LAST_PUBLISH_KEY, runtime.lastPublishAt);
-    writeJson(DRAFT_KEY, null);
     writeJson(DEMO_DRAFT_KEY, null);
     clearHandoff();
     runtime.busy = false;
@@ -1215,12 +1305,11 @@ async function publishProfile() {
   runtime.busy = false;
   runtime.profile = { profile: runtime.draft, profile_id: result.profile_id, version_id: result.version_id };
   runtime.profileLoaded = true;
-  runtime.draft = null;
+  clearDraftState();
   runtime.demoDraft = false;
   runtime.matches = null;
   runtime.lastPublishAt = Date.now();
   writeJson(LAST_PUBLISH_KEY, runtime.lastPublishAt);
-  writeJson(DRAFT_KEY, null);
   writeJson(DEMO_DRAFT_KEY, null);
   clearHandoff();
   runtime.notice = t("notice.published");
@@ -1280,18 +1369,18 @@ function signout() {
   runtime.profileLoaded = false;
   runtime.matches = null;
   runtime.invitations = null;
-  runtime.draft = null;
+  clearDraftState();
   runtime.demoDraft = false;
   runtime.demo = false;
   runtime.displayName = "";
   clearAuthFlow();
   clearHandoff();
   writeJson(STORAGE_KEY, null);
-  writeJson(DRAFT_KEY, null);
   writeJson(DEMO_DRAFT_KEY, null);
   writeJson(DISPLAY_NAME_KEY, null);
   writeJson(DEMO_KEY, null);
   writeJson(DEMO_MATCH_KEY, null);
+  writeJson(DEMO_PROFILE_KEY, null);
   writeJson(LAST_PUBLISH_KEY, null);
   runtime.lastPublishAt = 0;
   runtime.matchesPollError = false;
@@ -1305,18 +1394,18 @@ function validateDisplayName(value) {
   return displayName;
 }
 
-async function routeReturningOwner() {
+async function routeReturningOwner({ replace = false } = {}) {
   try {
     runtime.profile = await api("/v1/profiles/me");
     runtime.profileLoaded = true;
     runtime.displayName = runtime.profile.display_name || runtime.displayName;
     if (runtime.displayName) writeJson(DISPLAY_NAME_KEY, runtime.displayName);
-    navigate("/matches");
+    navigate("/matches", { replace });
   } catch (error) {
     if (error.status !== 404) throw error;
     runtime.profile = null;
     runtime.profileLoaded = true;
-    navigate(runtime.draft ? "/import" : "/assistant");
+    navigate(runtime.draft ? "/import" : "/assistant", { replace });
   }
 }
 
@@ -1331,6 +1420,7 @@ async function resumeComputerDraft() {
     return;
   }
   runtime.draft = validateProfileClient(draft.profile);
+  setDraftMode("new");
   runtime.demoDraft = false;
   writeJson(DRAFT_KEY, runtime.draft);
   writeJson(DEMO_DRAFT_KEY, null);
