@@ -1,4 +1,0 @@
-node_modules/
-cdk.out*/
-cdk-outputs*.json
-scripts/test-fixtures/runs/
