@@ -176,6 +176,7 @@ const runtime = {
   pendingMatchDecision: null,
   pendingPitchEdit: false,
   homeRouting: false,
+  profileLoading: false,
   lastPublishAt: SAVED_LAST_PUBLISH_AT,
   matchesPollError: false,
 };
@@ -517,7 +518,6 @@ function progressHeader(step, labelKey) {
 }
 
 function onboardingExit() {
-  if (runtime.session && !runtime.profileLoaded) queueMicrotask(loadProfile);
   return runtime.profile ? `<a href="/matches" data-link class="flow-exit">${esc(t("flow.leaveMatches"))}</a>` : "";
 }
 
@@ -901,16 +901,36 @@ function startPublishedPitchEdit({ replaceDraft = false } = {}) {
 }
 
 async function loadProfile() {
-  runtime.profileLoaded = true;
-  if (runtime.demo) { runtime.profile = { profile: sampleProfile(), profile_id: "demo-owner" }; queueMicrotask(render); return; }
-  try {
-    runtime.profile = await api("/v1/profiles/me");
-    if (runtime.profile.display_name) {
-      runtime.displayName = runtime.profile.display_name;
-      writeJson(DISPLAY_NAME_KEY, runtime.displayName);
-    }
+  if (runtime.profileLoading) return;
+  runtime.profileLoading = true;
+  if (runtime.demo) {
+    runtime.profile = { profile: sampleProfile(), profile_id: "demo-owner" };
+    runtime.profileLoaded = true;
+    runtime.profileLoading = false;
+    queueMicrotask(render);
+    return;
   }
-  catch (error) { if (error.status !== 404) setRuntimeError(error); }
+  const sessionAtLoad = runtime.session;
+  let loadedProfile = null;
+  let loadError = null;
+  try {
+    loadedProfile = await api("/v1/profiles/me");
+  }
+  catch (error) {
+    loadError = error;
+  }
+  if (runtime.session !== sessionAtLoad) {
+    runtime.profileLoading = false;
+    return;
+  }
+  runtime.profile = loadedProfile;
+  if (loadedProfile?.display_name) {
+    runtime.displayName = loadedProfile.display_name;
+    writeJson(DISPLAY_NAME_KEY, runtime.displayName);
+  }
+  if (loadError && loadError.status !== 404) setRuntimeError(loadError);
+  runtime.profileLoaded = true;
+  runtime.profileLoading = false;
   render();
 }
 
@@ -1059,6 +1079,11 @@ function render() {
   if (!runtime.session && !runtime.demo && !["/", "/signin", "/privacy", "/terms", "/support"].includes(path)) {
     history.replaceState({}, "", "/signin");
     app.innerHTML = signinScreen();
+    return;
+  }
+  if (runtime.session && ["/assistant", "/handoff", "/import", "/review"].includes(path) && !runtime.profileLoaded) {
+    app.innerHTML = shell(`<div class="loading" role="status">${esc(t("common.loading"))}</div>`);
+    if (!runtime.profileLoading) queueMicrotask(loadProfile);
     return;
   }
   if (path === "/" && (runtime.session || runtime.demo)) {
