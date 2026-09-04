@@ -66,6 +66,8 @@ const runtime = {
   challengeId: null,
   signinEmail: "",
   prompt: typeof SAVED_HANDOFF?.prompt === "string" ? SAVED_HANDOFF.prompt : "",
+  handoffLaunchedAt: Number(SAVED_HANDOFF?.launchedAt) || 0,
+  showFullPrompt: false,
   busy: false,
   error: "",
   notice: "",
@@ -96,7 +98,27 @@ function writeJson(key, value) {
 
 function clearHandoff() {
   runtime.prompt = "";
+  runtime.handoffLaunchedAt = 0;
+  runtime.showFullPrompt = false;
   writeJson(HANDOFF_KEY, null);
+}
+
+function saveHandoff() {
+  writeJson(HANDOFF_KEY, {
+    selectedAi: runtime.selectedAi,
+    locale: runtime.locale,
+    prompt: runtime.prompt,
+    launchedAt: runtime.handoffLaunchedAt || null,
+  });
+}
+
+function rehydrateHandoff() {
+  const saved = readJson(HANDOFF_KEY);
+  if (!saved) return;
+  runtime.selectedAi = ["ChatGPT", "Claude", "Other AI"].includes(saved.selectedAi) ? saved.selectedAi : runtime.selectedAi;
+  runtime.locale = ["zh-Hant", "en"].includes(saved.locale) ? saved.locale : runtime.locale;
+  runtime.prompt = typeof saved.prompt === "string" ? saved.prompt : runtime.prompt;
+  runtime.handoffLaunchedAt = Number(saved.launchedAt) || 0;
 }
 
 function esc(value) {
@@ -215,10 +237,14 @@ async function copyPromptBestEffort(prompt) {
 async function launchAiWithPrompt() {
   const prompt = String(runtime.prompt || "").trim();
   if (!prompt) throw new Error("Prompt 尚未完成載入，請稍後再試。");
+  runtime.handoffLaunchedAt = Date.now();
+  runtime.showFullPrompt = false;
+  saveHandoff();
 
   if (runtime.selectedAi === "Other AI") {
     if (navigator.share) {
       await navigator.share({ title: "PitchYourOwner owner pitch prompt", text: prompt });
+      render();
       return;
     }
     const copied = await copyPromptBestEffort(prompt);
@@ -284,15 +310,29 @@ function assistantScreen() {
 }
 
 function handoffScreen() {
-  return shell(`<div class="prompt-meta"><span>Back to ${esc(runtime.selectedAi)}</span><span>${runtime.locale === "en" ? "English" : "繁體中文"}</span></div>
-    <h1 class="page-title">Hand this to ${esc(runtime.selectedAi)}</h1>
-    <div class="progress" aria-label="Step 2 of 4"><span class="active"></span><span></span><span></span><span></span></div>
-    <div class="prompt-box" aria-label="完整 extraction prompt">${esc(runtime.prompt || "正在載入 prompt…")}</div>
-    <p class="subtle">AI 第一則會顯示精簡預覽，並一次列出實際發現的 security／privacy 項目；不會問介紹是否符合聊天歷史。選完所有 S 編號並加上「確認安全並產生 JSON」後，再複製下一則純 JSON。</p>
-    <button class="button primary" style="width:100%" data-action="launch-ai-with-prompt">${esc(handoffButtonLabel())}</button>
-    <p class="subtle" style="text-align:center;margin:9px 0 0">一次完成：將完整 Prompt 帶入 ${esc(runtime.selectedAi)} 並開啟；也會嘗試複製到剪貼簿作為備援。</p>
-    <button class="button quiet" style="margin-top:9px;width:100%" data-action="copy-prompt">Copy prompt</button>
-    <button class="button quiet" style="margin-top:9px" data-action="go-import">Security checked · Paste final JSON</button>`);
+  const promptReady = Boolean(String(runtime.prompt || "").trim());
+  const afterHandoff = runtime.handoffLaunchedAt > 0;
+  const prompt = `<div class="prompt-box" aria-label="完整 extraction prompt">${esc(runtime.prompt || "正在載入 prompt…")}</div>`;
+  const actions = afterHandoff
+    ? `<p class="page-intro">從 ${esc(runtime.selectedAi)} 回來了嗎？貼上它給你的 JSON。</p>
+      <button class="button primary" style="width:100%" data-action="go-import">貼上最終 JSON</button>
+      <button class="button quiet" style="margin-top:9px;width:100%" data-action="launch-ai-with-prompt" ${promptReady ? "" : "disabled"}>再次開啟 ${esc(runtime.selectedAi)}</button>
+      <button class="text-action handoff-text-action" data-action="copy-prompt" ${promptReady ? "" : "disabled"}>Copy prompt again</button>`
+    : `${prompt}
+      <p class="subtle">AI 第一則會顯示精簡預覽，並一次列出實際發現的 security／privacy 項目；不會問介紹是否符合聊天歷史。選完所有 S 編號並加上「確認安全並產生 JSON」後，再複製下一則純 JSON。</p>
+      <button class="button primary" style="width:100%" data-action="launch-ai-with-prompt" ${promptReady ? "" : "disabled"}>${esc(handoffButtonLabel())}</button>
+      <p class="subtle" style="text-align:center;margin:9px 0 0">一次完成：將完整 Prompt 帶入 ${esc(runtime.selectedAi)} 並開啟；也會嘗試複製到剪貼簿作為備援。</p>
+      <button class="button quiet" style="margin-top:9px;width:100%" data-action="copy-prompt" ${promptReady ? "" : "disabled"}>Copy prompt</button>`;
+  const collapsedPrompt = afterHandoff
+    ? `<div class="settings-row"><span>Extraction prompt ready</span><button data-action="toggle-full-prompt">${runtime.showFullPrompt ? "Hide full prompt" : "Show full prompt"}</button></div>${runtime.showFullPrompt ? prompt : ""}`
+    : "";
+  return shell(`<p class="eyebrow">STEP 2 / 4 · HAND OFF</p>
+    <div class="prompt-meta"><a href="/assistant" data-link>更改 AI 或語言</a><span>${runtime.locale === "en" ? "English" : "繁體中文"}</span></div>
+    <h1 class="page-title">${afterHandoff ? "Bring your pitch back" : `Hand this to ${esc(runtime.selectedAi)}`}</h1>
+    <div class="progress" aria-label="Step 2 of 4"><span></span><span class="active"></span><span></span><span></span></div>
+    ${!promptReady ? '<div class="notice error">Prompt 尚未完成載入，請返回上一步再試。</div>' : ""}
+    ${collapsedPrompt}
+    ${actions}`);
 }
 
 function parseJsonCandidate(value) {
@@ -582,11 +622,14 @@ document.addEventListener("click", async (event) => {
       const response = await fetch(promptFileForLocale(), { cache: "no-store" });
       if (!response.ok) throw new Error(`Prompt 載入失敗（HTTP ${response.status}）`);
       runtime.prompt = await response.text();
-      writeJson(HANDOFF_KEY, { selectedAi: runtime.selectedAi, locale: runtime.locale, prompt: runtime.prompt });
+      runtime.handoffLaunchedAt = 0;
+      runtime.showFullPrompt = false;
+      saveHandoff();
       navigate("/handoff");
     }
     if (action === "launch-ai-with-prompt") await launchAiWithPrompt();
     if (action === "copy-prompt") await copyPrompt();
+    if (action === "toggle-full-prompt") { runtime.showFullPrompt = !runtime.showFullPrompt; render(); }
     if (action === "go-import") navigate("/import");
     if (action === "load-sample") { runtime.draft = structuredClone(SAMPLE_PROFILE); writeJson(DRAFT_KEY, runtime.draft); render(); }
     if (action === "resume-computer-draft") await resumeComputerDraft();
@@ -798,5 +841,9 @@ window.addEventListener("popstate", () => {
 document.addEventListener("visibilitychange", () => {
   if (document.hidden) stopMatchesPolling();
   else if (location.pathname === "/matches") ensureMatchesPolling();
+  else if (location.pathname === "/handoff") { rehydrateHandoff(); render(); }
+});
+window.addEventListener("pageshow", () => {
+  if (location.pathname === "/handoff") { rehydrateHandoff(); render(); }
 });
 loadProfileSchemaConfig().finally(render);

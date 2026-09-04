@@ -16,6 +16,7 @@ button{cursor:pointer}
 .wordmark{display:flex;align-items:center;justify-content:space-between;min-height:44px;font:600 10px/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
 .wordmark a{text-decoration:none}
 .wordmark .text-action{color:var(--blue);letter-spacing:.04em;text-transform:none}
+.text-action{color:var(--blue)}
 .eyebrow,.field-label,.step-label,.evidence-label,.status-label{font:600 10px/1.35 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
 .hero{flex:1;display:flex;flex-direction:column;justify-content:center;padding:54px 0 34px}
 .hero h1{margin:0;font-size:42px;line-height:1.01;letter-spacing:-.045em;font-weight:650}
@@ -33,6 +34,8 @@ button{cursor:pointer}
 .button.quiet{background:transparent;border-color:var(--line);color:#565650}
 .button.danger{border-color:var(--danger);color:var(--danger)}
 .button[disabled]{opacity:.48;cursor:wait}
+.handoff-text-action{align-self:center;min-height:44px;margin:6px auto 0;border:0;background:transparent;padding:10px 12px;font-weight:700}
+.handoff-text-action[disabled]{opacity:.48;cursor:wait}
 .button-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.7fr);gap:8px;margin-top:16px}
 .button-stack{display:grid;gap:9px}
 .page-title{margin:18px 0 5px;font-size:30px;line-height:1.08;letter-spacing:-.035em}
