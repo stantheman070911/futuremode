@@ -2,6 +2,7 @@ const STORAGE_KEY = "pitchyourowner.session.v1";
 const DRAFT_KEY = "pitchyourowner.draft.v1";
 const HANDOFF_KEY = "pitchyourowner.handoff.v1";
 const DISPLAY_NAME_KEY = "pitchyourowner.display-name.v1";
+const AUTH_FLOW_KEY = "pitchyourowner.auth-flow.v1";
 const DEMO_KEY = "pitchyourowner.demo.v1";
 const DEMO_DRAFT_KEY = "pitchyourowner.demo-draft.v1";
 const DEMO_MATCH_KEY = "pitchyourowner.demo-match.v1";
@@ -59,6 +60,7 @@ const DEMO_QUERY_ENABLED = new URLSearchParams(location.search).has("demo");
 const PERSISTED_DEMO_ENABLED = readJson(DEMO_KEY)?.enabled === true;
 const DEMO_AVAILABLE = ["127.0.0.1", "localhost"].includes(location.hostname) || DEMO_QUERY_ENABLED || PERSISTED_DEMO_ENABLED;
 const SAVED_HANDOFF = readJson(HANDOFF_KEY);
+const SAVED_AUTH_FLOW = readJson(AUTH_FLOW_KEY);
 
 const runtime = {
   session: readJson(STORAGE_KEY),
@@ -66,8 +68,12 @@ const runtime = {
   selectedAi: ["ChatGPT", "Claude", "Other AI"].includes(SAVED_HANDOFF?.selectedAi) ? SAVED_HANDOFF.selectedAi : "ChatGPT",
   locale: ["zh-Hant", "en"].includes(SAVED_HANDOFF?.locale) ? SAVED_HANDOFF.locale : "zh-Hant",
   displayName: readJson(DISPLAY_NAME_KEY) || "",
-  challengeId: null,
-  signinEmail: "",
+  challengeId: typeof SAVED_AUTH_FLOW?.challengeId === "string" ? SAVED_AUTH_FLOW.challengeId : null,
+  signinEmail: typeof SAVED_AUTH_FLOW?.email === "string" ? SAVED_AUTH_FLOW.email : "",
+  challengeExpiresAt: Number(SAVED_AUTH_FLOW?.expiresAt) || 0,
+  resendAt: Number(SAVED_AUTH_FLOW?.resendAt) || 0,
+  verificationCode: "",
+  codeError: "",
   prompt: typeof SAVED_HANDOFF?.prompt === "string" ? SAVED_HANDOFF.prompt : "",
   handoffLaunchedAt: Number(SAVED_HANDOFF?.launchedAt) || 0,
   showFullPrompt: false,
@@ -92,6 +98,7 @@ const runtime = {
 let matchesPollTimer = null;
 let matchesCountdownTimer = null;
 let nextMatchCheckAt = 0;
+let otpCountdownTimer = null;
 
 function readJson(key) {
   try { return JSON.parse(localStorage.getItem(key) || "null"); } catch { return null; }
@@ -109,6 +116,31 @@ function resetDemoMatch() {
 
 function saveDemoMatch() {
   writeJson(DEMO_MATCH_KEY, runtime.demoMatch);
+}
+
+function saveAuthFlow() {
+  if (!runtime.challengeId) {
+    writeJson(AUTH_FLOW_KEY, null);
+    return;
+  }
+  writeJson(AUTH_FLOW_KEY, {
+    challengeId: runtime.challengeId,
+    email: runtime.signinEmail,
+    expiresAt: runtime.challengeExpiresAt,
+    resendAt: runtime.resendAt,
+  });
+}
+
+function clearAuthFlow({ keepEmail = false } = {}) {
+  clearInterval(otpCountdownTimer);
+  otpCountdownTimer = null;
+  runtime.challengeId = null;
+  runtime.challengeExpiresAt = 0;
+  runtime.resendAt = 0;
+  runtime.verificationCode = "";
+  runtime.codeError = "";
+  if (!keepEmail) runtime.signinEmail = "";
+  writeJson(AUTH_FLOW_KEY, null);
 }
 
 function clearHandoff() {
@@ -188,6 +220,13 @@ function userFacingError(message, action = "retry", actionLabel = "Try again", o
 
 function mapError(identifier, status, body = {}) {
   const normalized = String(identifier || "").trim();
+  if (normalized === "verification_request_limited") {
+    const waitSeconds = Math.max(1, Number(body.retryAfterSeconds) || 30);
+    const waitText = waitSeconds >= 3600
+      ? `${Math.ceil(waitSeconds / 3600)} 小時`
+      : waitSeconds >= 60 ? `${Math.ceil(waitSeconds / 60)} 分鐘` : `${waitSeconds} 秒`;
+    return userFacingError(`驗證碼請求太頻繁。請在 ${waitText}後再試，或改用另一個 Email。`, "change-email", "Change email", { identifier: normalized, status, body });
+  }
   const definition = ERROR_DEFINITIONS[normalized]
     || (status === 401 ? ERROR_DEFINITIONS.invalid_cloud_session : null)
     || (status === 429 ? ["操作太頻繁。請稍候再試。", "retry", "Try again"] : null);
@@ -213,7 +252,7 @@ function setRuntimeError(error) {
   if (normalized.action === "signin") {
     if (runtime.draft) writeJson(DRAFT_KEY, runtime.draft);
     runtime.session = null;
-    runtime.challengeId = null;
+    clearAuthFlow();
     writeJson(STORAGE_KEY, null);
     history.replaceState({}, "", "/signin");
   }
@@ -228,6 +267,10 @@ function errorNotice() {
 
 function navigate(path) {
   if (path !== "/matches") stopMatchesPolling();
+  if (path !== "/signin") {
+    clearInterval(otpCountdownTimer);
+    otpCountdownTimer = null;
+  }
   history.pushState({}, "", path);
   runtime.error = "";
   runtime.notice = "";
@@ -401,6 +444,67 @@ async function retryCurrentScreen() {
   render();
 }
 
+function resendSecondsRemaining() {
+  return Math.max(0, Math.ceil((runtime.resendAt - Date.now()) / 1000));
+}
+
+function updateOtpCountdown() {
+  const remaining = resendSecondsRemaining();
+  const status = document.querySelector("[data-resend-countdown]");
+  const button = document.querySelector('[data-action="resend-code"]');
+  if (status) status.textContent = remaining ? `${remaining} 秒後可重新寄送` : "現在可以重新寄送驗證碼";
+  if (button) button.disabled = runtime.busy || remaining > 0;
+  if (!remaining) {
+    clearInterval(otpCountdownTimer);
+    otpCountdownTimer = null;
+  }
+}
+
+function ensureOtpCountdown() {
+  if (location.pathname !== "/signin" || !runtime.challengeId) {
+    clearInterval(otpCountdownTimer);
+    otpCountdownTimer = null;
+    return;
+  }
+  updateOtpCountdown();
+  if (resendSecondsRemaining() && !otpCountdownTimer) otpCountdownTimer = setInterval(updateOtpCountdown, 1000);
+}
+
+async function requestVerificationCode({ resend = false } = {}) {
+  try {
+    const result = await api("/v1/email-verifications", { method: "POST", body: JSON.stringify({ email: runtime.signinEmail }) });
+    const now = Date.now();
+    runtime.challengeId = result.challengeId;
+    runtime.challengeExpiresAt = now + Math.max(1, Number(result.expiresInSeconds) || 600) * 1000;
+    runtime.resendAt = now + 30 * 1000;
+    runtime.verificationCode = "";
+    runtime.codeError = "";
+    saveAuthFlow();
+    runtime.notice = resend ? "新的驗證碼已寄出" : "驗證碼已寄出";
+    announce(runtime.notice);
+  } catch (error) {
+    if (error?.identifier === "verification_request_limited") {
+      runtime.resendAt = Date.now() + Math.max(1, Number(error.body?.retryAfterSeconds) || 30) * 1000;
+      saveAuthFlow();
+    }
+    throw error;
+  }
+}
+
+async function resendVerificationCode({ ignoreCountdown = false } = {}) {
+  if ((!ignoreCountdown && resendSecondsRemaining() > 0) || runtime.busy) return;
+  runtime.busy = true;
+  runtime.error = "";
+  runtime.notice = "";
+  render();
+  try {
+    await requestVerificationCode({ resend: true });
+  } finally {
+    runtime.busy = false;
+    render();
+  }
+}
+
 function startScreen() {
   return shell(`<div class="hero">
     <h1>Your agent<br>knows you.<span>Let it pitch you.</span></h1>
@@ -418,15 +522,17 @@ function startScreen() {
 
 function signinScreen() {
   const codeStep = Boolean(runtime.challengeId);
+  if (codeStep) queueMicrotask(ensureOtpCountdown);
+  const remaining = resendSecondsRemaining();
   return shell(`<div>
     <p class="eyebrow">${codeStep ? "STEP 2 / 2 · VERIFY" : "STEP 1 / 2 · SIGN IN"}</p>
     <h1 class="page-title">${codeStep ? "Check your email" : "Start with your email"}</h1>
-    <p class="page-intro">${codeStep ? `六位數驗證碼已寄到 ${esc(runtime.signinEmail)}。` : "登入後，prompt、draft、pitch 與 invitation 才能由同一位 owner 控制。"}</p>
-    <form class="form" data-form="${codeStep ? "confirm-code" : "request-code"}">
-      ${codeStep ? `<label class="field"><span class="field-label">Verification code</span><input name="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required></label>` : `<label class="field"><span class="field-label">Email</span><input name="email" type="email" inputmode="email" autocomplete="email" required placeholder="owner@example.com"></label>`}
+    <p class="page-intro">${codeStep ? `六位數驗證碼已寄到<br><strong style="color:var(--ink);overflow-wrap:anywhere">${esc(runtime.signinEmail)}</strong>` : "登入後，prompt、draft、pitch 與 invitation 才能由同一位 owner 控制。"}</p>
+    <form class="form" data-form="${codeStep ? "confirm-code" : "request-code"}" ${codeStep ? "novalidate" : ""}>
+      ${codeStep ? `<label class="field"><span class="field-label">Verification code</span><input name="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required value="${esc(runtime.verificationCode)}" aria-describedby="code-error" ${runtime.codeError ? 'aria-invalid="true"' : ""}><span class="field-hint" id="code-error" ${runtime.codeError ? 'role="alert"' : ""}>${esc(runtime.codeError)}</span></label>` : `<label class="field"><span class="field-label">Email</span><input name="email" type="email" inputmode="email" autocomplete="email" required placeholder="owner@example.com" value="${esc(runtime.signinEmail)}"></label>`}
       <button class="button primary" ${runtime.busy ? "disabled" : ""}>${runtime.busy ? "處理中" : codeStep ? "Verify and continue" : "Send verification code"}</button>
     </form>
-    ${codeStep ? `<button class="button quiet" style="margin-top:9px;width:100%" data-action="change-email">Change email</button>` : ""}
+    ${codeStep ? `<button class="button quiet" style="margin-top:9px;width:100%" data-action="resend-code" ${runtime.busy || remaining ? "disabled" : ""}>Resend code</button><p class="subtle" style="text-align:center;margin:7px 0 0" data-resend-countdown aria-live="polite">${remaining ? `${remaining} 秒後可重新寄送` : "現在可以重新寄送驗證碼"}</p><button class="button quiet" style="margin-top:9px;width:100%" data-action="change-email">Change email</button>` : ""}
   </div>`);
 }
 
@@ -766,7 +872,8 @@ document.addEventListener("click", async (event) => {
     runtime.error = "";
     if (action === "begin") runtime.session ? await routeReturningOwner() : navigate("/signin");
     if (action === "demo-flow") { runtime.demo = true; runtime.draft = null; runtime.demoDraft = false; runtime.profile = null; runtime.profileLoaded = false; runtime.matches = null; runtime.invitations = null; runtime.match = null; runtime.displayName = "Ari C."; resetDemoMatch(); writeJson(DEMO_KEY, { enabled: true }); writeJson(DRAFT_KEY, null); writeJson(DEMO_DRAFT_KEY, null); writeJson(DISPLAY_NAME_KEY, runtime.displayName); navigate("/assistant"); }
-    if (action === "change-email") { runtime.challengeId = null; runtime.signinEmail = ""; render(); }
+    if (action === "change-email") { clearAuthFlow(); render(); }
+    if (action === "resend-code") await resendVerificationCode();
     if (action === "select-ai") { runtime.selectedAi = button.dataset.ai; render(); }
     if (action === "select-locale") { runtime.locale = button.dataset.locale === "en" ? "en" : "zh-Hant"; render(); }
     if (action === "create-prompt") {
@@ -794,8 +901,9 @@ document.addEventListener("click", async (event) => {
     if (action === "error-dismiss") { runtime.error = ""; render(); }
     if (action === "error-matches") navigate("/matches");
     if (action === "error-create-pitch") navigate("/assistant");
-    if (action === "error-change-email") { runtime.error = ""; runtime.challengeId = null; runtime.signinEmail = ""; render(); }
-    if (action === "error-signin") { runtime.error = ""; runtime.challengeId = null; history.replaceState({}, "", "/signin"); render(); requestAnimationFrame(() => document.querySelector('input[name="email"]')?.focus()); }
+    if (action === "error-change-email") { runtime.error = ""; clearAuthFlow(); render(); }
+    if (action === "error-resend") { runtime.error = ""; await resendVerificationCode({ ignoreCountdown: true }); }
+    if (action === "error-signin") { runtime.error = ""; clearAuthFlow(); history.replaceState({}, "", "/signin"); render(); requestAnimationFrame(() => document.querySelector('input[name="email"]')?.focus()); }
     if (action === "match-decision" && runtime.demo && button.dataset.decision === "not_now") {
       runtime.pendingMatchDecision = { matchId: button.dataset.matchId, decision: "not_now" };
       render();
@@ -815,22 +923,39 @@ document.addEventListener("click", async (event) => {
   }
 });
 
+document.addEventListener("input", (event) => {
+  if (event.target.matches('input[name="code"]')) {
+    runtime.verificationCode = event.target.value.replace(/\D/g, "").slice(0, 6);
+    if (event.target.value !== runtime.verificationCode) event.target.value = runtime.verificationCode;
+  }
+});
+
 document.addEventListener("submit", async (event) => {
   const form = event.target.closest("form[data-form]");
   if (!form) return;
   event.preventDefault();
+  const formData = new FormData(form);
+  if (form.dataset.form === "request-code") runtime.signinEmail = String(formData.get("email") || "").trim();
+  if (form.dataset.form === "confirm-code") {
+    runtime.verificationCode = String(formData.get("code") || "").replace(/\D/g, "").slice(0, 6);
+    if (!/^\d{6}$/.test(runtime.verificationCode)) {
+      runtime.codeError = "請輸入完整的六位數驗證碼。";
+      render();
+      requestAnimationFrame(() => document.querySelector('input[name="code"]')?.focus());
+      return;
+    }
+  }
   runtime.busy = true;
   runtime.error = "";
+  runtime.notice = "";
+  runtime.codeError = "";
   render();
   try {
-    const formData = new FormData(form);
     if (form.dataset.form === "request-code") {
-      runtime.signinEmail = String(formData.get("email") || "").trim();
-      const result = await api("/v1/email-verifications", { method: "POST", body: JSON.stringify({ email: runtime.signinEmail }) });
-      runtime.challengeId = result.challengeId;
-      runtime.notice = "驗證碼已寄出";
+      await requestVerificationCode();
     } else if (form.dataset.form === "confirm-code") {
-      const result = await api(`/v1/email-verifications/${encodeURIComponent(runtime.challengeId)}/confirm`, { method: "POST", body: JSON.stringify({ email: runtime.signinEmail, code: String(formData.get("code") || "") }) });
+      const result = await api(`/v1/email-verifications/${encodeURIComponent(runtime.challengeId)}/confirm`, { method: "POST", body: JSON.stringify({ email: runtime.signinEmail, code: runtime.verificationCode }) });
+      const confirmedEmail = runtime.signinEmail;
       const wasDemo = runtime.demo;
       if (wasDemo) {
         runtime.demo = false;
@@ -848,8 +973,9 @@ document.addEventListener("submit", async (event) => {
         writeJson(DRAFT_KEY, null);
         writeJson(DEMO_DRAFT_KEY, null);
       }
-      runtime.session = { accessToken: result.accessToken, email: runtime.signinEmail };
+      runtime.session = { accessToken: result.accessToken, email: confirmedEmail };
       writeJson(STORAGE_KEY, runtime.session);
+      clearAuthFlow();
       runtime.profileLoaded = false;
       await routeReturningOwner();
     } else if (form.dataset.form === "parse-json") {
@@ -870,7 +996,15 @@ document.addEventListener("submit", async (event) => {
       runtime.supportRequestId = result.requestId;
     }
   } catch (error) {
-    setRuntimeError(error);
+    if (form.dataset.form === "confirm-code" && error?.identifier === "invalid_or_expired_code") {
+      if (runtime.challengeExpiresAt && Date.now() >= runtime.challengeExpiresAt) {
+        setRuntimeError(userFacingError("這組驗證碼已到期。請重新寄送一組新的代碼。", "resend", "Resend code", { identifier: error.identifier }));
+      } else {
+        runtime.error = "";
+        runtime.codeError = "驗證碼不正確。請修改後再試；這次驗證仍然有效。";
+        announce(runtime.codeError);
+      }
+    } else setRuntimeError(error);
   } finally {
     runtime.busy = false;
     render();
@@ -975,6 +1109,7 @@ function signout() {
   runtime.demoDraft = false;
   runtime.demo = false;
   runtime.displayName = "";
+  clearAuthFlow();
   clearHandoff();
   writeJson(STORAGE_KEY, null);
   writeJson(DRAFT_KEY, null);
@@ -1052,8 +1187,10 @@ document.addEventListener("visibilitychange", () => {
   if (document.hidden) stopMatchesPolling();
   else if (location.pathname === "/matches") ensureMatchesPolling();
   else if (location.pathname === "/handoff") { rehydrateHandoff(); render(); }
+  else if (location.pathname === "/signin") ensureOtpCountdown();
 });
 window.addEventListener("pageshow", () => {
   if (location.pathname === "/handoff") { rehydrateHandoff(); render(); }
+  if (location.pathname === "/signin") ensureOtpCountdown();
 });
 loadProfileSchemaConfig().finally(render);
