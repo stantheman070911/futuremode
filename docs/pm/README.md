@@ -34,6 +34,10 @@ Project and Hackathon Guide and the Canonical Product Design.
 8. [Computer API｜電腦版 API](../computer-api.md)
    — 24-hour, single-use, write-only draft upload contract and final owner-review
    boundary.｜24 小時、單次、write-only 草稿上傳契約與 owner 最終審核邊界。
+9. [UX Implementation Plan｜使用者體驗實作計畫](ux-implementation-plan.md)
+   — prioritized, agent-ready plan covering the end-to-end journey, navigation, states,
+   and acceptance criteria for each UX change.｜以優先順序排列、可直接交付給 coding agent 的
+   計畫，涵蓋端到端旅程、導覽、各種狀態與每項變更的驗收標準。
 
 ## Current decision precedence｜目前決策優先順序
 
