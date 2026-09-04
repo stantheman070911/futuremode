@@ -15,19 +15,23 @@ Project and Hackathon Guide and the Canonical Product Design.
    隱私邊界、架構、MVP 與驗證優先順序。
 2. [Canonical Product Design｜正式產品設計](../product-design.md)
    — the authoritative product and experience specification.｜產品與體驗的唯一正式規格。
-3. [V2 Product Memo｜V2 產品備忘錄](v2-product-memo.md)
+3. [Customer Flow and Page Inventory｜顧客流程與頁面清單](customer-flow-and-page-inventory.md)
+   — the sign-in-to-connection journey, complete customer-facing page/state inventory,
+   recovery paths, and implementation gaps.｜從登入到雙方連結的旅程、完整顧客頁面／狀態清單、
+   復原路徑與實作缺口。
+4. [V2 Product Memo｜V2 產品備忘錄](v2-product-memo.md)
    — why the project broadened from developer work history to cross-domain friend
    discovery.｜為何從開發者工作紀錄擴展為跨領域朋友探索。
-4. [AWS Integration Decision Report｜AWS 整合決策報告](aws-integration-decision-report.md)
+5. [AWS Integration Decision Report｜AWS 整合決策報告](aws-integration-decision-report.md)
    — repository comparison, resolved requirement batches, architecture choices, and
    implementation implications.｜Repository 比較、分批需求決定、架構選擇與實作影響。
-5. [Cross-persona Corrected Experiment｜跨 Persona 修正版實驗](cross-persona-corrected-experiment.md)
+6. [Cross-persona Corrected Experiment｜跨 Persona 修正版實驗](cross-persona-corrected-experiment.md)
    — self-contained experiment design, corrected results, known flaws, and next
    validation direction.｜可獨立閱讀的實驗設計、修正結果、已知缺陷與下一步驗證方向。
-6. [AWS Build and Verification Report｜AWS 建置與驗證報告](aws-build-and-verification-report.md)
+7. [AWS Build and Verification Report｜AWS 建置與驗證報告](aws-build-and-verification-report.md)
    — implemented flow, deployed stack, automated and browser verification, and current
    operational risks.｜已實作流程、已部署 stack、自動化與瀏覽器驗證及目前維運風險。
-7. [Computer API｜電腦版 API](../computer-api.md)
+8. [Computer API｜電腦版 API](../computer-api.md)
    — 24-hour, single-use, write-only draft upload contract and final owner-review
    boundary.｜24 小時、單次、write-only 草稿上傳契約與 owner 最終審核邊界。
 
