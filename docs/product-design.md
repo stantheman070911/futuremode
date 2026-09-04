@@ -1,8 +1,8 @@
 # PitchYourOwner — Product Design｜產品設計
 
-_Canonical product and experience specification · updated 2026-09-03_
+_Canonical product and experience specification · updated 2026-09-04_
 
-_產品與體驗的唯一正式規格 · 更新於 2026-09-03_
+_產品與體驗的唯一正式規格 · 更新於 2026-09-04_
 
 The original [`README.md`](../README.md) is a frozen product memo retained for context.
 This document is the current source of truth for what the experience should be.
@@ -11,11 +11,29 @@ This document is the current source of truth for what the experience should be.
 體驗的唯一正式依據。
 
 [`design/prototype.html`](../design/prototype.html) is the current interactive visual
-exploration. It contains alternatives rather than settled requirements; when it differs
-from this document, this document wins.
+exploration. It still contains alternatives from the decision phase; the next prototype
+must implement the confirmed direction below. When it differs from this document, this
+document wins.
 
-[`design/prototype.html`](../design/prototype.html) 是目前的互動式視覺探索，其中包含多種
-方案而非已定案需求；若與本文件不同，以本文件為準。
+[`design/prototype.html`](../design/prototype.html) 是目前的互動式視覺探索，仍保留決策階段
+的多種方案；下一版 prototype 必須實作下列已確認方向。若與本文件不同，以本文件為準。
+
+## 0. Confirmed prototype direction｜已確認的 Prototype 方向
+
+All five product-design decisions were completed on 2026-09-04. These are requirements
+for the next prototype and implementation plan; unselected variants remain reference
+material, not fallback requirements.
+
+五項產品設計決策已於 2026-09-04 全部完成。以下內容是下一版 prototype 與 implementation
+plan 的必要條件；未選方案只保留作為參考，不是備援需求。
+
+| Surface｜畫面 | Confirmed direction｜已確認方向 | Required treatment｜必要處理 |
+| --- | --- | --- |
+| Confidence｜信心 | Retain for owner review only｜只保留於 owner review | Qualitative `high`／`medium`／`low`; never public and never used in matching｜使用定性等級；不公開，也不參與配對 |
+| Start｜開始 | **1b — Typographic promise** | Lead with the promise and preview both owner-review checkpoints｜先呈現產品承諾，並預告兩個 owner review 關卡 |
+| Handoff｜交接 | **1d — Prompt is the object** | Make the complete prompt visible and primary; show copy, open, and return actions without unobservable live status｜完整 prompt 為主體；顯示複製、開啟與返回操作，不呈現無法觀測的即時狀態 |
+| My Pitch｜我的介紹 | **1f — Document fields** | Show all configured fields in a document layout; move `history_scope` to the top; show confidence only to the owner during review｜以文件式版面呈現全部欄位；`history_scope` 移到頂部；confidence 只在 owner review 顯示 |
+| Match detail｜配對詳情 | **1h — Three questions** | Answer the three explanation questions and label the supporting profile evidence; do not expose confidence or a numeric score｜回答三個配對問題並標示所依據的 profile 欄位；不顯示 confidence 或數字分數 |
 
 ## 1. Product intent｜產品意圖
 
@@ -73,14 +91,20 @@ relevant than a conventional self-written profile.
    motivation, active problem, or recurring question—not a broad category.
    **相關性來自共享的深度。** 配對依據是具體興趣、目前動機、當前問題或反覆疑問，
    不是廣泛分類。
-3. **Consent is explicit and consolidated.** The owner sees the entire proposed pitch
-   and makes one final publishing decision. Silence, ambiguity, or edits without final
-   approval never count as consent.
-   **同意必須明確且集中。** Owner 先看完整提案，再做一次最終發布決定。未回覆、模糊
-   回覆，或僅修改但未最終核准，都不構成同意。
-4. **Privacy is visible.** The experience explains what context was available, what was
-   excluded, and what will be shared before publication.
-   **隱私必須可見。** 發布前，體驗需說明哪些脈絡可用、哪些已排除，以及將分享什麼。
+3. **Consent has two distinct checkpoints.** The AI chat asks once only for decisions
+   about specific detected security/privacy concerns and confirmation that those
+   decisions may be applied. After paste-back, PitchYourOwner asks once for final
+   publication approval. Silence, ambiguity, or edits without the relevant approval
+   never count as consent.
+   **同意有兩個目的不同的關卡。** AI 對話頁只針對實際偵測到的 security／privacy 疑慮，
+   一次取得處理選擇與套用確認；貼回後，
+   PitchYourOwner 再一次取得最終發布授權。未回覆、模糊回覆，或僅修改但未完成相應核准，
+   都不構成同意。
+4. **The data boundary is visible.** The AI discloses what context it could access and
+   completes sensitive-data handling before transfer. The site shows exactly which
+   final profile fields it will store and does not repeat sensitive-data processing.
+   **資料邊界必須可見。** AI 說明實際可存取的脈絡，並在傳輸前完成敏感資料處理；網站
+   顯示將儲存的最終 profile 欄位，不重複執行敏感資料處理。
 5. **A match explains itself.** The reason to meet must be concrete and readable without
    a score or opaque ranking language.
    **配對必須能自我解釋。** 值得認識的理由需具體且可讀，不依賴分數或不透明的排序語言。
@@ -90,56 +114,75 @@ relevant than a conventional self-written profile.
 
 ## 3. Core user journey｜核心使用者旅程
 
-> Understand the promise → choose an AI → hand off the prompt → review one complete
-> pitch → publish → understand a match → invite → mutually accept
+> Understand the promise → choose an AI → hand off the prompt → confirm the complete
+> security/privacy decisions in the AI → paste JSON → edit fields → final publish review → understand a
+> match → invite → mutually accept
 >
-> 理解承諾 → 選擇 AI → 交付提示詞 → 審核一份完整介紹 → 發布 → 理解配對 → 邀請 →
-> 雙方接受
+> 理解承諾 → 選擇 AI → 交付提示詞 → 在 AI 處理具體 security／privacy 決定 → 貼回 JSON → 編輯欄位 →
+> 最終發布審核 → 理解配對 → 邀請 → 雙方接受
 
 ### 1. Understand and begin｜理解並開始
 
-The start screen states the outcome, estimated effort, supported assistants, and
-**“Raw chats are not uploaded.”** The user selects an assistant and chooses
-**Let my agent pitch me**.
+The start screen states the outcome, estimated effort, supported assistants, and the two
+owner-review checkpoints. The user selects an assistant and chooses **Let my agent pitch me**.
 
-開始頁說明成果、預估投入時間、支援的助理，以及 **「不會上傳原始對話」**。使用者選擇
-助理並點選 **Let my agent pitch me**。
+開始頁說明成果、預估投入時間、支援的助理，以及兩個 owner review 關卡。使用者選擇助理
+並點選 **Let my agent pitch me**。
 
 ### 2. Hand off to the chosen AI｜交付給選定的 AI
 
-The product gives the user one clear sequence—**Create prompt → Ask your AI → Confirm
-once → Pitch ready**—and lets them copy or share the prompt. A visible expiry prevents
+The product gives the user one clear sequence—**Create prompt → Ask your AI → Resolve
+security/privacy items → Copy JSON back**—and lets them copy or share the prompt. A visible expiry prevents
 surprise when an old handoff can no longer be completed.
 
-產品呈現單一明確流程：**建立提示詞 → 詢問你的 AI → 一次確認 → Pitch ready**，並允許
+產品呈現單一明確流程：**建立提示詞 → 詢問你的 AI → 處理 security／privacy 項目 → 複製 JSON 回網站**，並允許
 複製或分享提示詞。清楚顯示到期時間，避免舊交接失效時造成意外。
 
 ### 3. Generate a grounded proposal｜產生有依據的提案
 
 The AI uses only context the owner authorized and the assistant can actually access. It
-produces one complete proposal, excludes raw conversations and verbatim excerpts, and
-generalizes sensitive details. It prioritizes repeated or explicitly important signals,
+produces one complete proposal and generalizes sensitive details. It prioritizes repeated or explicitly important signals,
 distinguishes user-stated facts from cross-conversation inference, and excludes resolved
 or one-off matters from claims about current attention. When context is insufficient, it
 says so and offers selected chats or a user-provided export; it never invents a profile
 or starts a forced multi-round interview.
 
-AI 只使用 owner 已授權且助理確實可存取的脈絡，產生一份完整提案，排除原始對話與逐字
-引用，並概括化敏感細節。內容優先採用反覆出現或被明確指出為重要的訊號，區分使用者
+AI 只使用 owner 已授權且助理確實可存取的脈絡，產生一份完整提案，並概括化敏感細節。
+內容優先採用反覆出現或被明確指出為重要的訊號，區分使用者
 明確陳述與跨對話歸納，並排除已解決或一次性的事項，不將其描述為目前關注。若脈絡不足，
 AI 必須坦白說明，並提供指定對話或使用者匯出資料的方式；不得虛構檔案，也不得強迫進入
 多輪訪談。
 
-### 4. Review and approve once｜一次審核與核准
+### 4. Resolve transfer risks, then authorize publication｜先處理傳輸風險，再授權發布
 
-The owner sees every field, the accessible-history scope, confidence, and any sensitive
-details that were removed or generalized. They may edit, cancel, or explicitly approve.
-There is exactly one final publishing confirmation, made either in the AI when direct
-transfer is available or in the product’s **Review & Publish** fallback.
+The AI chat first shows a concise synthesis instead of expanding every schema field
+line by line. It scans the proposed transfer across authentication secrets, private
+infrastructure, identifying personal data, third-party data, organizational secrets,
+highly sensitive personal data, re-identification combinations, and sharing rights.
+It asks only about issues actually detected—never whether the profile matches chat
+history and never a generic or open profile question. Every issue has an `S1`, `S2`, ...
+identifier, a concrete risk, and explicit remove/replace/authorized-keep options where
+appropriate. The owner chooses all options in one message and adds the exact security
+confirmation phrase. After every decision and explicit confirmation, the AI returns
+exactly one parseable profile JSON object with no surrounding prose or Markdown; it
+does not publish the profile.
 
-Owner 會看到每個欄位、可存取的歷史範圍、信心程度，以及被移除或概括的敏感細節，並可
-修改、取消或明確核准。最終發布確認只發生一次：有直接傳輸時在 AI 中完成；使用備援時則
-在產品的 **Review & Publish** 畫面完成。
+AI 對話頁先顯示精簡的整體摘要，不把 schema 欄位逐欄展開，並針對 authentication secrets、
+私人基礎設施、可識別個人資料、第三方資料、組織機密、高敏感個資、組合識別風險與分享
+權限掃描擬傳輸內容。它只詢問實際偵測到的問題，不詢問 profile 是否吻合聊天歷史，也不問
+一般或開放式 profile 問題。每項問題使用 `S1`、`S2`… 編號，說明具體風險，並在適用時提供
+明確的移除／替換／經授權保留選項。Owner 在一則訊息選完所有項目並加入確切的 security
+確認語。完成全部決定與明確確認後，AI 只回傳一個可直接解析、前後沒有說明或 Markdown 的
+profile JSON，不直接發布。
+
+On PitchYourOwner, the owner pastes the JSON into an editable field form. **Continue**
+opens a separate read-only review. **Confirm & upload** is the only publication action;
+**Back to edit** preserves all edits. The site does not show a privacy ledger and does
+not detect, filter, label, or rewrite sensitive data.
+
+回到 PitchYourOwner 後，owner 將 JSON 貼入可編輯欄位表單。點選 **Continue** 進入獨立的
+唯讀審核頁；只有 **Confirm & upload** 會發布，**Back to edit** 會保留所有修改。網站不顯示
+privacy ledger，也不偵測、過濾、標示或改寫敏感資料。
 
 ### 5. See My Pitch｜查看我的介紹
 
@@ -187,8 +230,8 @@ fifth permanent destination.
 ### Start｜開始
 
 - Lead with the promise and one primary action.｜以產品承諾與單一主要操作開場。
-- Show supported AI choices, estimated time, and the raw-chat privacy statement before
-  the user acts.｜操作前顯示支援的 AI、預估時間與原始對話隱私聲明。
+- Show supported AI choices, estimated time, and the owner-review checkpoints before
+  the user acts.｜操作前顯示支援的 AI、預估時間與 owner review 關卡。
 - Do not require profile forms before the value proposition is understood.
   在使用者理解價值主張前，不要求填寫個人檔案表單。
 
@@ -200,7 +243,7 @@ fifth permanent destination.
 - When expired, explain what happened and provide one action to create a fresh handoff.
   到期時說明原因，並提供單一操作重新建立交接。
 
-### Review & Publish fallback｜審核與發布備援
+### Import, edit, and final review｜匯入、編輯與最終審核
 
 - Accept pasted or shared structured content, then render the full pitch in human
   language before asking for approval.｜接收貼上或分享的結構化內容後，先以人類可讀方式
@@ -256,10 +299,12 @@ fifth permanent destination.
 
 ## 6. Pitch content model｜介紹內容模型
 
-The pitch contains nine user-meaningful parts. Field names are not UI labels; the UI
+The pitch contains seven public/matchable profile dimensions plus configurable owner-only
+confidence metadata. Field names are not UI labels; the UI
 uses natural language appropriate to the selected language.
 
-介紹包含九個對使用者有意義的部分。欄位名稱不是 UI 標籤；介面應依選定語言使用自然文案。
+介紹包含七個可公開／可配對的 profile 維度，以及可設定、僅 owner 可見的 confidence metadata。
+欄位名稱不是 UI 標籤；介面應依選定語言使用自然文案。
 
 | Part｜部分 | Purpose｜用途 |
 | --- | --- |
@@ -270,8 +315,7 @@ uses natural language appropriate to the selected language.
 | Recurring topics｜反覆主題 | Questions the owner returns to｜Owner 持續回到的問題 |
 | Friend intent｜交友意圖 | The person or conversation they hope to find｜希望找到的人或對話 |
 | History scope｜歷史範圍 | What context was and was not available｜哪些脈絡可用、哪些不可用 |
-| Confidence｜信心 | How strongly each claim is supported｜每項描述的支持程度 |
-| Sensitive-data note｜敏感資料說明 | What was removed or generalized｜哪些內容已移除或概括 |
+| Confidence｜信心（owner only） | Qualitative review aid; never public and never used in matching｜定性的審核輔助；不公開且不參與配對 |
 
 Specificity is the quality bar: **“low-light street photography”** is useful;
 **“photography”** alone is not. Claims should describe current attention without
@@ -301,17 +345,17 @@ photography and dance through an interest in how posture communicates emotion.
 ## 8. Trust, privacy, and safety｜信任、隱私與安全
 
 > Authorized private context → inference inside the chosen AI → abstraction → sensitive
-> detail check → owner approval → shared pitch
+> detail check and specific security/privacy decisions in the AI → final JSON → publication approval
+> in PitchYourOwner → shared pitch
 >
-> 經授權的私密脈絡 → 在選定 AI 中推論 → 抽象化 → 敏感細節檢查 → owner 核准 → 分享介紹
+> 經授權的私密脈絡 → 在選定 AI 中推論 → 抽象化 → 在 AI 進行敏感細節檢查與具體 security／privacy 決定 →
+> 最終 JSON → 在 PitchYourOwner 授權發布 → 分享介紹
 
-- Raw histories never enter PitchYourOwner; verbatim excerpts are excluded by default.
-  原始紀錄永不進入 PitchYourOwner；逐字引用預設排除。
-- Names, exact locations, credentials, private repositories, customer details,
-  confidential relationships, internal metrics, health information, and proprietary
-  identifiers are omitted or generalized before review.
-  姓名、精確位置、憑證、私人儲存庫、客戶資料、機密關係、內部指標、健康資訊與專有識別
-  資訊，必須在審核前移除或概括。
+- The generated prompt instructs the chosen AI to identify, label, omit, or generalize
+  sensitive content and show that handling to the owner before transfer. PitchYourOwner
+  does not repeat this processing and does not receive a sensitive-data ledger.
+  產生的提示詞要求選定 AI 在傳輸前辨識、標示、移除或概括敏感內容，並向 owner 顯示處理
+  結果。PitchYourOwner 不重複此處理，也不接收 sensitive-data ledger。
 - Every shared claim is visibly owner-approved and conversation-derived.
   每項分享的描述都明確標示為 owner 已核准且由對話衍生。
 - Unapproved pitches are invisible and never used for matching.
@@ -372,21 +416,23 @@ The experience is ready to evaluate when all of the following are observable:
 
 當以下條件皆可觀察時，體驗才可進入評估：
 
-1. A new user can explain the promise and the raw-chat boundary before beginning.
-   新使用者在開始前能說明產品承諾與原始對話的界線。
+1. A new user can explain the promise and the two owner-review checkpoints before beginning.
+   新使用者在開始前能說明產品承諾與兩個 owner review 關卡。
 2. The entire journey can be completed on a phone, including the universal copy/share
    fallback.｜完整旅程能在手機上完成，包含通用的複製／分享備援。
-3. The owner encounters one final confirmation, sees every pitch field, and can edit or
-   cancel before publishing.｜Owner 只遇到一次最終確認、能看到所有介紹欄位，並可在發布前
-   修改或取消。
+3. The owner completes one batch of decisions covering every detected security/privacy
+   issue in the AI and one final
+   publication confirmation in PitchYourOwner. The site shows every imported field,
+   supports editing before the read-only review, and preserves edits when returning.
+   Owner 在 AI 以一批回答處理所有實際偵測到的 security／privacy 問題，並在 PitchYourOwner 完成一次最終發布確認；
+   網站顯示所有匯入欄位、在唯讀審核前允許編輯，返回時保留修改。
 4. No unapproved pitch appears to another person or participates in matching.
    未核准的介紹不會被他人看見，也不會參與配對。
 5. Every surfaced match names concrete shared attention and answers the three Match
    Detail questions.｜每個呈現的配對都指出具體的共同關注，並回答配對詳情的三個問題。
 6. A pair sharing only a broad category is not surfaced.｜只共享廣泛分類的兩人不會被呈現。
-7. No user-facing surface exposes raw conversation content, private decline reasons,
-   numeric match scores, or popularity signals.｜任何使用者介面都不揭露原始對話、私密拒絕
-   原因、數字配對分數或人氣訊號。
+7. No user-facing surface exposes private decline reasons, numeric match scores, or
+   popularity signals.｜任何使用者介面都不揭露私密拒絕原因、數字配對分數或人氣訊號。
 8. An introduction appears only after the recipient accepts, including simultaneous
    invitation cases.｜只有接收者接受後才形成引介，包含雙方同時邀請的情況。
 9. Expired handoffs, malformed imports, insufficient AI context, zero matches, and
