@@ -1,0 +1,25 @@
+{
+  "name": "@workspace/aws-serverless-foundation",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc --noEmit",
+    "test": "node --import tsx --test test/**/*.test.ts"
+  },
+  "dependencies": {
+    "@aws-sdk/client-bedrock-runtime": "3.1111.0",
+    "@aws-sdk/client-dynamodb": "3.1111.0",
+    "@aws-sdk/client-sesv2": "3.1111.0",
+    "@aws-sdk/lib-dynamodb": "3.1111.0",
+    "aws-cdk-lib": "2.265.0",
+    "constructs": "10.8.1"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "8.10.152",
+    "@types/node": "24.3.0",
+    "esbuild": "0.25.9",
+    "tsx": "4.20.5",
+    "typescript": "5.9.2"
+  }
+}
