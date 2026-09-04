@@ -4,7 +4,7 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const packageDir = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const source = resolve(packageDir, "..", "..", "..", "config", "pitchyourowner-profile-schema.json");
+const source = resolve(packageDir, "..", "..", "config", "pitchyourowner-profile-schema.json");
 const targets = [
   resolve(packageDir, "config", "pitchyourowner-profile-schema.json"),
   resolve(packageDir, "static", "pitchyourowner-profile-schema.json"),
