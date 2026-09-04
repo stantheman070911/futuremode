@@ -3,6 +3,9 @@ const DRAFT_KEY = "pitchyourowner.draft.v1";
 const HANDOFF_KEY = "pitchyourowner.handoff.v1";
 const DISPLAY_NAME_KEY = "pitchyourowner.display-name.v1";
 const DEMO_KEY = "pitchyourowner.demo.v1";
+const LAST_PUBLISH_KEY = "pitchyourowner.last-publish.v1";
+const MATCH_SEARCH_WINDOW_MS = 3 * 60 * 1000;
+const MATCH_POLL_INTERVAL_MS = 6 * 1000;
 let CONFIDENCE_FIELDS = ["summary", "interests", "motivations", "active_problems", "recurring_topics", "friend_intent"];
 let CONFIDENCE_LEVELS = ["high", "medium", "low"];
 let ARRAY_FIELDS = ["interests", "motivations", "active_problems", "recurring_topics"];
@@ -74,7 +77,13 @@ const runtime = {
   uploadSession: null,
   supportRequestId: null,
   demo: DEMO_QUERY_ENABLED || PERSISTED_DEMO_ENABLED,
+  lastPublishAt: Number(readJson(LAST_PUBLISH_KEY)) || 0,
+  matchesPollError: false,
 };
+
+let matchesPollTimer = null;
+let matchesCountdownTimer = null;
+let nextMatchCheckAt = 0;
 
 function readJson(key) {
   try { return JSON.parse(localStorage.getItem(key) || "null"); } catch { return null; }
@@ -104,12 +113,47 @@ function announce(message) {
 }
 
 function navigate(path) {
+  if (path !== "/matches") stopMatchesPolling();
   history.pushState({}, "", path);
   runtime.error = "";
   runtime.notice = "";
   runtime.match = null;
   window.scrollTo(0, 0);
   render();
+}
+
+function isRecentPublish() {
+  return runtime.lastPublishAt > 0 && Date.now() - runtime.lastPublishAt < MATCH_SEARCH_WINDOW_MS;
+}
+
+function stopMatchesPolling() {
+  clearTimeout(matchesPollTimer);
+  clearInterval(matchesCountdownTimer);
+  matchesPollTimer = null;
+  matchesCountdownTimer = null;
+  nextMatchCheckAt = 0;
+}
+
+function updateMatchCountdown() {
+  const line = document.querySelector("[data-match-countdown]");
+  if (!line) return;
+  const seconds = Math.max(0, Math.ceil((nextMatchCheckAt - Date.now()) / 1000));
+  line.textContent = `Checking again in ${seconds}s`;
+}
+
+function ensureMatchesPolling() {
+  if (location.pathname !== "/matches" || document.hidden || !isRecentPublish() || runtime.matchesPollError || runtime.matches?.length) {
+    stopMatchesPolling();
+    return;
+  }
+  if (matchesPollTimer) return;
+  nextMatchCheckAt = Date.now() + MATCH_POLL_INTERVAL_MS;
+  updateMatchCountdown();
+  matchesCountdownTimer = setInterval(updateMatchCountdown, 1000);
+  matchesPollTimer = setTimeout(async () => {
+    stopMatchesPolling();
+    await loadMatches({ polling: true });
+  }, MATCH_POLL_INTERVAL_MS);
 }
 
 async function api(path, options = {}) {
@@ -388,14 +432,44 @@ function matchesScreen() {
     return shell('<div class="loading">Looking for specific overlap</div>', { nav: true, active: "matches" });
   }
   const visible = runtime.matches.filter((match) => match.state !== "not_now");
-  if (!visible.length) return shell(`<div class="empty"><p class="eyebrow">MATCHES</p><h2>No filler.</h2><p>目前還沒有能具體說明理由的配對。若剛發布 pitch，matching 可能仍在執行。</p><button class="button primary" data-action="refresh-matches">Check again</button></div>`, { nav: true, active: "matches" });
+  if (!visible.length && runtime.matchesPollError) {
+    stopMatchesPolling();
+    return shell(`<div class="empty"><p class="eyebrow">MATCHES</p><h2>Matching paused</h2><p>我們暫時無法檢查新配對。你的 pitch 已安全保存。</p><button class="button primary" data-action="retry-matches">Try again</button></div>`, { nav: true, active: "matches" });
+  }
+  if (!visible.length && isRecentPublish()) {
+    queueMicrotask(ensureMatchesPolling);
+    return shell(`<div class="empty"><p class="eyebrow">MATCHES · SEARCHING</p><h2>你的 Agent 正在尋找</h2><p>正在把你的 pitch 與其他 owners 比較。通常一分鐘內就能完成。</p><p class="status-label" data-match-countdown aria-live="polite">Checking again in 6s</p></div>`, { nav: true, active: "matches" });
+  }
+  if (!visible.length) {
+    stopMatchesPolling();
+    return shell(`<div class="empty"><p class="eyebrow">MATCHES</p><h2>No filler.</h2><p>目前還沒有能具體說明理由的配對。每當有新的 owner 發布 pitch，系統會再次進行配對。</p><button class="button primary" data-action="refresh-matches">Check again</button></div>`, { nav: true, active: "matches" });
+  }
+  stopMatchesPolling();
   return shell(`<h1 class="page-title">Matches</h1><p class="page-intro">少量、具體、可以解釋的朋友配對。</p><div class="match-list">${visible.map((match) => `<a class="match-card" href="/matches/${encodeURIComponent(match.match_id)}" data-link><div class="match-card-head"><h2>${esc(match.peer.display_name)}</h2><span class="status-label">${esc(match.state)}</span></div><p>${esc(match.explanation.what_we_both_care_about)}</p><div class="evidence" style="margin-top:12px">${match.explanation.evidence_labels.map((label) => `<span class="evidence-label">${esc(label)}</span>`).join("")}</div></a>`).join("")}</div>`, { nav: true, active: "matches" });
 }
 
-async function loadMatches() {
-  if (runtime.demo) { runtime.matches = [structuredClone(DEMO_MATCH)]; queueMicrotask(render); return; }
-  try { runtime.matches = (await api("/v1/matches")).matches || []; }
-  catch (error) { runtime.matches = []; runtime.error = error.message; }
+async function loadMatches({ polling = false } = {}) {
+  const wasSearching = polling || (Array.isArray(runtime.matches) && runtime.matches.length === 0 && isRecentPublish());
+  if (runtime.demo) {
+    runtime.matches = isRecentPublish() && Date.now() - runtime.lastPublishAt < MATCH_POLL_INTERVAL_MS
+      ? []
+      : [structuredClone(DEMO_MATCH)];
+    runtime.matchesPollError = false;
+    if (wasSearching && runtime.matches.length) announce("找到 1 個配對");
+    queueMicrotask(render);
+    return;
+  }
+  try {
+    runtime.matches = (await api("/v1/matches")).matches || [];
+    runtime.matchesPollError = false;
+    if (wasSearching && runtime.matches.length) announce(`${runtime.matches.length} match${runtime.matches.length === 1 ? "" : "es"} found`);
+  }
+  catch (error) {
+    runtime.matches = [];
+    runtime.matchesPollError = true;
+    runtime.error = error.message;
+    stopMatchesPolling();
+  }
   render();
 }
 
@@ -526,7 +600,8 @@ document.addEventListener("click", async (event) => {
       navigate("/import");
     }
     if (action === "refresh-pitch") { runtime.draft = null; writeJson(DRAFT_KEY, null); navigate("/assistant"); }
-    if (action === "refresh-matches") { runtime.matches = null; render(); }
+    if (action === "refresh-matches") { runtime.matchesPollError = false; runtime.matches = null; render(); }
+    if (action === "retry-matches") { runtime.error = ""; runtime.matchesPollError = false; runtime.matches = null; render(); }
     if (action === "match-decision") await decideMatch(button.dataset.matchId, button.dataset.decision);
     if (action === "create-upload-session") { runtime.uploadSession = await api("/v1/upload-sessions", { method: "POST", body: "{}" }); render(); }
     if (action === "delete-profile") await deleteProfile();
@@ -590,7 +665,9 @@ async function publishProfile() {
     runtime.profile = { profile: structuredClone(runtime.draft), profile_id: "demo-owner", version_id: "demo-v1" };
     runtime.profileLoaded = true;
     runtime.draft = null;
-    runtime.matches = [structuredClone(DEMO_MATCH)];
+    runtime.matches = null;
+    runtime.lastPublishAt = Date.now();
+    writeJson(LAST_PUBLISH_KEY, runtime.lastPublishAt);
     writeJson(DRAFT_KEY, null);
     clearHandoff();
     runtime.busy = false;
@@ -608,6 +685,8 @@ async function publishProfile() {
   runtime.profileLoaded = true;
   runtime.draft = null;
   runtime.matches = null;
+  runtime.lastPublishAt = Date.now();
+  writeJson(LAST_PUBLISH_KEY, runtime.lastPublishAt);
   writeJson(DRAFT_KEY, null);
   clearHandoff();
   runtime.notice = "Pitch published. Matching started.";
@@ -652,6 +731,10 @@ function signout() {
   writeJson(DRAFT_KEY, null);
   writeJson(DISPLAY_NAME_KEY, null);
   writeJson(DEMO_KEY, null);
+  writeJson(LAST_PUBLISH_KEY, null);
+  runtime.lastPublishAt = 0;
+  runtime.matchesPollError = false;
+  stopMatchesPolling();
   navigate("/");
 }
 
@@ -708,5 +791,12 @@ async function loadProfileSchemaConfig() {
   }
 }
 
-window.addEventListener("popstate", render);
+window.addEventListener("popstate", () => {
+  if (location.pathname !== "/matches") stopMatchesPolling();
+  render();
+});
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) stopMatchesPolling();
+  else if (location.pathname === "/matches") ensureMatchesPolling();
+});
 loadProfileSchemaConfig().finally(render);
