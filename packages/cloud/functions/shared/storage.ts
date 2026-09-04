@@ -1,13 +1,7 @@
-import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
+import { createDynamoClients, requiredEnvironment } from "../../lib/reusable/aws-clients.js";
 
-export const rawDynamo = new DynamoDBClient({});
-export const documentDynamo = DynamoDBDocumentClient.from(rawDynamo, {
-  marshallOptions: { removeUndefinedValues: true },
-});
+const clients = createDynamoClients();
 
-export function requiredEnvironment(name: string): string {
-  const value = process.env[name];
-  if (!value) throw new Error(`missing environment variable ${name}`);
-  return value;
-}
+export const rawDynamo = clients.raw;
+export const documentDynamo = clients.document;
+export { requiredEnvironment };

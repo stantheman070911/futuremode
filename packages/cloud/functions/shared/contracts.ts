@@ -1,5 +1,5 @@
-import { createHash } from "node:crypto";
 import profileSchemaConfig from "../../config/pitchyourowner-profile-schema.json" with { type: "json" };
+import { contentFingerprint, stableStringify } from "../../lib/reusable/core.js";
 
 export const PROFILE_SCHEMA = "pitchyourowner.profile-publish.v1" as const;
 type CoreProfileField = keyof typeof profileSchemaConfig.core_fields;
@@ -123,17 +123,8 @@ export function publicProfile(profile: OwnerPitchProfile): Omit<OwnerPitchProfil
   return shareable;
 }
 
-export function stableStringify(value: unknown): string {
-  if (Array.isArray(value)) return `[${value.map(stableStringify).join(",")}]`;
-  if (value && typeof value === "object") {
-    return `{${Object.entries(value)
-      .sort(([left], [right]) => left.localeCompare(right))
-      .map(([key, nested]) => `${JSON.stringify(key)}:${stableStringify(nested)}`)
-      .join(",")}}`;
-  }
-  return JSON.stringify(value);
+export function payloadHash(payload: PublishPayload | OwnerPitchProfile): string {
+  return contentFingerprint(payload);
 }
 
-export function payloadHash(payload: PublishPayload | OwnerPitchProfile): string {
-  return createHash("sha256").update(stableStringify(payload)).digest("hex");
-}
+export { stableStringify };

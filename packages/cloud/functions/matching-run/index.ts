@@ -1,7 +1,8 @@
 import { SearchVectorsCommand } from "@aws-sdk/client-dynamodb";
-import { BedrockRuntimeClient, ConverseCommand } from "@aws-sdk/client-bedrock-runtime";
+import { BedrockRuntimeClient } from "@aws-sdk/client-bedrock-runtime";
 import { unmarshall } from "@aws-sdk/util-dynamodb";
 import { GetCommand, ScanCommand, TransactWriteCommand } from "@aws-sdk/lib-dynamodb";
+import { judgeJson } from "../../lib/reusable/bedrock.js";
 import { randomOpaqueToken, sha256 } from "../shared/security.js";
 import { documentDynamo, rawDynamo, requiredEnvironment } from "../shared/storage.js";
 import type { OwnerPitchProfile } from "../shared/contracts.js";
@@ -209,20 +210,6 @@ async function loadProfileVersion(tableName: string, profileId: string, versionI
   return item;
 }
 
-function parseJsonObject(textValue: string): unknown {
-  const raw = textValue.trim();
-  const fenced = raw.match(/```(?:json)?\s*([\s\S]*?)```/i);
-  const candidate = fenced ? fenced[1].trim() : raw;
-  try {
-    return JSON.parse(candidate);
-  } catch {
-    const start = candidate.indexOf("{");
-    const end = candidate.lastIndexOf("}");
-    if (start >= 0 && end > start) return JSON.parse(candidate.slice(start, end + 1));
-    throw new Error("match judge did not return JSON");
-  }
-}
-
 function boundedScore(value: unknown): number {
   const score = Number(value);
   if (!Number.isFinite(score)) return 0;
@@ -312,13 +299,12 @@ export async function judgeMatchCandidates(seed: ActiveProfile, candidates: Cand
       ...profileForJudge(candidate),
     })), null, 2)}`,
   ].join("\n");
-  const response = await bedrock.send(new ConverseCommand({
+  const response = await judgeJson({
+    client: bedrock,
     modelId: requiredEnvironment("MATCH_JUDGE_MODEL_ID"),
-    messages: [{ role: "user", content: [{ text: prompt }] }],
-    inferenceConfig: { maxTokens: 4096, temperature: 0.1 },
-  }));
-  const responseText = response.output?.message?.content?.map((entry) => entry.text ?? "").join("\n") ?? "";
-  return normalizeJudgeResult(parseJsonObject(responseText), seed.profileId, candidateIds);
+    prompt,
+  });
+  return normalizeJudgeResult(response, seed.profileId, candidateIds);
 }
 
 function emailText({

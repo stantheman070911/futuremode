@@ -13,5 +13,5 @@ The Noto CJK fonts are distributed by the Noto Fonts project under the
 SIL Open Font License. See the Noto CJK upstream repository for the full
 project history and release metadata.
 
-This copy is included to render Traditional Chinese text in VibeSafari
+This copy is included to render Traditional Chinese text in PitchYourOwner
 social preview images.

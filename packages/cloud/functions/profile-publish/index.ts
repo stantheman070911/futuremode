@@ -1,36 +1,17 @@
-import { BedrockRuntimeClient, InvokeModelCommand } from "@aws-sdk/client-bedrock-runtime";
 import { GetCommand, TransactWriteCommand } from "@aws-sdk/lib-dynamodb";
 import type { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from "aws-lambda";
+import { embedText } from "../../lib/reusable/bedrock.js";
 import { loadSession, profileIdForEmailHash } from "../shared/auth.js";
 import { canonicalMatchingDocument, payloadHash, PROFILE_SCHEMA, validatePublishPayload } from "../shared/contracts.js";
 import { json, parseJsonBody } from "../shared/http.js";
 import { documentDynamo, requiredEnvironment } from "../shared/storage.js";
 
-const bedrock = new BedrockRuntimeClient({});
-
 async function embed(document: string): Promise<number[]> {
-  const response = await bedrock.send(new InvokeModelCommand({
+  return embedText({
+    text: document,
     modelId: requiredEnvironment("EMBEDDING_MODEL_ID"),
-    contentType: "application/json",
-    accept: "application/json",
-    body: JSON.stringify({
-      input_type: "search_document",
-      texts: [document],
-      embedding_types: ["float"],
-      output_dimension: Number(requiredEnvironment("EMBEDDING_DIMENSIONS")),
-      max_tokens: 128_000,
-      truncate: "RIGHT",
-    }),
-  }));
-  const decoded = JSON.parse(new TextDecoder().decode(response.body)) as {
-    embeddings?: number[][] | { float?: number[][] };
-    embeddings_by_type?: { float?: number[][] };
-  };
-  const vector = Array.isArray(decoded.embeddings)
-    ? decoded.embeddings[0]
-    : decoded.embeddings?.float?.[0] ?? decoded.embeddings_by_type?.float?.[0];
-  if (!vector || vector.length !== Number(requiredEnvironment("EMBEDDING_DIMENSIONS"))) throw new Error("invalid embedding response");
-  return vector;
+    dimensions: Number(requiredEnvironment("EMBEDDING_DIMENSIONS")),
+  });
 }
 
 export async function handler(event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> {

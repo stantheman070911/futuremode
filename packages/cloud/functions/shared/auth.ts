@@ -1,5 +1,4 @@
-import { GetCommand } from "@aws-sdk/lib-dynamodb";
-import { bearerToken } from "./http.js";
+import { DynamoSessionStore } from "../../lib/reusable/session-store.js";
 import { sha256 } from "./security.js";
 import { documentDynamo, requiredEnvironment } from "./storage.js";
 
@@ -12,15 +11,10 @@ export interface CloudSession {
 }
 
 export async function loadSession(authorization: string | undefined): Promise<CloudSession> {
-  const token = bearerToken(authorization);
-  const result = await documentDynamo.send(new GetCommand({
-    TableName: requiredEnvironment("TABLE_NAME"),
-    Key: { pk: `SESSION#${sha256(token)}`, sk: "META" },
-    ConsistentRead: true,
-  }));
-  const session = result.Item as CloudSession | undefined;
-  if (!session || session.expiresAt < Math.floor(Date.now() / 1_000)) throw new Error("invalid session");
-  return session;
+  return new DynamoSessionStore<CloudSession>({
+    client: documentDynamo,
+    tableName: requiredEnvironment("TABLE_NAME"),
+  }).loadFromAuthorization(authorization);
 }
 
 export function profileIdForEmailHash(emailHash: string): string {
