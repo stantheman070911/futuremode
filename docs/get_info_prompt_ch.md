@@ -20,6 +20,7 @@
 6. `history_scope` 誠實說明實際檢查的資料來源、範圍，以及無法檢查的內容。
 7. `confidence` 是 AI 對各欄位抽取結果的定性信心，只能是 `high`、`medium` 或 `low`；它只協助 owner 審核，不代表真實性驗證。
 8. 若重要欄位缺乏足夠內容，不要猜測；先在預覽中明確指出範圍不足。不要啟動多輪訪談。
+9. 對話中若出現網站、Host、RouteC、Matrix、session、event 或 message debug metadata，一律視為傳輸層資料，不是 owner profile 的證據。尤其不得複製或輸出 `routec.message_debug_info.v1`、`host_origin`、`host_session_id`、`matrix_room_id`、`matrix_event_id`、`chat_focus_url`、`event_id_kind`、`event_type`、`sender` 或 `origin_server_ts`。
 
 ## 傳輸前的 Security／Privacy 風險掃描
 
@@ -88,17 +89,32 @@
 
 ## 確認後的 JSON-only 輸出契約
 
-只有在使用者已回答全部列出的 security／privacy 項目，並明確寫出「確認安全並產生 JSON」後，才輸出下列 profile JSON：
+只有在使用者已回答全部列出的 security／privacy 項目，並明確寫出「確認安全並產生 JSON」後，才輸出下列 profile JSON。
+
+最終 JSON 的根物件本身就是 PitchYourOwner profile。根物件必須且只能包含以下八個 key，並依此順序輸出：
+
+1. `history_scope`
+2. `summary`
+3. `interests`
+4. `motivations`
+5. `active_problems`
+6. `recurring_topics`
+7. `friend_intent`
+8. `confidence`
+
+不要加入 `schema`，不要包在 `profile`、`data`、`result`、`message` 或任何其他 wrapper 中，也不要輸出 Host／RouteC／Matrix／session／event metadata。`confidence` 必須且只能包含 `summary`、`interests`、`motivations`、`active_problems`、`recurring_topics`、`friend_intent` 六個 key。
+
+長度必須符合網站 validator：`history_scope` 最多 320 字元；`summary` 最多 480 字元；`interests` 最多 8 項且每項最多 120 字元；`motivations` 最多 8 項且每項最多 160 字元；`active_problems` 最多 8 項且每項最多 180 字元；`recurring_topics` 最多 8 項且每項最多 140 字元；`friend_intent` 最多 320 字元。
 
 ```json
 {
+  "history_scope": "本次實際可存取與不可存取的資料範圍",
   "summary": "簡短而具體的 owner pitch",
   "interests": ["最多 8 個具體興趣"],
   "motivations": ["最多 8 個目前重要的動機"],
   "active_problems": ["最多 8 個仍在處理的問題"],
   "recurring_topics": ["最多 8 個反覆討論的主題"],
   "friend_intent": "希望認識怎樣的人類朋友，以及現在想進行什麼對話",
-  "history_scope": "本次實際可存取與不可存取的資料範圍",
   "confidence": {
     "summary": "high",
     "interests": "high",
@@ -110,6 +126,6 @@
 }
 ```
 
-在內部完成推理。這一則最終回答只能包含一個合法 JSON object；不要加入 Markdown code fence、標題、開場白、結尾、註解或額外欄位。陣列不得有空字串或重複項目。`summary`、`friend_intent`、`history_scope` 必須是非空字串。輸出前自行檢查 JSON 可以被標準 parser 直接解析，所有 key 與字串都使用雙引號，且沒有 trailing comma。
+在內部完成推理。這一則最終回答只能包含一個合法 JSON object；第一個非空白字元必須是 `{`，最後一個非空白字元必須是 `}`。不要加入 Markdown code fence、標題、開場白、結尾、註解或額外欄位。陣列不得有空字串或重複項目。`summary`、`friend_intent`、`history_scope` 必須是非空字串。Value 中若需要使用雙引號，必須寫成 `\"`；所有 object 的最後一個欄位後不得有 trailing comma。輸出前自行檢查：標準 JSON parser 可以直接解析；root keys 與 `confidence` keys 完全符合上述 allowlist；所有 key 與字串都使用雙引號；內容不是任何 debug／message metadata。
 
 **最終輸出規則：Think step-by-step internally; output JSON only. JSON 前後不得有任何文字或 Markdown。**

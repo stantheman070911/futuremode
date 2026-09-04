@@ -100,7 +100,7 @@ The app explains: **Your agent knows you. Let it pitch you to a friend worth mee
 
 ### 2. Hand Off the Prompt｜交付提示詞
 
-The user opens ChatGPT, Claude, or another assistant using copy, share sheet, or deep link. The prompt asks the assistant to analyze only history or memory the user authorized and the assistant can actually access. 使用者透過複製、分享選單或深層連結開啟 AI 助理。提示詞要求 AI 只分析使用者已授權且系統確實可存取的紀錄或記憶。
+One primary handoff action carries the complete prompt into ChatGPT, Claude, or another assistant and opens it. ChatGPT uses a prefilled deep link with a clipboard fallback; the user does not press Copy and Open separately. Other assistants use the same one-action handoff where supported, or a one-action copy/share fallback. The prompt asks the assistant to analyze only history or memory the user authorized and the assistant can actually access. 單一主要交接操作會把完整 prompt 帶入 ChatGPT、Claude 或其他助理並開啟。ChatGPT 使用預填 deep link 並保留剪貼簿備援，不要求使用者分別按 Copy 與 Open；其他助理在支援時採同樣單鍵交接，否則使用單鍵複製／分享備援。提示詞要求 AI 只分析使用者已授權且系統確實可存取的紀錄或記憶。
 
 ### 3. Generate the Owner Pitch｜產生 Owner Pitch
 
@@ -155,7 +155,7 @@ Show the promise, supported AI choices, time required, and the two owner-review 
 
 ### Prompt Handoff｜提示詞交接頁
 
-Show one progress path: **Copy prompt → Ask your AI → Resolve detected security/privacy items → Return final JSON**. The complete prompt is the main object, with clear copy, open, and return instructions. 顯示單一路徑：**複製提示詞 → 詢問 AI → 處理偵測到的 security／privacy 項目 → 帶回最終 JSON**。完整提示詞是主要物件，並提供清楚的複製、開啟與返回說明。
+Show one progress path: **Open AI with the prompt → Resolve detected security/privacy items → Return final JSON**. The complete prompt is the main object, with one primary prefill-and-open action, a clipboard fallback, and clear return instructions. 顯示單一路徑：**帶入 prompt 並開啟 AI → 處理偵測到的 security／privacy 項目 → 帶回最終 JSON**。完整提示詞是主要物件，並提供單一預填並開啟操作、剪貼簿備援與清楚的返回說明。
 
 ### My Pitch｜我的介紹頁
 

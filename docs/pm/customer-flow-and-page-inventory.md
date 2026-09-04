@@ -28,7 +28,7 @@ flowchart TD
     C --> D{已有已發布 Pitch?}
     D -- 是 --> K[Matches<br/>查看少量建議配對]
     D -- 否 --> E[Choose AI<br/>選擇 ChatGPT / Claude / Other]
-    E --> F[Prompt handoff<br/>複製或開啟完整 Prompt]
+    E --> F[Prompt handoff<br/>單鍵帶入完整 Prompt 並開啟 AI]
     F --> G[External AI chat<br/>產生摘要並處理實際偵測到的安全／隱私問題]
     G --> H[Final JSON<br/>Owner 一次確認後取得純 JSON]
     H --> I[Paste and edit<br/>貼回網站並編輯七個欄位]
@@ -58,7 +58,9 @@ flowchart TD
 ### Phase B — Let the agent prepare the pitch｜由 Agent 準備 Pitch
 
 5. 使用者選擇平常最了解自己的 ChatGPT、Claude 或 Other AI。
-6. 網站顯示完整 prompt 作為主要物件，提供 **Copy prompt**、**Open AI** 與清楚的返回路徑。
+6. 網站顯示完整 prompt 作為主要物件。ChatGPT 使用單一 **Open ChatGPT with my prompt**
+   操作，將完整 prompt 預填後開啟 ChatGPT，並嘗試複製至剪貼簿備援；不得要求先 Copy、
+   再 Open。其他 AI 在支援時採相同單鍵交接，否則以單鍵 copy/share fallback 處理。
 7. 使用者在外部 AI 對話貼上 prompt。AI 只使用 owner 授權且實際可存取的 context：
    - 先產生精簡整體摘要，不要求逐欄核對 profile；
    - 只列出實際偵測到的 security／privacy 問題；
@@ -121,7 +123,7 @@ flowchart TD
 | P02 | Email sign-in｜Email 登入 | `/signin` | 輸入 Email 並要求 OTP | P0 | 已有 |
 | P03 | OTP verification｜驗證碼 | `/signin` 的第二狀態 | 完成無密碼登入；可改 Email／重送 | P0 | 基本流程已有；明確重送與倒數尚需補齊 |
 | P04 | Choose AI｜選擇 AI | `/assistant` | 選擇最了解 owner 的 AI | P0 | 已有 |
-| P05 | Prompt handoff｜Prompt 交接 | `/handoff` | 檢視、複製 prompt、開啟 AI、返回匯入 | P0 | 已有 |
+| P05 | Prompt handoff｜Prompt 交接 | `/handoff` | 檢視 prompt、單鍵帶入並開啟 AI、返回匯入 | P0 | 已有；ChatGPT 採預填 deep link 並同步嘗試 clipboard fallback |
 | X01 | External AI chat｜外部 AI 對話 | ChatGPT／Claude／其他 AI | 產生 pitch、只處理 security／privacy 決定並輸出純 JSON | P0 | 不屬本站；中英文 canonical prompts 已有 |
 | P06 | Paste JSON｜貼回 JSON | `/import` 空白狀態 | 貼上最終 JSON 並得到精確錯誤 | P0 | 已有 |
 | P07 | Edit pitch｜編輯 Pitch | `/import` draft 狀態 | 編輯全部欄位與 owner-only confidence | P0 | 已有 |

@@ -20,6 +20,7 @@ Only after the user answers every listed security/privacy item and includes the 
 6. `history_scope` honestly states which sources and ranges were inspected and what could not be inspected.
 7. `confidence` is the assistant’s qualitative confidence in each extracted field and must be `high`, `medium`, or `low`. It helps the owner review the draft; it is not verification.
 8. If important fields lack enough context, say so in the preview instead of guessing. Do not start a multi-round interview.
+9. Treat website, Host, RouteC, Matrix, session, event, and message debug metadata as transport data, never as evidence about the owner. In particular, never copy or output `routec.message_debug_info.v1`, `host_origin`, `host_session_id`, `matrix_room_id`, `matrix_event_id`, `chat_focus_url`, `event_id_kind`, `event_type`, `sender`, or `origin_server_ts`.
 
 ## Pre-transfer security/privacy risk scan
 
@@ -88,17 +89,32 @@ If the user omits an item, selects a forbidden option, or omits the confirmation
 
 ## JSON-only output contract after confirmation
 
-Only after the user has answered every listed security/privacy item and explicitly includes “CONFIRM SECURITY AND GENERATE JSON,” output this profile JSON:
+Only after the user has answered every listed security/privacy item and explicitly includes “CONFIRM SECURITY AND GENERATE JSON,” output this profile JSON.
+
+The root object is the PitchYourOwner profile itself. It must contain exactly these eight keys and emit them in this order:
+
+1. `history_scope`
+2. `summary`
+3. `interests`
+4. `motivations`
+5. `active_problems`
+6. `recurring_topics`
+7. `friend_intent`
+8. `confidence`
+
+Do not add `schema`. Do not wrap the object in `profile`, `data`, `result`, `message`, or any other envelope. Do not output Host, RouteC, Matrix, session, event, or message metadata. `confidence` must contain exactly these six keys: `summary`, `interests`, `motivations`, `active_problems`, `recurring_topics`, and `friend_intent`.
+
+Keep every value within the website validator limits: `history_scope` up to 320 characters; `summary` up to 480 characters; `interests` up to 8 items of 120 characters each; `motivations` up to 8 items of 160 characters each; `active_problems` up to 8 items of 180 characters each; `recurring_topics` up to 8 items of 140 characters each; and `friend_intent` up to 320 characters.
 
 ```json
 {
+  "history_scope": "What information was and was not accessible for this analysis",
   "summary": "A short, specific owner pitch",
   "interests": ["Up to 8 specific interests"],
   "motivations": ["Up to 8 motivations that matter now"],
   "active_problems": ["Up to 8 problems that remain active"],
   "recurring_topics": ["Up to 8 recurring discussion topics"],
   "friend_intent": "The human friend the user hopes to meet and the conversation they want now",
-  "history_scope": "What information was and was not accessible for this analysis",
   "confidence": {
     "summary": "high",
     "interests": "high",
@@ -110,6 +126,6 @@ Only after the user has answered every listed security/privacy item and explicit
 }
 ```
 
-Think and reason internally. This final response must contain exactly one valid JSON object. Do not add a Markdown code fence, heading, introduction, conclusion, comment, or extra field. Arrays must not contain empty strings or duplicates. `summary`, `friend_intent`, and `history_scope` must be non-empty strings. Before responding, verify that a standard JSON parser can parse the output, every key and string uses double quotes, and there is no trailing comma.
+Think and reason internally. This final response must contain exactly one valid JSON object; its first non-whitespace character must be `{` and its last non-whitespace character must be `}`. Do not add a Markdown code fence, heading, introduction, conclusion, comment, or extra field. Arrays must not contain empty strings or duplicates. `summary`, `friend_intent`, and `history_scope` must be non-empty strings. Escape any double quote inside a value as `\"`, and remove every trailing comma from objects and arrays. Before responding, verify that a standard JSON parser can parse the output; the root keys and `confidence` keys exactly match the allowlists above; every key and string uses double quotes; and the content is not debug or message metadata.
 
 **Final output rule: Think step-by-step internally; output JSON only. No text or Markdown may appear before or after the JSON.**

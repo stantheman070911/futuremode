@@ -115,15 +115,62 @@ async function api(path, options = {}) {
 function shell(content, { nav = false, active = "", action = "" } = {}) {
   return `<div class="app-shell"><section class="screen ${nav ? "" : "no-nav"}">
     <header class="wordmark"><a href="/" data-link>PITCHYOUROWNER</a>${action}</header>
-    ${runtime.error ? `<div class="notice error" role="alert">${esc(runtime.error)}</div>` : ""}
+    ${runtime.error ? `<div class="notice error" role="alert" tabindex="-1">${esc(runtime.error)}</div>` : ""}
     ${runtime.notice ? `<div class="notice success">${esc(runtime.notice)}</div>` : ""}
     ${content}
   </section>${nav ? bottomNav(active) : ""}</div>`;
 }
 
+function focusErrorNotice() {
+  requestAnimationFrame(() => {
+    const notice = document.querySelector('[role="alert"]');
+    notice?.focus({ preventScroll: true });
+    notice?.scrollIntoView({ block: "start" });
+  });
+}
+
 function bottomNav(active) {
   const links = [["matches", "/matches", "Matches"], ["invitations", "/invitations", "Invites"], ["pitch", "/pitch", "My Pitch"], ["settings", "/settings", "Settings"]];
   return `<nav class="bottom-nav" aria-label="主要導覽">${links.map(([key, href, label]) => `<a href="${href}" data-link class="${active === key ? "active" : ""}" ${active === key ? 'aria-current="page"' : ""}>${label}</a>`).join("")}</nav>`;
+}
+
+function handoffButtonLabel() {
+  if (runtime.selectedAi === "ChatGPT") return "Open ChatGPT with my prompt";
+  if (runtime.selectedAi === "Claude") return "Open Claude with my prompt";
+  return "Share prompt to my AI";
+}
+
+async function copyPromptBestEffort(prompt) {
+  if (!navigator.clipboard?.writeText) return false;
+  try {
+    await navigator.clipboard.writeText(prompt);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function launchAiWithPrompt() {
+  const prompt = String(runtime.prompt || "").trim();
+  if (!prompt) throw new Error("Prompt 尚未完成載入，請稍後再試。");
+
+  if (runtime.selectedAi === "Other AI") {
+    if (navigator.share) {
+      await navigator.share({ title: "PitchYourOwner owner pitch prompt", text: prompt });
+      return;
+    }
+    const copied = await copyPromptBestEffort(prompt);
+    if (!copied) throw new Error("這個瀏覽器無法分享或複製 Prompt，請長按上方 Prompt 手動複製。");
+    runtime.notice = "Prompt 已複製，現在可貼到你選擇的 AI。";
+    announce(runtime.notice);
+    render();
+    return;
+  }
+
+  await copyPromptBestEffort(prompt);
+  const target = new URL(runtime.selectedAi === "Claude" ? "https://claude.ai/new" : "https://chatgpt.com/");
+  target.searchParams.set("q", prompt);
+  window.location.assign(target.toString());
 }
 
 function startScreen() {
@@ -169,7 +216,8 @@ function handoffScreen() {
     <div class="progress" aria-label="Step 2 of 4"><span class="active"></span><span></span><span></span><span></span></div>
     <div class="prompt-box" aria-label="完整 extraction prompt">${esc(runtime.prompt || "正在載入 prompt…")}</div>
     <p class="subtle">AI 第一則會顯示精簡預覽，並一次列出實際發現的 security／privacy 項目；不會問介紹是否符合聊天歷史。選完所有 S 編號並加上「確認安全並產生 JSON」後，再複製下一則純 JSON。</p>
-    <div class="button-row"><button class="button" data-action="copy-prompt">Copy prompt</button><button class="button primary" data-action="open-ai">Open ${esc(runtime.selectedAi)}</button></div>
+    <button class="button primary" style="width:100%" data-action="launch-ai-with-prompt">${esc(handoffButtonLabel())}</button>
+    <p class="subtle" style="text-align:center;margin:9px 0 0">一次完成：將完整 Prompt 帶入 ${esc(runtime.selectedAi)} 並開啟；也會嘗試複製到剪貼簿作為備援。</p>
     <button class="button quiet" style="margin-top:9px" data-action="go-import">Security checked · Paste final JSON</button>`);
 }
 
@@ -180,6 +228,9 @@ function parseJsonCandidate(value) {
     parsed = JSON.parse(cleaned);
   } catch {
     throw new Error("這不是最終 JSON。請回到 AI，逐項回覆它列出的 S 編號 security／privacy 選項，並在同一則訊息最後加上「確認安全並產生 JSON」，再複製下一則回答。");
+  }
+  if (parsed?.schema === "routec.message_debug_info.v1" || parsed?.matrix_event_id || parsed?.host_session_id) {
+    throw new Error("你貼上的是 Oysterun／RouteC 的訊息除錯資料，不是 Owner Pitch。請回到 ChatGPT，完成 security／privacy 確認後，只複製包含 summary、interests、motivations、active_problems、recurring_topics、friend_intent、history_scope 與 confidence 的最後一則 JSON。");
   }
   if (parsed?.status === "review_required") {
     throw new Error("這仍是待確認預覽。請回到 AI，選完所有 S 編號 security／privacy 項目並加上「確認安全並產生 JSON」，再貼上下一則純 JSON。");
@@ -411,11 +462,7 @@ document.addEventListener("click", async (event) => {
       runtime.prompt = await fetch("/owner-pitch-prompt-zh-Hant.txt", { cache: "no-store" }).then((response) => response.text());
       navigate("/handoff");
     }
-    if (action === "copy-prompt") { await navigator.clipboard.writeText(runtime.prompt); runtime.notice = "Prompt copied"; announce("Prompt copied"); render(); }
-    if (action === "open-ai") {
-      const target = runtime.selectedAi === "Claude" ? "https://claude.ai/new" : "https://chatgpt.com/";
-      window.open(target, "_blank", "noopener,noreferrer");
-    }
+    if (action === "launch-ai-with-prompt") await launchAiWithPrompt();
     if (action === "go-import") navigate("/import");
     if (action === "load-sample") { runtime.draft = structuredClone(SAMPLE_PROFILE); writeJson(DRAFT_KEY, runtime.draft); render(); }
     if (action === "replace-json") { runtime.draft = null; writeJson(DRAFT_KEY, null); render(); }
@@ -430,6 +477,7 @@ document.addEventListener("click", async (event) => {
   } catch (error) {
     runtime.error = error.message || "操作失敗";
     render();
+    focusErrorNotice();
   }
 });
 
@@ -466,6 +514,7 @@ document.addEventListener("submit", async (event) => {
   } finally {
     runtime.busy = false;
     render();
+    if (runtime.error) focusErrorNotice();
   }
 });
 

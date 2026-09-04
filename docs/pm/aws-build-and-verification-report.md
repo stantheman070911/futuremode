@@ -45,7 +45,7 @@
 
 1. Email OTP 登入。
 2. 選擇 ChatGPT、Claude 或其他 AI。
-3. 以完整 prompt 為主要物件，提供複製、開啟 AI 與返回說明。AI 第一則顯示精簡摘要，只列出實際偵測到的 security／privacy 問題；每項都有 `S1`、`S2`… 編號、具體風險及處理選項，不逐欄展示 schema，也不詢問介紹是否符合聊天歷史。
+3. 以完整 prompt 為主要物件，以單一操作將 prompt 帶入選定 AI 並開啟；ChatGPT 使用預填 deep link 並同步嘗試 clipboard fallback，不再要求先 Copy 再 Open。AI 第一則顯示精簡摘要，只列出實際偵測到的 security／privacy 問題；每項都有 `S1`、`S2`… 編號、具體風險及處理選項，不逐欄展示 schema，也不詢問介紹是否符合聊天歷史。
 4. Owner 在一則訊息選完所有 S 編號並加上「確認安全並產生 JSON」後，AI 下一則只輸出可解析 JSON；使用者將該 JSON 貼回網站。
 5. 將七個核心欄位與 confidence 渲染成可編輯控制項。
 6. 進入獨立唯讀最終發布審核。

@@ -104,7 +104,7 @@ Host Owner 要求：
 
 1. 理解 PitchYourOwner 的承諾。
 2. 選擇 ChatGPT 或 Claude。
-3. 複製／分享 handoff prompt。
+3. 以單一操作將完整 handoff prompt 帶入選定 AI 並開啟；ChatGPT 使用預填 deep link 並同步嘗試 clipboard fallback，不再分成 Copy 與 Open 兩個必要步驟。
 4. AI 產生完整 owner pitch，並在 AI 頁完成敏感資料處理與一次整合式內容確認。
 5. AI 回傳最終 structured JSON。
 6. 使用者回到網站貼上 JSON；網站只做 schema 驗證並渲染可編輯欄位。

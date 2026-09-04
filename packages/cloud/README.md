@@ -5,7 +5,7 @@ This package is an isolated AWS implementation of the confirmed PitchYourOwner h
 ## Product flow
 
 1. The owner signs in with an email verification code.
-2. The site gives the owner one prompt to paste into ChatGPT, Claude, or another agent.
+2. One primary handoff action carries the prompt into the chosen AI and opens it. ChatGPT uses a prefilled deep link with a clipboard fallback; other assistants use the same one-action handoff where supported or a one-action copy/share fallback.
 3. The AI page extracts seven profile dimensions and asks the owner for one consolidated content confirmation.
 4. On phone, the owner pastes the final JSON back into the site. The site renders editable fields, followed by a separate read-only publication review.
 5. On computer, an authenticated owner may create a 24-hour, single-use upload capability and let an agent create a draft through the API. The owner still reviews and publishes on the site.

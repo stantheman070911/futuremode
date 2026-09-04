@@ -97,7 +97,7 @@ The primary use case is **friend finding**. Complementary expertise can enrich a
 
 1. The user completes email OTP sign-in on the PitchYourOwner website.
 2. The website creates a prompt for the user's chosen AI.
-3. The user passes the prompt to ChatGPT, Claude, or another assistant by copy, share sheet, or deep link.
+3. One primary handoff action carries the complete prompt into the chosen assistant and opens it. For ChatGPT, the site uses a prefilled deep link and also attempts to copy the prompt as a fallback; it must not require separate Copy and Open actions. Other assistants use the same one-action handoff where supported, or a one-action copy/share fallback.
 4. The assistant analyzes only history, memory, selected chats, exports, or workspace sessions that the user authorized and the assistant can actually access.
 5. The assistant shows a concise synthesis rather than expanding every schema field, scans the proposed transfer for security/privacy concerns, and asks only the specific concerns it actually found. Every concern has an `S1`, `S2`, ... identifier, a concrete risk, and directly selectable handling options. It never asks whether the profile matches the user's chat history or any general/open profile question.
 6. The owner answers every listed security/privacy item in one message and adds the exact confirmation phrase **CONFIRM SECURITY AND GENERATE JSON／確認安全並產生 JSON**. When nothing requires a decision, the assistant states that explicitly and requests only the same security confirmation. This is not a multi-round profile interview or a line-by-line review.

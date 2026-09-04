@@ -31,7 +31,7 @@ plan 的必要條件；未選方案只保留作為參考，不是備援需求。
 | --- | --- | --- |
 | Confidence｜信心 | Retain for owner review only｜只保留於 owner review | Qualitative `high`／`medium`／`low`; never public and never used in matching｜使用定性等級；不公開，也不參與配對 |
 | Start｜開始 | **1b — Typographic promise** | Lead with the promise and preview both owner-review checkpoints｜先呈現產品承諾，並預告兩個 owner review 關卡 |
-| Handoff｜交接 | **1d — Prompt is the object** | Make the complete prompt visible and primary; show copy, open, and return actions without unobservable live status｜完整 prompt 為主體；顯示複製、開啟與返回操作，不呈現無法觀測的即時狀態 |
+| Handoff｜交接 | **1d — Prompt is the object** | Make the complete prompt visible and primary; use one primary action that carries the prompt into the chosen AI and opens it, plus a clipboard fallback and return action; do not show unobservable live status｜完整 prompt 為主體；以一個主要操作將 prompt 帶入選定 AI 並開啟，同時保留剪貼簿備援與返回操作；不呈現無法觀測的即時狀態 |
 | My Pitch｜我的介紹 | **1f — Document fields** | Show all configured fields in a document layout; move `history_scope` to the top; show confidence only to the owner during review｜以文件式版面呈現全部欄位；`history_scope` 移到頂部；confidence 只在 owner review 顯示 |
 | Match detail｜配對詳情 | **1h — Three questions** | Answer the three explanation questions and label the supporting profile evidence; do not expose confidence or a numeric score｜回答三個配對問題並標示所依據的 profile 欄位；不顯示 confidence 或數字分數 |
 
@@ -131,12 +131,18 @@ owner-review checkpoints. The user selects an assistant and chooses **Let my age
 
 ### 2. Hand off to the chosen AI｜交付給選定的 AI
 
-The product gives the user one clear sequence—**Create prompt → Ask your AI → Resolve
-security/privacy items → Copy JSON back**—and lets them copy or share the prompt. A visible expiry prevents
-surprise when an old handoff can no longer be completed.
+The product gives the user one clear sequence—**Create prompt → Open the chosen AI with
+the prompt → Resolve security/privacy items → Copy JSON back**. For ChatGPT, one primary
+action opens ChatGPT with the complete prompt prefilled and also attempts to copy it as
+a fallback; the user must not have to press separate Copy and Open buttons. Other AI
+providers use the same one-action handoff when supported, or a one-action copy/share
+fallback. A visible expiry prevents surprise when an old handoff can no longer be completed.
 
-產品呈現單一明確流程：**建立提示詞 → 詢問你的 AI → 處理 security／privacy 項目 → 複製 JSON 回網站**，並允許
-複製或分享提示詞。清楚顯示到期時間，避免舊交接失效時造成意外。
+產品呈現單一明確流程：**建立提示詞 → 帶入 prompt 並開啟選定 AI → 處理 security／privacy
+項目 → 複製 JSON 回網站**。ChatGPT 的主要操作需一次開啟已預填完整 prompt 的 ChatGPT，
+並同時嘗試複製至剪貼簿作為備援；不得要求使用者先按 Copy、再按 Open。其他 AI 在支援時
+採相同單鍵交接，不支援時使用單鍵複製／分享備援。清楚顯示到期時間，避免舊交接失效時
+造成意外。
 
 ### 3. Generate a grounded proposal｜產生有依據的提案
 
@@ -237,8 +243,11 @@ fifth permanent destination.
 
 ### Prompt handoff｜提示詞交接
 
-- Show current step, remaining steps, expiry, and clear **Copy prompt** and **Share**
-  actions.｜顯示目前步驟、剩餘步驟、到期時間，以及清楚的 **Copy prompt** 與 **Share** 操作。
+- Show current step, remaining steps, and expiry. Use one primary **Open with my prompt**
+  action; it pre-fills ChatGPT where supported and copies the prompt as a fallback. Do
+  not require separate Copy and Open actions.｜顯示目前步驟、剩餘步驟與到期時間。使用單一主要
+  **帶入我的 Prompt 並開啟** 操作；支援時預填 ChatGPT，並複製 prompt 作為備援。不得要求
+  分別操作 Copy 與 Open。
 - Confirm successful copy without interrupting progress.｜以不中斷流程的方式確認複製成功。
 - When expired, explain what happened and provide one action to create a fresh handoff.
   到期時說明原因，並提供單一操作重新建立交接。
@@ -418,8 +427,11 @@ The experience is ready to evaluate when all of the following are observable:
 
 1. A new user can explain the promise and the two owner-review checkpoints before beginning.
    新使用者在開始前能說明產品承諾與兩個 owner review 關卡。
-2. The entire journey can be completed on a phone, including the universal copy/share
-   fallback.｜完整旅程能在手機上完成，包含通用的複製／分享備援。
+2. The entire journey can be completed on a phone. ChatGPT handoff takes one primary
+   action with a prefilled prompt and clipboard fallback; a universal one-action
+   copy/share fallback remains available for other assistants.｜完整旅程能在手機上完成；
+   ChatGPT 以一次主要操作帶入已預填 prompt，並保留剪貼簿備援；其他助理仍有通用的單鍵
+   複製／分享備援。
 3. The owner completes one batch of decisions covering every detected security/privacy
    issue in the AI and one final
    publication confirmation in PitchYourOwner. The site shows every imported field,
