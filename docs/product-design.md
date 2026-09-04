@@ -31,7 +31,7 @@ plan 的必要條件；未選方案只保留作為參考，不是備援需求。
 | --- | --- | --- |
 | Confidence｜信心 | Retain for owner review only｜只保留於 owner review | Qualitative `high`／`medium`／`low`; never public and never used in matching｜使用定性等級；不公開，也不參與配對 |
 | Start｜開始 | **1b — Typographic promise** | Lead with the promise and preview both owner-review checkpoints｜先呈現產品承諾，並預告兩個 owner review 關卡 |
-| Handoff｜交接 | **1d — Prompt is the object** | Make the complete prompt visible and primary; use one primary action that carries the prompt into the chosen AI and opens it, plus a clipboard fallback and return action; do not show unobservable live status｜完整 prompt 為主體；以一個主要操作將 prompt 帶入選定 AI 並開啟，同時保留剪貼簿備援與返回操作；不呈現無法觀測的即時狀態 |
+| Handoff｜交接 | **1d — Prompt is the object** | Make the complete prompt visible and primary; use one primary action that carries the prompt into the chosen AI and opens it, plus a visible secondary Copy fallback and return action; do not show unobservable live status｜完整 prompt 為主體；以一個主要操作將 prompt 帶入選定 AI 並開啟，同時保留可見的次要 Copy 備援與返回操作；不呈現無法觀測的即時狀態 |
 | My Pitch｜我的介紹 | **1f — Document fields** | Show all configured fields in a document layout; move `history_scope` to the top; show confidence only to the owner during review｜以文件式版面呈現全部欄位；`history_scope` 移到頂部；confidence 只在 owner review 顯示 |
 | Match detail｜配對詳情 | **1h — Three questions** | Answer the three explanation questions and label the supporting profile evidence; do not expose confidence or a numeric score｜回答三個配對問題並標示所依據的 profile 欄位；不顯示 confidence 或數字分數 |
 
@@ -134,15 +134,16 @@ owner-review checkpoints. The user selects an assistant and chooses **Let my age
 The product gives the user one clear sequence—**Create prompt → Open the chosen AI with
 the prompt → Resolve security/privacy items → Copy JSON back**. For ChatGPT, one primary
 action opens ChatGPT with the complete prompt prefilled and also attempts to copy it as
-a fallback; the user must not have to press separate Copy and Open buttons. Other AI
-providers use the same one-action handoff when supported, or a one-action copy/share
-fallback. A visible expiry prevents surprise when an old handoff can no longer be completed.
+a fallback. A visible secondary Copy action covers long-URL, clipboard-permission, and
+in-app-browser failures; it is not a prerequisite for the primary action. Other AI
+providers use the same primary handoff when supported, with the same visible Copy fallback.
+The phone handoff has no stated expiry; the 24-hour expiry applies only to Computer API tokens.
 
 產品呈現單一明確流程：**建立提示詞 → 帶入 prompt 並開啟選定 AI → 處理 security／privacy
 項目 → 複製 JSON 回網站**。ChatGPT 的主要操作需一次開啟已預填完整 prompt 的 ChatGPT，
-並同時嘗試複製至剪貼簿作為備援；不得要求使用者先按 Copy、再按 Open。其他 AI 在支援時
-採相同單鍵交接，不支援時使用單鍵複製／分享備援。清楚顯示到期時間，避免舊交接失效時
-造成意外。
+並同時嘗試複製至剪貼簿作為備援。可見的次要 Copy 操作涵蓋過長 URL、剪貼簿權限與
+in-app browser 失敗；它不是主要操作的前置步驟。其他 AI 在支援時採相同主要交接，並保留
+同一個可見 Copy 備援。手機 handoff 不宣稱到期；24 小時只適用於 Computer API token。
 
 ### 3. Generate a grounded proposal｜產生有依據的提案
 
@@ -228,7 +229,7 @@ fifth permanent destination.
 | --- | --- | --- |
 | **Matches｜配對** | Who may be worth meeting, and why?｜誰值得認識，為什麼？ | A short list of explainable matches｜少量可解釋的配對 |
 | **Invitations｜邀請** | Who is waiting for my decision?｜誰在等我的決定？ | Incoming, sent, and accepted introductions｜收到、送出與已接受的引介 |
-| **My Pitch｜我的介紹** | What is my agent sharing about me?｜我的 Agent 正在分享什麼？ | Approved pitch, scope, confidence, visibility｜已核准介紹、範圍、信心與可見性 |
+| **My Pitch｜我的介紹** | What is my agent sharing about me?｜我的 Agent 正在分享什麼？ | Approved pitch, scope, visibility; confidence appears only during edit/final review｜已核准介紹、範圍與可見性；confidence 只出現在 edit／final review |
 | **Settings｜設定** | How do I control privacy and safety?｜如何控制隱私與安全？ | Visibility, language, block, report, export, delete｜可見性、語言、封鎖、檢舉、匯出、刪除 |
 
 ## 5. Screen and interaction specification｜畫面與互動規格
@@ -243,11 +244,11 @@ fifth permanent destination.
 
 ### Prompt handoff｜提示詞交接
 
-- Show current step, remaining steps, and expiry. Use one primary **Open with my prompt**
-  action; it pre-fills ChatGPT where supported and copies the prompt as a fallback. Do
-  not require separate Copy and Open actions.｜顯示目前步驟、剩餘步驟與到期時間。使用單一主要
-  **帶入我的 Prompt 並開啟** 操作；支援時預填 ChatGPT，並複製 prompt 作為備援。不得要求
-  分別操作 Copy 與 Open。
+- Show current step and remaining steps. Use one primary **Open with my prompt** action;
+  it pre-fills ChatGPT where supported and copies the prompt as a fallback. Keep a visible
+  secondary **Copy prompt** action, but never require it before Open.｜顯示目前步驟與剩餘步驟。
+  使用單一主要 **帶入我的 Prompt 並開啟** 操作；支援時預填 ChatGPT，並複製 prompt 作為
+  備援。保留可見的次要 **Copy prompt**，但絕不要求先 Copy 才能 Open。
 - Confirm successful copy without interrupting progress.｜以不中斷流程的方式確認複製成功。
 - When expired, explain what happened and provide one action to create a fresh handoff.
   到期時說明原因，並提供單一操作重新建立交接。
@@ -405,7 +406,7 @@ photography and dance through an interest in how posture communicates emotion.
 | Situation｜情況 | Experience requirement｜體驗要求 |
 | --- | --- |
 | AI has insufficient context｜AI 脈絡不足 | Disclose the limitation; offer selected chats or an export; do not fabricate｜說明限制；提供指定對話或匯出資料；不得虛構 |
-| Handoff expires｜交接到期 | Explain expiry and offer one-tap restart｜說明到期並提供一鍵重啟 |
+| Computer API token expires｜Computer API token 到期 | Explain the 24-hour token expiry and offer one-tap regeneration｜說明 24 小時 token 到期並提供一鍵重新產生 |
 | Imported pitch is malformed｜匯入介紹格式錯誤 | Name the missing/problematic part; preserve input; publish nothing｜指出缺少或有問題的部分；保留輸入；不得發布 |
 | Owner edits the pitch｜Owner 修改介紹 | Review and publish the edited version, never the superseded draft｜審核並發布修改後版本，不得發布已被取代的草稿 |
 | No viable matches｜沒有可行配對 | Show an honest empty state; never pad recommendations｜顯示誠實的空白狀態；不得填充推薦 |

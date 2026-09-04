@@ -28,7 +28,7 @@ flowchart TD
     C --> D{已有已發布 Pitch?}
     D -- 是 --> K[Matches<br/>查看少量建議配對]
     D -- 否 --> E[Choose AI<br/>選擇 ChatGPT / Claude / Other]
-    E --> F[Prompt handoff<br/>單鍵帶入完整 Prompt 並開啟 AI]
+    E --> F[Prompt handoff<br/>主要按鈕帶入並開啟；次要 Copy 備援]
     F --> G[External AI chat<br/>產生摘要並處理實際偵測到的安全／隱私問題]
     G --> H[Final JSON<br/>Owner 一次確認後取得純 JSON]
     H --> I[Paste and edit<br/>貼回網站並編輯七個欄位]
@@ -58,9 +58,10 @@ flowchart TD
 ### Phase B — Let the agent prepare the pitch｜由 Agent 準備 Pitch
 
 5. 使用者選擇平常最了解自己的 ChatGPT、Claude 或 Other AI。
-6. 網站顯示完整 prompt 作為主要物件。ChatGPT 使用單一 **Open ChatGPT with my prompt**
-   操作，將完整 prompt 預填後開啟 ChatGPT，並嘗試複製至剪貼簿備援；不得要求先 Copy、
-   再 Open。其他 AI 在支援時採相同單鍵交接，否則以單鍵 copy/share fallback 處理。
+6. 網站顯示完整 prompt 作為主要物件。ChatGPT 使用 **Open ChatGPT with my prompt**
+   主要操作，將完整 prompt 預填後開啟 ChatGPT，並嘗試複製至剪貼簿備援；另保留可見的
+   **Copy prompt** 次要操作處理過長 URL、權限或 in-app browser 失敗，但不要求先 Copy、
+   再 Open。其他 AI 在支援時採相同主要交接與 Copy fallback。
 7. 使用者在外部 AI 對話貼上 prompt。AI 只使用 owner 授權且實際可存取的 context：
    - 先產生精簡整體摘要，不要求逐欄核對 profile；
    - 只列出實際偵測到的 security／privacy 問題；
@@ -122,23 +123,23 @@ flowchart TD
 | P01 | Landing｜開始頁 | `/` | 理解承諾、約需時間與兩個確認關卡 | P0 | 已有 |
 | P02 | Email sign-in｜Email 登入 | `/signin` | 輸入 Email 並要求 OTP | P0 | 已有 |
 | P03 | OTP verification｜驗證碼 | `/signin` 的第二狀態 | 完成無密碼登入；可改 Email／重送 | P0 | 基本流程已有；明確重送與倒數尚需補齊 |
-| P04 | Choose AI｜選擇 AI | `/assistant` | 選擇最了解 owner 的 AI | P0 | 已有 |
-| P05 | Prompt handoff｜Prompt 交接 | `/handoff` | 檢視 prompt、單鍵帶入並開啟 AI、返回匯入 | P0 | 已有；ChatGPT 採預填 deep link 並同步嘗試 clipboard fallback |
+| P04 | Choose AI｜選擇 AI | `/assistant` | 選擇最了解 owner 的 AI 與 prompt 語言 | P0 | 已有；繁體中文／English |
+| P05 | Prompt handoff｜Prompt 交接 | `/handoff` | 檢視 prompt、主要按鈕帶入並開啟 AI、Copy fallback、返回匯入 | P0 | 已有；handoff state 可跨 reload 復原；ChatGPT 採預填 deep link |
 | X01 | External AI chat｜外部 AI 對話 | ChatGPT／Claude／其他 AI | 產生 pitch、只處理 security／privacy 決定並輸出純 JSON | P0 | 不屬本站；中英文 canonical prompts 已有 |
 | P06 | Paste JSON｜貼回 JSON | `/import` 空白狀態 | 貼上最終 JSON 並得到精確錯誤 | P0 | 已有 |
 | P07 | Edit pitch｜編輯 Pitch | `/import` draft 狀態 | 編輯全部欄位與 owner-only confidence | P0 | 已有 |
-| P08 | Final publish review｜最終發布審核 | `/review` | 唯讀確認網站將儲存的完整版本 | P0 | 已有 |
+| P08 | Final publish review｜最終發布審核 | `/review` | 唯讀確認網站將儲存的完整版本並輸入 display name | P0 | 已有；display name 不屬於 Agent-derived profile |
 | P09 | Publish／matching progress｜發布／配對中 | P08 → `/matches` transition | 告知發布成功、matching 已開始、失敗可重試 | P0 | 有基本 loading／notice；需補 interrupted recovery |
 | P10 | Matches list｜配對列表 | `/matches` | 查看少量建議配對 | P0 | 已有 loading、empty、list |
 | P11 | Match detail｜配對詳情 | `/matches/:matchId` | 回答三個配對問題、顯示 evidence labels | P0 | 已有 |
 | P12 | Invitation status｜邀請狀態 | `/matches/:matchId` 狀態 | Invite、Not now、等待對方 | P0 | 已有 |
 | P13 | Invitations hub｜邀請中心 | `/invitations` | 查看 incoming、outgoing、connected | P0 | 已有 |
 | P14 | Connected detail｜已連結詳情 | `/matches/:matchId` connected 狀態 | 顯示聯絡方式與開場問題 | P0 | 已顯示聯絡方式；開場問題呈現在配對說明中 |
-| P15 | My Pitch｜我的介紹 | `/pitch` | 查看已發布 pitch、scope、來源標籤與重新產生入口 | P0 | 已有；confidence 顯示時機需依下方決策統一 |
+| P15 | My Pitch｜我的介紹 | `/pitch` | 查看已發布 pitch、scope、來源標籤與重新產生入口 | P0 | 已有；不顯示 review-only confidence |
 | P16 | Settings｜設定 | `/settings` | 管理 matching、account、Computer API 與資料 | P0 | 部分完成 |
 | P17 | Privacy｜隱私說明 | `/privacy` | 說明 AI 與網站的資料責任邊界 | P0 | 只有短版 placeholder |
 | P18 | Terms｜使用條款 | `/terms` | 說明 pitch 是 owner-approved inference，不是身分／專業證明 | P0 | 只有短版 placeholder |
-| P19 | Support｜支援 | `/support` | 取得協助並提供不含 profile payload 的錯誤資訊 | P0 | 只有短版 placeholder；後端 support API 未接表單 |
+| P19 | Support｜支援 | `/support` | 送出 message 與 optional contact，不含 profile payload | P0 | 已接 `POST /v1/support-requests` 並顯示 request ID |
 
 目前前端共有 **14 個 route pattern**；因 `/signin`、`/import` 與 `/matches/:matchId` 各承載多個
 任務狀態，完整核心體驗為上表 **19 個站內 page/state + 1 個外部 AI surface**。
@@ -150,14 +151,14 @@ flowchart TD
 
 | ID | Page / control｜頁面／控制 | Why it is needed｜需要原因 | Priority / status｜優先度／狀態 |
 | --- | --- | --- | --- |
-| C01 | Account identity｜帳號識別 | 目前 matched peer 可能只顯示 `Another owner`。需決定採 owner 設定的 display name、公開代稱，或接受前匿名／接受後顯示名稱。這是 account metadata，不應加入七個 agent-derived profile 維度。 | **P0 decision required；未實作** |
+| C01 | Account identity｜帳號識別 | Owner 在 final review 提供 1–40 字元 display name／handle；這是 publish metadata，不加入七個 agent-derived profile 維度。 | **P0；已實作** |
 | C02 | Matching visibility｜配對可見性 | Owner 需能暫停／恢復 matching，並理解對既有 matches 的影響。 | **P0；API 已支援 active／paused，UI 未接** |
 | C03 | Notification preference｜通知設定 | 管理 strong-match 與 invitation 通知；lock-screen copy 維持概括，點擊後 deep-link 到 authenticated detail。 | **P1；未完成 end-to-end** |
 | C04 | Blocked owners｜封鎖名單 | 避免不受歡迎的再次接觸，並提供解除封鎖入口。 | **P1；未實作** |
 | C05 | Report flow｜檢舉流程 | 從 Match Detail／Connected Detail 送出具體 reason，且不公開給被檢舉者。 | **P1；未實作** |
 | C06 | Data export｜資料匯出 | 讓 owner 取得已儲存 pitch、version 與 invitation decisions。 | **P1；未實作** |
 | C07 | Delete confirmation｜刪除確認 | 在刪除前明確列出 pitch、matches、invites 與 session 的影響。 | **P0；目前只有 browser confirm** |
-| C08 | Computer API detail｜Computer API 詳情 | 建立並說明 24 小時、single-use、write-only、draft-only upload session；POST 後仍回到網站 final review。 | **P1；建立 token 已有，完整教學可補** |
+| C08 | Computer API detail｜Computer API 詳情 | 建立並說明 24 小時、single-use、write-only、draft-only upload session；POST 後以 Resume computer draft 回到 edit／final review。 | **P1；完整 round-trip 已實作** |
 | C09 | Connection feedback｜引介後回饋 | 回答是否真的開始對話、是否有用、若無 PitchYourOwner 是否會找到此人，支援 Hackathon validation。 | **P1 for experiment；未實作** |
 
 不需要為 loading、copy success、invite sent、Not now、delete confirmation 建立新的頂層頁面；
@@ -198,22 +199,20 @@ retry 與 offline/interrupted 狀態。
 
 ## 8. Important implementation gaps and unresolved decisions｜重要缺口與待決定事項
 
-1. **Returning-owner redirect：**目前 OTP 成功後一律進 `/assistant`；應先取得 profile／draft
-   狀態，再送往 Matches、Resume draft 或 Choose AI。
-2. **Display identity：**目前 profile schema 沒有 display name，match API 會 fallback 為
-   `Another owner`。需決定連結前後各顯示什麼名稱；不得從 Email local-part 暗自推導。
-3. **Confidence visibility conflict：**已確認決定是 confidence 僅供 owner review、不公開、
-   不參與 matching；目前 My Pitch 仍顯示 confidence。需決定「review-only」是否也包含
-   發布後的 owner-only My Pitch，並統一文件與 UI。
-4. **Handoff expiry boundary：**24 小時已明確適用於 Computer API upload token；手機 handoff
-   目前顯示 `24-hour workflow`，但沒有可觀測的 server-bound expiry。需移除該暗示，或真正
-   建立可復原的 handoff session。
+1. **Returning-owner redirect（已解決）：**OTP 成功後先取得 profile；有已發布 pitch 前往
+   Matches，只有 local draft 時回 Import，否則才進 Choose AI。
+2. **Display identity（已解決）：**display name 是 publish payload 的獨立欄位，不由 Agent
+   推論，也不從 Email local-part 暗自產生；owner 在 final review 輸入 1–40 字元名稱或 handle。
+3. **Confidence visibility（已解決）：**confidence 僅出現在 edit／final review，不出現在
+   My Pitch、matching、peer response 或公開畫面。
+4. **Handoff expiry boundary（已解決）：**24 小時只適用於 Computer API upload token；手機
+   handoff 不再顯示不存在的 expiry，且 prompt、AI、locale 可跨 hard reload 復原。
 5. **Safety readiness：**block、report、invitation rate limit 與 age policy 在公開服務前不可缺；
    Hackathon 若只允許已知成人參與者，應將此 cohort 限制明確寫入測試計畫。
 6. **Notifications：**產品已定義 strong-match／invitation 通知，但目前尚無完整裝置權限、
    preference、general lock-screen copy 與 authenticated deep-link 流程。
-7. **Legal and support：**Privacy、Terms、Support 目前只是短版 placeholder；公開招募外部
-   使用者前需要正式內容與可提交的 support UI。
+7. **Legal and support：**Support 已可提交 message 與 optional contact；Privacy、Terms 仍是
+   短版 placeholder，公開招募外部使用者前需要正式內容。
 8. **Experiment completion：**若 Hackathon 目標包含驗證相關性，Connection 後需要最小回饋
    surface，否則只能量到 click／accept，無法量到是否真的開始有用的對話。
 

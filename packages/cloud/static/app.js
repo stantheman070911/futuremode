@@ -1,5 +1,8 @@
 const STORAGE_KEY = "pitchyourowner.session.v1";
 const DRAFT_KEY = "pitchyourowner.draft.v1";
+const HANDOFF_KEY = "pitchyourowner.handoff.v1";
+const DISPLAY_NAME_KEY = "pitchyourowner.display-name.v1";
+const DEMO_KEY = "pitchyourowner.demo.v1";
 let CONFIDENCE_FIELDS = ["summary", "interests", "motivations", "active_problems", "recurring_topics", "friend_intent"];
 let CONFIDENCE_LEVELS = ["high", "medium", "low"];
 let ARRAY_FIELDS = ["interests", "motivations", "active_problems", "recurring_topics"];
@@ -46,15 +49,20 @@ const DEMO_MATCH = {
   },
   can_invite: true,
 };
-const LOCAL_DEMO_AVAILABLE = ["127.0.0.1", "localhost"].includes(location.hostname);
+const DEMO_QUERY_ENABLED = new URLSearchParams(location.search).has("demo");
+const PERSISTED_DEMO_ENABLED = readJson(DEMO_KEY)?.enabled === true;
+const DEMO_AVAILABLE = ["127.0.0.1", "localhost"].includes(location.hostname) || DEMO_QUERY_ENABLED || PERSISTED_DEMO_ENABLED;
+const SAVED_HANDOFF = readJson(HANDOFF_KEY);
 
 const runtime = {
   session: readJson(STORAGE_KEY),
   draft: readJson(DRAFT_KEY),
-  selectedAi: "ChatGPT",
+  selectedAi: ["ChatGPT", "Claude", "Other AI"].includes(SAVED_HANDOFF?.selectedAi) ? SAVED_HANDOFF.selectedAi : "ChatGPT",
+  locale: ["zh-Hant", "en"].includes(SAVED_HANDOFF?.locale) ? SAVED_HANDOFF.locale : "zh-Hant",
+  displayName: readJson(DISPLAY_NAME_KEY) || "",
   challengeId: null,
   signinEmail: "",
-  prompt: "",
+  prompt: typeof SAVED_HANDOFF?.prompt === "string" ? SAVED_HANDOFF.prompt : "",
   busy: false,
   error: "",
   notice: "",
@@ -64,7 +72,8 @@ const runtime = {
   invitations: null,
   match: null,
   uploadSession: null,
-  demo: false,
+  supportRequestId: null,
+  demo: DEMO_QUERY_ENABLED || PERSISTED_DEMO_ENABLED,
 };
 
 function readJson(key) {
@@ -74,6 +83,11 @@ function readJson(key) {
 function writeJson(key, value) {
   if (value === null) localStorage.removeItem(key);
   else localStorage.setItem(key, JSON.stringify(value));
+}
+
+function clearHandoff() {
+  runtime.prompt = "";
+  writeJson(HANDOFF_KEY, null);
 }
 
 function esc(value) {
@@ -140,6 +154,10 @@ function handoffButtonLabel() {
   return "Share prompt to my AI";
 }
 
+function promptFileForLocale() {
+  return runtime.locale === "en" ? "/owner-pitch-prompt-en.txt" : "/owner-pitch-prompt-zh-Hant.txt";
+}
+
 async function copyPromptBestEffort(prompt) {
   if (!navigator.clipboard?.writeText) return false;
   try {
@@ -173,6 +191,15 @@ async function launchAiWithPrompt() {
   window.location.assign(target.toString());
 }
 
+async function copyPrompt() {
+  const prompt = String(runtime.prompt || "").trim();
+  if (!prompt) throw new Error("Prompt 尚未完成載入，請稍後再試。");
+  if (!await copyPromptBestEffort(prompt)) throw new Error("這個瀏覽器無法複製 Prompt，請長按上方 Prompt 手動複製。");
+  runtime.notice = "Prompt copied. Open your AI and paste it to continue.";
+  announce(runtime.notice);
+  render();
+}
+
 function startScreen() {
   return shell(`<div class="hero">
     <h1>Your agent<br>knows you.<span>Let it pitch you.</span></h1>
@@ -184,7 +211,7 @@ function startScreen() {
     <div><strong>2</strong><span>在網站授權發布<br>Approve publishing</span></div>
   </div>
   <button class="button primary" data-action="begin">Let my agent pitch me</button>
-  ${LOCAL_DEMO_AVAILABLE ? '<button class="button quiet" style="margin-top:9px" data-action="demo-flow">Preview seeded flow</button>' : ""}
+  ${DEMO_AVAILABLE ? '<button class="button quiet" style="margin-top:9px" data-action="demo-flow">Preview seeded flow</button>' : ""}
   <p class="subtle" style="text-align:center;margin:10px 0 0">手機可完成 · 約 3 分鐘</p>`);
 }
 
@@ -207,17 +234,20 @@ function assistantScreen() {
     <h1 class="page-title">Who knows you best?</h1>
     <p class="page-intro">選擇平常最常一起思考、且能存取相關脈絡的 AI。</p>
     <div class="assistant-grid">${["ChatGPT", "Claude", "Other AI"].map((name) => `<button class="assistant-card" data-action="select-ai" data-ai="${name}" aria-pressed="${runtime.selectedAi === name}"><strong>${name}</strong><span>${runtime.selectedAi === name ? "Selected" : "Choose"}</span></button>`).join("")}</div>
+    <div class="divider-label">Prompt language</div>
+    <div class="language-grid" role="group" aria-label="Prompt language">${[["zh-Hant", "繁體中文"], ["en", "English"]].map(([locale, label]) => `<button class="language-card" data-action="select-locale" data-locale="${locale}" aria-pressed="${runtime.locale === locale}">${label}</button>`).join("")}</div>
     <div style="margin-top:auto;padding-top:28px"><button class="button primary" style="width:100%" data-action="create-prompt">Create my prompt</button></div>`, { action: '<a href="/settings" data-link class="text-action">Account</a>' });
 }
 
 function handoffScreen() {
-  return shell(`<div class="prompt-meta"><span>Back to ${esc(runtime.selectedAi)}</span><span>24-hour workflow</span></div>
+  return shell(`<div class="prompt-meta"><span>Back to ${esc(runtime.selectedAi)}</span><span>${runtime.locale === "en" ? "English" : "繁體中文"}</span></div>
     <h1 class="page-title">Hand this to ${esc(runtime.selectedAi)}</h1>
     <div class="progress" aria-label="Step 2 of 4"><span class="active"></span><span></span><span></span><span></span></div>
     <div class="prompt-box" aria-label="完整 extraction prompt">${esc(runtime.prompt || "正在載入 prompt…")}</div>
     <p class="subtle">AI 第一則會顯示精簡預覽，並一次列出實際發現的 security／privacy 項目；不會問介紹是否符合聊天歷史。選完所有 S 編號並加上「確認安全並產生 JSON」後，再複製下一則純 JSON。</p>
     <button class="button primary" style="width:100%" data-action="launch-ai-with-prompt">${esc(handoffButtonLabel())}</button>
     <p class="subtle" style="text-align:center;margin:9px 0 0">一次完成：將完整 Prompt 帶入 ${esc(runtime.selectedAi)} 並開啟；也會嘗試複製到剪貼簿作為備援。</p>
+    <button class="button quiet" style="margin-top:9px;width:100%" data-action="copy-prompt">Copy prompt</button>
     <button class="button quiet" style="margin-top:9px" data-action="go-import">Security checked · Paste final JSON</button>`);
 }
 
@@ -230,7 +260,7 @@ function parseJsonCandidate(value) {
     throw new Error("這不是最終 JSON。請回到 AI，逐項回覆它列出的 S 編號 security／privacy 選項，並在同一則訊息最後加上「確認安全並產生 JSON」，再複製下一則回答。");
   }
   if (parsed?.schema === "routec.message_debug_info.v1" || parsed?.matrix_event_id || parsed?.host_session_id) {
-    throw new Error("你貼上的是 Oysterun／RouteC 的訊息除錯資料，不是 Owner Pitch。請回到 ChatGPT，完成 security／privacy 確認後，只複製包含 summary、interests、motivations、active_problems、recurring_topics、friend_intent、history_scope 與 confidence 的最後一則 JSON。");
+    throw new Error("這看起來是除錯／傳輸資料，不是你的 Owner Pitch。請回到 AI，完成 security／privacy 確認後，只複製包含 summary、interests、motivations、active_problems、recurring_topics、friend_intent、history_scope 與 confidence 的最後一則 JSON。");
   }
   if (parsed?.status === "review_required") {
     throw new Error("這仍是待確認預覽。請回到 AI，選完所有 S 編號 security／privacy 項目並加上「確認安全並產生 JSON」，再貼上下一則純 JSON。");
@@ -272,7 +302,8 @@ function importScreen() {
         <label class="field"><span class="field-label">Owner pitch JSON</span><textarea class="tall" name="json" required placeholder='{ "summary": "..." }'></textarea></label>
         <button class="button primary">Render editable fields</button>
       </form>
-      <button class="button quiet" style="margin-top:9px" data-action="load-sample">Load hackathon sample</button>`);
+      <button class="button quiet" style="margin-top:9px" data-action="load-sample">Load hackathon sample</button>
+      ${runtime.session && !runtime.demo ? '<button class="button quiet" style="margin-top:9px" data-action="resume-computer-draft">Resume computer draft</button>' : ""}`);
   }
   return shell(`<p class="eyebrow">STEP 3 / 4 · EDIT FIELDS</p>
     <h1 class="page-title">Make it sound like you</h1>
@@ -309,7 +340,10 @@ function reviewScreen() {
     <h1 class="page-title">Publish this pitch?</h1>
     <p class="page-intro">這是 PitchYourOwner 將儲存的完整版本。此頁唯讀；若要修改，請返回上一頁。</p>
     ${profileDocument(runtime.draft, true)}
-    <div class="button-row"><button class="button" data-action="back-edit">Back to edit</button><button class="button primary" data-action="publish-profile" ${runtime.busy ? "disabled" : ""}>${runtime.busy ? "Publishing" : "Confirm & upload"}</button></div>`);
+    <form class="form" data-form="publish-profile">
+      <label class="field"><span class="field-label">Display name</span><span class="field-hint">Shown to a match before you connect. Use a first name or a handle.</span><input name="display_name" autocomplete="nickname" minlength="1" maxlength="40" required value="${esc(runtime.displayName)}"></label>
+      <div class="button-row"><button type="button" class="button" data-action="back-edit">Back to edit</button><button class="button primary" ${runtime.busy ? "disabled" : ""}>${runtime.busy ? "Publishing" : "Confirm & upload"}</button></div>
+    </form>`);
 }
 
 function profileDocument(profile, showConfidence) {
@@ -330,13 +364,20 @@ function pitchScreen() {
     return shell('<div class="loading">Loading your pitch</div>', { nav: true, active: "pitch" });
   }
   if (!runtime.profile) return shell(`<div class="empty"><p class="eyebrow">MY PITCH</p><h2>No pitch yet</h2><p>先讓你的 AI 產生 owner pitch，再貼回並發布。</p><a class="button primary" href="/assistant" data-link>Create my pitch</a></div>`, { nav: true, active: "pitch" });
-  return shell(`<h1 class="page-title">My Pitch</h1><p class="page-intro">我的介紹 · owner 已核准</p>${profileDocument(runtime.profile.profile, true)}<button class="button" style="width:100%" data-action="refresh-pitch">Refresh my pitch</button>`, { nav: true, active: "pitch", action: '<a href="/settings" data-link class="text-action">Edit</a>' });
+  return shell(`<h1 class="page-title">My Pitch</h1><p class="page-intro">我的介紹 · owner 已核准</p>${profileDocument(runtime.profile.profile, false)}<button class="button" style="width:100%" data-action="refresh-pitch">Refresh my pitch</button>`, { nav: true, active: "pitch", action: '<a href="/settings" data-link class="text-action">Edit</a>' });
 }
 
 async function loadProfile() {
   runtime.profileLoaded = true;
   if (runtime.demo) { runtime.profile = { profile: structuredClone(SAMPLE_PROFILE), profile_id: "demo-owner" }; queueMicrotask(render); return; }
-  try { runtime.profile = await api("/v1/profiles/me"); }
+  try {
+    runtime.profile = await api("/v1/profiles/me");
+    runtime.locale = runtime.profile.locale === "en" ? "en" : "zh-Hant";
+    if (runtime.profile.display_name) {
+      runtime.displayName = runtime.profile.display_name;
+      writeJson(DISPLAY_NAME_KEY, runtime.displayName);
+    }
+  }
   catch (error) { if (error.status !== 404) runtime.error = error.message; }
   render();
 }
@@ -409,7 +450,7 @@ async function loadInvitations() {
 function settingsScreen() {
   return shell(`<h1 class="page-title">Settings</h1><p class="page-intro">Account、matching 與 computer API。</p>
     <div class="settings-group"><div class="divider-label">Computer API</div><div class="settings-row"><div><strong>24-hour draft upload</strong><div class="subtle">單次、write-only，只能建立 draft</div></div><button data-action="create-upload-session">Create</button></div></div>
-    ${runtime.uploadSession ? `<div class="notice">Submit URL</div><div class="api-token">${esc(runtime.uploadSession.submit_url)}</div><div class="notice" style="margin-top:8px">Bearer token · ${esc(runtime.uploadSession.expires_at)}</div><div class="api-token">${esc(runtime.uploadSession.upload_token)}</div><p class="subtle">此 token 只顯示於目前畫面。POST body：<code>{"profile": {…}, "locale": "zh-Hant"}</code></p>` : ""}
+    ${runtime.uploadSession ? `<div class="notice">Submit URL</div><div class="api-token">${esc(runtime.uploadSession.submit_url)}</div><div class="notice" style="margin-top:8px">Bearer token · ${esc(runtime.uploadSession.expires_at)}</div><div class="api-token">${esc(runtime.uploadSession.upload_token)}</div><p class="subtle">此 token 只顯示於目前畫面。POST body：<code>{"profile": {…}, "locale": "${esc(runtime.locale)}"}</code></p>` : ""}
     <div class="settings-group"><div class="divider-label">Data</div><div class="settings-row"><span>Delete pitch and account data</span><button data-action="delete-profile">Delete</button></div><div class="settings-row"><span>Sign out on this device</span><button data-action="signout">Sign out</button></div></div>
     <div class="settings-group"><div class="divider-label">Information</div><div class="settings-row"><a href="/privacy" data-link>Privacy</a></div><div class="settings-row"><a href="/terms" data-link>Terms</a></div><div class="settings-row"><a href="/support" data-link>Support</a></div></div>`, { nav: true, active: "settings" });
 }
@@ -418,9 +459,13 @@ function infoScreen(kind) {
   const copy = {
     privacy: ["Privacy", "PitchYourOwner stores only the owner pitch you explicitly publish, account/session records, matches, and invitation decisions. The selected AI handles content preparation before transfer."],
     terms: ["Terms", "Owner pitches are conversation-derived interpretations, not verified identity or expertise. Use the product respectfully and do not upload information you are not authorized to share."],
-    support: ["Support", "For hackathon support, return to Settings and keep the exact error message and time. Operational errors are monitored without logging profile payloads."],
+    support: ["Support", "Send the exact error message and what you were trying to do. Do not include your profile JSON, upload token, verification code, or other secrets."],
   }[kind];
-  return shell(`<a href="/settings" data-link class="eyebrow" style="text-decoration:none">Back to settings</a><h1 class="page-title">${copy[0]}</h1><p class="page-intro" style="color:var(--ink)">${copy[1]}</p>`);
+  const support = kind === "support" ? (runtime.supportRequestId
+    ? `<div class="notice success" role="status">Support request ${esc(runtime.supportRequestId)} was sent.</div><button class="button quiet" style="margin-top:16px;width:100%" data-action="new-support-request">Send another request</button>`
+    : `<form class="form" data-form="support-request"><label class="field"><span class="field-label">Message</span><textarea name="message" minlength="20" maxlength="5000" required placeholder="What happened, what you expected, and the approximate time"></textarea></label><label class="field"><span class="field-label">Contact (optional)</span><input name="contact" maxlength="320" placeholder="Email or another way to reply"></label><button class="button primary" ${runtime.busy ? "disabled" : ""}>${runtime.busy ? "Sending" : "Send support request"}</button></form>`)
+    : "";
+  return shell(`<a href="/settings" data-link class="eyebrow" style="text-decoration:none">Back to settings</a><h1 class="page-title">${copy[0]}</h1><p class="page-intro" style="color:var(--ink)">${copy[1]}</p>${support}`);
 }
 
 function render() {
@@ -454,26 +499,39 @@ document.addEventListener("click", async (event) => {
   const action = button.dataset.action;
   try {
     runtime.error = "";
-    if (action === "begin") navigate(runtime.session ? "/assistant" : "/signin");
-    if (action === "demo-flow") { runtime.demo = true; runtime.draft = null; navigate("/assistant"); }
+    if (action === "begin") runtime.session ? await routeReturningOwner() : navigate("/signin");
+    if (action === "demo-flow") { runtime.demo = true; runtime.draft = null; runtime.displayName = "Ari C."; writeJson(DEMO_KEY, { enabled: true }); writeJson(DISPLAY_NAME_KEY, runtime.displayName); navigate("/assistant"); }
     if (action === "change-email") { runtime.challengeId = null; runtime.signinEmail = ""; render(); }
     if (action === "select-ai") { runtime.selectedAi = button.dataset.ai; render(); }
+    if (action === "select-locale") { runtime.locale = button.dataset.locale === "en" ? "en" : "zh-Hant"; render(); }
     if (action === "create-prompt") {
-      runtime.prompt = await fetch("/owner-pitch-prompt-zh-Hant.txt", { cache: "no-store" }).then((response) => response.text());
+      const response = await fetch(promptFileForLocale(), { cache: "no-store" });
+      if (!response.ok) throw new Error(`Prompt 載入失敗（HTTP ${response.status}）`);
+      runtime.prompt = await response.text();
+      writeJson(HANDOFF_KEY, { selectedAi: runtime.selectedAi, locale: runtime.locale, prompt: runtime.prompt });
       navigate("/handoff");
     }
     if (action === "launch-ai-with-prompt") await launchAiWithPrompt();
+    if (action === "copy-prompt") await copyPrompt();
     if (action === "go-import") navigate("/import");
     if (action === "load-sample") { runtime.draft = structuredClone(SAMPLE_PROFILE); writeJson(DRAFT_KEY, runtime.draft); render(); }
+    if (action === "resume-computer-draft") await resumeComputerDraft();
     if (action === "replace-json") { runtime.draft = null; writeJson(DRAFT_KEY, null); render(); }
-    if (action === "back-edit") navigate("/import");
-    if (action === "publish-profile") await publishProfile();
+    if (action === "back-edit") {
+      const displayName = String(document.querySelector('input[name="display_name"]')?.value || "").trim();
+      if (displayName && displayName.length <= 40 && !/[\r\n]/.test(displayName)) {
+        runtime.displayName = displayName;
+        writeJson(DISPLAY_NAME_KEY, runtime.displayName);
+      }
+      navigate("/import");
+    }
     if (action === "refresh-pitch") { runtime.draft = null; writeJson(DRAFT_KEY, null); navigate("/assistant"); }
     if (action === "refresh-matches") { runtime.matches = null; render(); }
     if (action === "match-decision") await decideMatch(button.dataset.matchId, button.dataset.decision);
     if (action === "create-upload-session") { runtime.uploadSession = await api("/v1/upload-sessions", { method: "POST", body: "{}" }); render(); }
     if (action === "delete-profile") await deleteProfile();
     if (action === "signout") signout();
+    if (action === "new-support-request") { runtime.supportRequestId = null; render(); }
   } catch (error) {
     runtime.error = error.message || "操作失敗";
     render();
@@ -500,7 +558,7 @@ document.addEventListener("submit", async (event) => {
       runtime.session = { accessToken: result.accessToken, email: runtime.signinEmail };
       writeJson(STORAGE_KEY, runtime.session);
       runtime.profileLoaded = false;
-      navigate("/assistant");
+      await routeReturningOwner();
     } else if (form.dataset.form === "parse-json") {
       runtime.draft = validateProfileClient(parseJsonCandidate(String(formData.get("json") || "")));
       writeJson(DRAFT_KEY, runtime.draft);
@@ -508,6 +566,13 @@ document.addEventListener("submit", async (event) => {
       runtime.draft = profileFromForm(form);
       writeJson(DRAFT_KEY, runtime.draft);
       navigate("/review");
+    } else if (form.dataset.form === "publish-profile") {
+      runtime.displayName = validateDisplayName(formData.get("display_name"));
+      writeJson(DISPLAY_NAME_KEY, runtime.displayName);
+      await publishProfile();
+    } else if (form.dataset.form === "support-request") {
+      const result = await api("/v1/support-requests", { method: "POST", body: JSON.stringify({ category: "other", message: String(formData.get("message") || ""), contact: String(formData.get("contact") || "") }) });
+      runtime.supportRequestId = result.requestId;
     }
   } catch (error) {
     runtime.error = error.message || "操作失敗";
@@ -527,6 +592,7 @@ async function publishProfile() {
     runtime.draft = null;
     runtime.matches = [structuredClone(DEMO_MATCH)];
     writeJson(DRAFT_KEY, null);
+    clearHandoff();
     runtime.busy = false;
     navigate("/matches");
     return;
@@ -534,7 +600,7 @@ async function publishProfile() {
   const result = await api("/v1/profile-versions", {
     method: "POST",
     headers: { "idempotency-key": crypto.randomUUID() },
-    body: JSON.stringify({ schema: "pitchyourowner.profile-publish.v1", profile: runtime.draft, locale: "zh-Hant", consent: { approvedAt: new Date().toISOString() } }),
+    body: JSON.stringify({ schema: "pitchyourowner.profile-publish.v1", display_name: runtime.displayName, profile: runtime.draft, locale: runtime.locale, consent: { approvedAt: new Date().toISOString() } }),
   });
   await api("/v1/matching-runs", { method: "POST", body: "{}" });
   runtime.busy = false;
@@ -543,6 +609,7 @@ async function publishProfile() {
   runtime.draft = null;
   runtime.matches = null;
   writeJson(DRAFT_KEY, null);
+  clearHandoff();
   runtime.notice = "Pitch published. Matching started.";
   navigate("/matches");
 }
@@ -579,9 +646,52 @@ function signout() {
   runtime.invitations = null;
   runtime.draft = null;
   runtime.demo = false;
+  runtime.displayName = "";
+  clearHandoff();
   writeJson(STORAGE_KEY, null);
   writeJson(DRAFT_KEY, null);
+  writeJson(DISPLAY_NAME_KEY, null);
+  writeJson(DEMO_KEY, null);
   navigate("/");
+}
+
+function validateDisplayName(value) {
+  const displayName = String(value || "").trim();
+  if (!displayName || displayName.length > 40 || /[\r\n]/.test(displayName)) throw new Error("Display name 必須是 1–40 字元，且不能換行。");
+  return displayName;
+}
+
+async function routeReturningOwner() {
+  try {
+    runtime.profile = await api("/v1/profiles/me");
+    runtime.profileLoaded = true;
+    runtime.locale = runtime.profile.locale === "en" ? "en" : "zh-Hant";
+    runtime.displayName = runtime.profile.display_name || runtime.displayName;
+    if (runtime.displayName) writeJson(DISPLAY_NAME_KEY, runtime.displayName);
+    navigate("/matches");
+  } catch (error) {
+    if (error.status !== 404) throw error;
+    runtime.profile = null;
+    runtime.profileLoaded = true;
+    navigate(runtime.draft ? "/import" : "/assistant");
+  }
+}
+
+async function resumeComputerDraft() {
+  const result = await api("/v1/profile-drafts");
+  const draft = Array.isArray(result.drafts)
+    ? [...result.drafts].sort((left, right) => String(right.createdAt || right.created_at || "").localeCompare(String(left.createdAt || left.created_at || "")))[0]
+    : null;
+  if (!draft?.profile) {
+    runtime.notice = "No computer draft is available yet.";
+    render();
+    return;
+  }
+  runtime.draft = validateProfileClient(draft.profile);
+  runtime.locale = draft.locale === "en" ? "en" : "zh-Hant";
+  writeJson(DRAFT_KEY, runtime.draft);
+  runtime.notice = "Computer draft loaded. Review every field before publishing.";
+  render();
 }
 
 async function loadProfileSchemaConfig() {

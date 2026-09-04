@@ -23,6 +23,7 @@ const profile = {
 
 const payload = {
   schema: "pitchyourowner.profile-publish.v1",
+  display_name: "Ari C.",
   profile,
   locale: "zh-Hant",
   consent: { approvedAt: "2026-09-04T08:00:00.000Z" },
@@ -31,7 +32,14 @@ const payload = {
 test("validates the seven core fields and owner-only confidence", () => {
   const parsed = validatePublishPayload(payload);
   assert.equal(parsed.profile.summary, profile.summary);
+  assert.equal(parsed.display_name, "Ari C.");
   assert.equal(parsed.profile.confidence.friend_intent, "low");
+});
+
+test("requires a short single-line display name outside the profile", () => {
+  assert.throws(() => validatePublishPayload({ ...payload, display_name: "" }), /display_name/);
+  assert.throws(() => validatePublishPayload({ ...payload, display_name: "Ari\nC." }), /newlines/);
+  assert.equal("display_name" in validatePublishPayload(payload).profile, false);
 });
 
 test("matching document excludes scope and confidence", () => {

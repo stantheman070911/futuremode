@@ -1,7 +1,7 @@
 import { SearchVectorsCommand } from "@aws-sdk/client-dynamodb";
 import { BedrockRuntimeClient, ConverseCommand } from "@aws-sdk/client-bedrock-runtime";
 import { unmarshall } from "@aws-sdk/util-dynamodb";
-import { GetCommand, QueryCommand, ScanCommand, TransactWriteCommand } from "@aws-sdk/lib-dynamodb";
+import { GetCommand, ScanCommand, TransactWriteCommand } from "@aws-sdk/lib-dynamodb";
 import { randomOpaqueToken, sha256 } from "../shared/security.js";
 import { documentDynamo, rawDynamo, requiredEnvironment } from "../shared/storage.js";
 import type { OwnerPitchProfile } from "../shared/contracts.js";
@@ -13,9 +13,6 @@ interface ActiveProfile {
   versionId: string;
   emailHash: string;
   embedding: number[];
-  profileHeadline?: string;
-  profileMarkdown?: string;
-  skills?: string[];
   profile?: OwnerPitchProfile;
   displayName?: string;
   locale?: string;
@@ -30,7 +27,6 @@ interface CurrentProfile extends Record<string, unknown> {
   matchingState?: string;
   matchLanguages?: string[];
   matchIntervalDays?: number;
-  publicSlug?: string;
   isTestProfile?: boolean;
   testRunId?: string;
   cleanupSafe?: boolean;
@@ -41,17 +37,10 @@ interface CandidateProfile extends ActiveProfile {
   rank: number;
 }
 
-interface EmailStoryPreview {
-  title?: string;
-  summary?: string;
-}
-
 interface EmailProfilePreview {
-  animalId?: string;
-  headline?: string;
-  markdown?: string;
-  skills?: string[];
-  stories?: EmailStoryPreview[];
+  displayName?: string;
+  summary?: string;
+  interests?: string[];
 }
 
 type UiLanguage = "zh" | "en";
@@ -65,8 +54,7 @@ interface EmailCopy {
   recipientReasonTitle: string;
   profileLabel: string;
   profileNameLabel: string;
-  skillsLabel: string;
-  storiesTitle: string;
+  interestsLabel: string;
   interestedCta: string;
   passCta: string;
   eligibilityNote: string;
@@ -166,8 +154,7 @@ function emailCopy(language: UiLanguage): EmailCopy {
       recipientReasonTitle: "對你來說",
       profileLabel: "對方 Profile",
       profileNameLabel: "名稱",
-      skillsLabel: "Skills",
-      storiesTitle: "Selected stories",
+      interestsLabel: "Interests",
       interestedCta: "我有興趣 — 我想要這個介紹 →",
       passCta: "略過 — 這次不需要",
       eligibilityNote: "你收到這封信，是因為你的 approved Profile 可以參與 PitchYourOwner matching。",
@@ -186,8 +173,7 @@ function emailCopy(language: UiLanguage): EmailCopy {
     recipientReasonTitle: "For you",
     profileLabel: "Matched Profile",
     profileNameLabel: "Name",
-    skillsLabel: "Skills",
-    storiesTitle: "Selected stories",
+    interestsLabel: "Interests",
     interestedCta: "INTERESTED — I WANT THIS INTRODUCTION →",
     passCta: "PASS — NOT THIS ONE",
     eligibilityNote: "You are receiving this because your approved Profile is eligible for PitchYourOwner matching.",
@@ -201,7 +187,7 @@ function emailCopy(language: UiLanguage): EmailCopy {
 function profileForJudge(profile: ActiveProfile) {
   return {
     id: profile.profileId,
-    summary: text(profile.profile?.summary ?? profile.profileHeadline, 480),
+    summary: text(profile.profile?.summary, 480),
     locale: text(profile.locale, 20),
     interests: profile.profile?.interests ?? [],
     motivations: profile.profile?.motivations ?? [],
@@ -216,24 +202,11 @@ async function loadProfileVersion(tableName: string, profileId: string, versionI
     TableName: tableName,
     Key: { pk: `PROFILE#${profileId}`, sk: `VERSION#${versionId}` },
     ConsistentRead: true,
-    ProjectionExpression: "profileId, versionId, emailHash, embedding, profileHeadline, profileMarkdown, skills, profile, displayName, locale, isTestProfile, testRunId, cleanupSafe",
+    ProjectionExpression: "profileId, versionId, emailHash, embedding, profile, displayName, locale, isTestProfile, testRunId, cleanupSafe",
   }));
   const item = result.Item as ActiveProfile | undefined;
   if (!item?.profileId || !item.versionId || !item.emailHash) return undefined;
   return item;
-}
-
-async function loadProfileStories(tableName: string, profileId: string, versionId: string): Promise<EmailStoryPreview[]> {
-  const result = await documentDynamo.send(new QueryCommand({
-    TableName: tableName,
-    KeyConditionExpression: "pk = :pk AND begins_with(sk, :story)",
-    ExpressionAttributeValues: { ":pk": `PROFILE#${profileId}`, ":story": `VERSION#${versionId}#STORY#` },
-    ProjectionExpression: "title, summary",
-  }));
-  return (result.Items ?? []).map((item) => ({
-    title: text(item.title, 160),
-    summary: text(item.summary, 260),
-  })).filter((story) => story.title || story.summary).slice(0, 3);
 }
 
 function parseJsonObject(textValue: string): unknown {
@@ -320,7 +293,7 @@ export async function judgeMatchCandidates(seed: ActiveProfile, candidates: Cand
     "- reasonForSeed must use the seed Profile's locale.",
     "- reasonForCandidate must use that candidate Profile's locale.",
     "- introReason can be concise English unless both Profiles use zh, then use Traditional Chinese.",
-    "- Do not translate Profile titles, skills, product names, or distinctive terms.",
+    "- Do not translate names, interest terms, product names, or other distinctive terms.",
     "",
     "Return JSON only with this shape:",
     "{\"seedId\":\"...\",\"rankedCandidates\":[{\"candidateId\":\"...\",\"decision\":\"strong_match|possible_match|weak_match|reject\",\"seedInterestScore\":0,\"candidateInterestScore\":0,\"mutualScore\":0,\"reasonForSeed\":\"...\",\"reasonForCandidate\":\"...\",\"introReason\":\"...\",\"whatWeBothCareAbout\":\"...\",\"whyItMattersNow\":\"...\",\"whatWeCouldDiscuss\":\"...\",\"evidenceLabels\":[\"interests\",\"active_problems\"],\"risks\":[\"...\"]}],\"bestCandidateId\":\"...\",\"bestIntroReason\":\"...\"}",
@@ -366,8 +339,7 @@ function emailText({
   siteOrigin: string;
 }): string {
   const copy = emailCopy(language);
-  const skills = Array.isArray(peer.skills) ? peer.skills.map((skill) => text(skill, 80)).filter(Boolean).slice(0, 10) : [];
-  const stories = Array.isArray(peer.stories) ? peer.stories.slice(0, 3) : [];
+  const interests = Array.isArray(peer.interests) ? peer.interests.map((interest) => text(interest, 120)).filter(Boolean).slice(0, 8) : [];
   return [
     copy.preheader,
     "",
@@ -376,11 +348,9 @@ function emailText({
     reasonForRecipient ? `\n${copy.recipientReasonTitle}: ${reasonForRecipient}` : "",
     "",
     `${copy.profileLabel}:`,
-    peer.animalId ? `${copy.profileNameLabel}: ${text(peer.animalId, 80)}` : "",
-    peer.headline ? `Headline: ${text(peer.headline, 240)}` : "",
-    `Summary: ${profileSummary(peer.markdown)}`,
-    skills.length ? `${copy.skillsLabel}: ${skills.join(", ")}` : "",
-    stories.length ? [`${copy.storiesTitle}:`, ...stories.map((story) => `- ${story.title}${story.summary ? ` — ${story.summary}` : ""}`)].join("\n") : "",
+    peer.displayName ? `${copy.profileNameLabel}: ${text(peer.displayName, 40)}` : "",
+    `Summary: ${profileSummary(peer.summary)}`,
+    interests.length ? `${copy.interestsLabel}: ${interests.join(", ")}` : "",
     "",
     `${copy.interestedCta}: ${acceptUrl}`,
     `${copy.passCta}: ${passUrl}`,
@@ -446,12 +416,11 @@ function emailHtml({
   siteOrigin: string;
 }): string {
   const copy = emailCopy(language);
-  const skills = Array.isArray(peer.skills) ? peer.skills.map((skill) => text(skill, 80)).filter(Boolean).slice(0, 10) : [];
-  const stories = Array.isArray(peer.stories) ? peer.stories.slice(0, 3) : [];
-  const animalId = text(peer.animalId, 80);
+  const interests = Array.isArray(peer.interests) ? peer.interests.map((interest) => text(interest, 120)).filter(Boolean).slice(0, 8) : [];
+  const displayName = text(peer.displayName, 40);
   const shortIntroReason = compactEmailText(introReason, 360);
   const shortRecipientReason = compactEmailText(reasonForRecipient, 360);
-  const shortProfileSummary = truncate(profileSummary(peer.markdown), 300);
+  const shortProfileSummary = truncate(profileSummary(peer.summary), 300);
   const actionButtons = `
           <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="width:100%;margin:20px 0 8px 0;border-collapse:separate;">
             <tr>
@@ -477,19 +446,16 @@ function emailHtml({
           <h1 style="margin:8px 0 0 0;font-size:34px;line-height:1.03;letter-spacing:-.04em;color:#17213d;">${escapeHtml(copy.heroTitle)}</h1>
         </div>
         <div style="padding:20px 20px 8px;">
-          ${animalId ? `<p style="display:inline-block;margin:0 0 14px 0;padding:8px 12px;border:2px solid #17213d;border-radius:999px;background:#7258e8;color:#ffffff;font-size:13px;font-weight:900;letter-spacing:.04em;">${escapeHtml(animalId)}</p>` : ""}
           <h2 style="margin:0 0 8px 0;font-size:20px;line-height:1.2;color:#17213d;">${escapeHtml(copy.reasonTitle)}</h2>
           <p style="margin:0 0 16px 0;font-size:15px;line-height:1.5;color:#34394d;">${paragraphHtml(shortIntroReason)}</p>
           ${shortRecipientReason ? `<h2 style="margin:18px 0 8px 0;font-size:20px;line-height:1.2;color:#17213d;">${escapeHtml(copy.recipientReasonTitle)}</h2><p style="margin:0 0 14px 0;font-size:15px;line-height:1.5;color:#34394d;">${paragraphHtml(shortRecipientReason)}</p>` : ""}
         </div>
         <div style="margin:6px 14px 0;padding:16px 16px;border:2px solid #17213d;border-radius:18px;background:#ffffff;">
           <p style="margin:0 0 8px 0;font-size:12px;letter-spacing:.13em;text-transform:uppercase;font-weight:900;color:#7258e8;">${escapeHtml(copy.profileLabel)}</p>
-          ${animalId ? `<p style="margin:0 0 8px 0;font-size:14px;line-height:1.4;color:#17213d;"><strong>${escapeHtml(copy.profileNameLabel)}:</strong> ${escapeHtml(animalId)}</p>` : ""}
-          <h3 style="margin:0 0 10px 0;font-size:23px;line-height:1.18;letter-spacing:-.02em;color:#17213d;">${escapeHtml(text(peer.headline, 240) || "PitchYourOwner Profile")}</h3>
+          <h3 style="margin:0 0 10px 0;font-size:23px;line-height:1.18;letter-spacing:-.02em;color:#17213d;">${escapeHtml(displayName || "Another owner")}</h3>
           <p style="margin:0 0 14px 0;font-size:15px;line-height:1.5;color:#34394d;">${escapeHtml(shortProfileSummary)}</p>
-          ${skills.length ? `<p style="margin:0 0 4px 0;font-size:14px;line-height:1.65;color:#17213d;"><strong>${escapeHtml(copy.skillsLabel)}:</strong> ${skills.map(escapeHtml).join(", ")}</p>` : ""}
+          ${interests.length ? `<p style="margin:0 0 4px 0;font-size:14px;line-height:1.65;color:#17213d;"><strong>${escapeHtml(copy.interestsLabel)}:</strong> ${interests.map(escapeHtml).join(", ")}</p>` : ""}
         </div>
-        ${stories.length ? `<div style="padding:18px 20px 2px;"><h2 style="margin:0 0 10px 0;font-size:20px;line-height:1.2;color:#17213d;">${escapeHtml(copy.storiesTitle)}</h2>${stories.map((story) => `<p style="margin:0 0 11px 0;padding-left:12px;border-left:4px solid #ff674d;font-size:14px;line-height:1.48;color:#34394d;"><strong style="display:block;color:#17213d;">${escapeHtml(story.title || "Selected story")}</strong>${story.summary ? escapeHtml(compactEmailText(story.summary, 140)) : ""}</p>`).join("")}</div>` : ""}
         <div style="padding:20px;background:#fff6ec;border-top:2px solid #17213d;">
           ${actionButtons}
           <p style="margin:0;font-size:13px;line-height:1.75;color:#686b7d;">
@@ -515,7 +481,7 @@ export async function handler(event?: unknown): Promise<{ considered: number; cr
     TableName: tableName,
     FilterExpression: profileFilter.expression,
     ExpressionAttributeValues: profileFilter.values,
-    ProjectionExpression: "profileId, versionId, emailHash, embedding, profileHeadline, profileMarkdown, skills, profile, displayName, locale, isTestProfile, testRunId, cleanupSafe",
+    ProjectionExpression: "profileId, versionId, emailHash, embedding, profile, displayName, locale, isTestProfile, testRunId, cleanupSafe",
   }));
   const profiles = (active.Items ?? []) as ActiveProfile[];
   const profileIdsInScope = new Set(profiles.map((profile) => profile.profileId));
@@ -540,7 +506,7 @@ export async function handler(event?: unknown): Promise<{ considered: number; cr
       SearchConditionExpression: "#scope = :active AND #matchable = :true",
       ExpressionAttributeNames: { "#scope": "profile_scope", "#matchable": "is_matchable" },
       ExpressionAttributeValues: { ":active": { S: "ACTIVE" }, ":true": { N: "1" } },
-      ProjectionExpression: "profileId, versionId, emailHash, profileHeadline, profileMarkdown, skills, locale",
+      ProjectionExpression: "profileId, versionId, emailHash, locale",
     }));
     const candidateRefs = (result.SearchResults ?? [])
       .map((entry): { profileId: string; versionId: string; score?: number } | undefined => {
@@ -554,7 +520,7 @@ export async function handler(event?: unknown): Promise<{ considered: number; cr
       // DynamoDB vector search does not reliably return every projected
       // application attribute. Hydrate the immutable Profile version before
       // sending candidates to the LLM judge; otherwise the judge may see empty
-      // headlines/skills/profile text and reject valid introductions.
+      // profile text and reject valid introductions.
       const hydrated = await loadProfileVersion(tableName, candidate.profileId, candidate.versionId);
       return hydrated ? { ...hydrated, score: candidate.score, rank: index + 1 } : undefined;
     }))).filter((entry): entry is CandidateProfile => Boolean(entry));
@@ -613,22 +579,13 @@ export async function handler(event?: unknown): Promise<{ considered: number; cr
       [profile.profileId, profile],
       [candidate.profileId, candidate],
     ]);
-    const storiesByProfileId = new Map<string, EmailStoryPreview[]>();
-    await Promise.all(pair.map(async (profileId) => {
-      const profileVersion = profileByProfileId.get(profileId);
-      if (!profileVersion) return;
-      storiesByProfileId.set(profileId, await loadProfileStories(tableName, profileId, profileVersion.versionId));
-    }));
     const peerPreviewFor = (profileId: string): EmailProfilePreview => {
       const peerProfileId = pair.find((entry) => entry !== profileId) ?? "";
       const peerProfile = profileByProfileId.get(peerProfileId);
-      const peerCurrent = currentByProfileId.get(peerProfileId);
       return {
-        animalId: peerCurrent?.publicSlug,
-        headline: peerProfile?.profileHeadline,
-        markdown: peerProfile?.profileMarkdown,
-        skills: peerProfile?.skills,
-        stories: storiesByProfileId.get(peerProfileId) ?? [],
+        displayName: peerProfile?.displayName,
+        summary: peerProfile?.profile?.summary,
+        interests: peerProfile?.profile?.interests,
       };
     };
     const languageFor = (profileId: string) => uiLanguage(profileByProfileId.get(profileId)?.locale);

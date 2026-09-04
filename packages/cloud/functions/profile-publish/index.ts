@@ -46,7 +46,7 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
         TableName: tableName,
         Key: { pk: `PROFILE#${profileId}`, sk: `VERSION#${versionId}` },
         ConsistentRead: true,
-        ProjectionExpression: "profileId, versionId, profile, locale, createdAt, payloadHash, embedding_status",
+        ProjectionExpression: "profileId, versionId, displayName, profile, locale, createdAt, payloadHash, embedding_status",
       }));
       return version.Item ? json(200, version.Item) : json(404, { error: "profile_version_not_found" });
     }
@@ -98,11 +98,9 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
             profileId,
             versionId,
             emailHash: session.emailHash,
+            displayName: payload.display_name,
             profile: payload.profile,
             locale: payload.locale,
-            profileHeadline: payload.profile.summary,
-            profileMarkdown: matchingDocument,
-            skills: [...payload.profile.interests, ...payload.profile.recurring_topics].slice(0, 16),
             payloadHash: digest,
             approvedAt: payload.consent.approvedAt,
             embedding: vector,
@@ -124,6 +122,7 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
             versionId,
             email: session.email,
             emailHash: session.emailHash,
+            displayName: payload.display_name,
             visibility: "matched-only",
             matchingState: "active",
             matchLanguages: payload.locale === "zh-Hant" ? ["zh", "en"] : ["en"],

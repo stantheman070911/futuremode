@@ -66,12 +66,13 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
         TableName: tableName,
         Key: { pk: profilePk, sk: `VERSION#${current.versionId}` },
         ConsistentRead: true,
-        ProjectionExpression: "profileId, versionId, profile, locale, createdAt, approvedAt, embedding_status",
+        ProjectionExpression: "profileId, versionId, displayName, profile, locale, createdAt, approvedAt, embedding_status",
       }))).Item;
       if (!version) return json(404, { error: "profile_version_not_found" });
       return json(200, {
         profile_id: profileId,
         version_id: current.versionId,
+        display_name: version.displayName ?? current.displayName,
         profile: version.profile,
         locale: version.locale,
         matching_state: current.matchingState ?? "active",

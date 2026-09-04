@@ -2,7 +2,7 @@ import { PublishCommand, SNSClient } from "@aws-sdk/client-sns";
 import { PutCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import type { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from "aws-lambda";
 import { json, parseJsonBody } from "../shared/http.js";
-import { normalizeEmail, sha256 } from "../shared/security.js";
+import { sha256 } from "../shared/security.js";
 import { documentDynamo, requiredEnvironment } from "../shared/storage.js";
 
 const sns = new SNSClient({});
@@ -15,6 +15,14 @@ function cleanMessage(value: unknown): string {
   const message = value.trim();
   if (message.length < 20 || message.length > 5_000) throw new Error("invalid message");
   return message;
+}
+
+function optionalContact(value: unknown): string | undefined {
+  if (value === undefined || value === null || value === "") return undefined;
+  if (typeof value !== "string") throw new Error("invalid contact");
+  const contact = value.trim();
+  if (!contact || contact.length > 320 || /[\r\n]/.test(contact)) throw new Error("invalid contact");
+  return contact;
 }
 
 async function claimCapacity(tableName: string, sourceIp: string, now: number): Promise<void> {
@@ -36,9 +44,11 @@ async function claimCapacity(tableName: string, sourceIp: string, now: number): 
 
 export async function handler(event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> {
   try {
-    const body = parseJsonBody(event.body) as { email?: unknown; category?: unknown; message?: unknown };
-    const email = normalizeEmail(body.email);
-    const category = String(body.category ?? "").trim().toLowerCase();
+    const body = parseJsonBody(event.body) as { contact?: unknown; category?: unknown; message?: unknown };
+    const unknown = Object.keys(body).filter((key) => !["contact", "category", "message"].includes(key));
+    if (unknown.length) return json(400, { error: "unknown_support_field" });
+    const contact = optionalContact(body.contact);
+    const category = String(body.category ?? "other").trim().toLowerCase();
     if (!CATEGORIES.has(category)) return json(400, { error: "invalid_support_category" });
     const message = cleanMessage(body.message);
     const tableName = requiredEnvironment("TABLE_NAME");
@@ -53,8 +63,7 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
         sk: "META",
         entityType: "SUPPORT_REQUEST",
         requestId,
-        email,
-        emailHash: sha256(email),
+        contact,
         category,
         message,
         status: "OPEN",
@@ -66,13 +75,13 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
     await sns.send(new PublishCommand({
       TopicArn: requiredEnvironment("OPERATIONS_TOPIC_ARN"),
       Subject: `[PitchYourOwner Support] ${category} · ${requestId}`.slice(0, 100),
-      Message: [`Request: ${requestId}`, `Category: ${category}`, `Reply email: ${email}`, `Created: ${createdAt}`, "", message].join("\n"),
+      Message: [`Request: ${requestId}`, `Category: ${category}`, `Reply contact: ${contact || "not provided"}`, `Created: ${createdAt}`, "", message].join("\n"),
     }));
     return json(202, { requestId, retainedDays: 90 });
   } catch (error) {
     if (error instanceof SupportRateLimitError) return json(429, { error: "support_request_limited" }, { "retry-after": "86400" });
     const message = error instanceof Error ? error.message : "support request failed";
-    if (/email|body|message/.test(message)) return json(400, { error: "invalid_support_request" });
+    if (/contact|body|message/.test(message)) return json(400, { error: "invalid_support_request" });
     console.error(JSON.stringify({ event: "support_request_failed", errorName: error instanceof Error ? error.name : "UnknownError", message }));
     throw error;
   }

@@ -20,7 +20,7 @@
 6. `history_scope` 誠實說明實際檢查的資料來源、範圍，以及無法檢查的內容。
 7. `confidence` 是 AI 對各欄位抽取結果的定性信心，只能是 `high`、`medium` 或 `low`；它只協助 owner 審核，不代表真實性驗證。
 8. 若重要欄位缺乏足夠內容，不要猜測；先在預覽中明確指出範圍不足。不要啟動多輪訪談。
-9. 對話中若出現網站、Host、RouteC、Matrix、session、event 或 message debug metadata，一律視為傳輸層資料，不是 owner profile 的證據。尤其不得複製或輸出 `routec.message_debug_info.v1`、`host_origin`、`host_session_id`、`matrix_room_id`、`matrix_event_id`、`chat_focus_url`、`event_id_kind`、`event_type`、`sender` 或 `origin_server_ts`。
+9. 對話中若出現網站或聊天系統產生的 session、event、sender、timestamp、origin、URL 或 message debug metadata，一律視為除錯／傳輸層資料，不是 owner profile 的證據；不得複製到最終 profile JSON。
 
 ## 傳輸前的 Security／Privacy 風險掃描
 
@@ -102,7 +102,7 @@
 7. `friend_intent`
 8. `confidence`
 
-不要加入 `schema`，不要包在 `profile`、`data`、`result`、`message` 或任何其他 wrapper 中，也不要輸出 Host／RouteC／Matrix／session／event metadata。`confidence` 必須且只能包含 `summary`、`interests`、`motivations`、`active_problems`、`recurring_topics`、`friend_intent` 六個 key。
+不要加入 `schema`，不要包在 `profile`、`data`、`result`、`message` 或任何其他 wrapper 中，也不要輸出聊天系統的 session／event／sender／timestamp／origin／URL／message debug metadata。`confidence` 必須且只能包含 `summary`、`interests`、`motivations`、`active_problems`、`recurring_topics`、`friend_intent` 六個 key。
 
 長度必須符合網站 validator：`history_scope` 最多 320 字元；`summary` 最多 480 字元；`interests` 最多 8 項且每項最多 120 字元；`motivations` 最多 8 項且每項最多 160 字元；`active_problems` 最多 8 項且每項最多 180 字元；`recurring_topics` 最多 8 項且每項最多 140 字元；`friend_intent` 最多 320 字元。
 

@@ -59,6 +59,9 @@ button{cursor:pointer}
 .assistant-card strong{font-size:18px}
 .assistant-card span{color:var(--muted);font-size:12px}
 .assistant-card[aria-pressed="true"]{border-color:var(--blue);box-shadow:inset 4px 0 0 var(--blue)}
+.language-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.language-card{min-height:48px;border:1px solid var(--line);background:var(--white);padding:10px 12px;font-weight:700}
+.language-card[aria-pressed="true"]{border-color:var(--blue);box-shadow:inset 4px 0 0 var(--blue);color:var(--blue)}
 .progress{display:grid;grid-template-columns:repeat(4,1fr);gap:0;height:3px;background:var(--line);margin:8px 0 16px}
 .progress span{background:transparent}
 .progress span.active{background:var(--blue)}
