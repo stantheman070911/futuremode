@@ -236,6 +236,19 @@ function handoffButtonLabel() {
   return "Share prompt to my AI";
 }
 
+const JSON_GUIDE_STEPS = [
+  ["先閱讀簡短預覽", "AI 會先回一段簡短預覽 — 這一則不要複製。"],
+  ["回答隱私項目", "它只列出實際發現的隱私項目。在同一則訊息回答全部，並加上「確認安全並產生 JSON」。"],
+  ["複製下一則回答", "複製下一則回答 — 它只會是 JSON，以 { 開頭。"],
+];
+
+function jsonGuide(includeRecoveryStep = false) {
+  const steps = includeRecoveryStep
+    ? [...JSON_GUIDE_STEPS, ["如果網站顯示錯誤", "回到 AI 完成所有安全選項，再複製它輸出的下一則純 JSON。"]]
+    : JSON_GUIDE_STEPS;
+  return `<ol class="json-guide">${steps.map(([title, detail]) => `<li><strong>${esc(title)}</strong><span>${esc(detail)}</span></li>`).join("")}</ol>`;
+}
+
 function promptFileForLocale() {
   return runtime.locale === "en" ? "/owner-pitch-prompt-en.txt" : "/owner-pitch-prompt-zh-Hant.txt";
 }
@@ -336,6 +349,7 @@ function handoffScreen() {
       <button class="text-action handoff-text-action" data-action="copy-prompt" ${promptReady ? "" : "disabled"}>Copy prompt again</button>`
     : `${prompt}
       <p class="subtle">AI 第一則會顯示精簡預覽，並一次列出實際發現的 security／privacy 項目；不會問介紹是否符合聊天歷史。選完所有 S 編號並加上「確認安全並產生 JSON」後，再複製下一則純 JSON。</p>
+      ${jsonGuide()}
       <button class="button primary" style="width:100%" data-action="launch-ai-with-prompt" ${promptReady ? "" : "disabled"}>${esc(handoffButtonLabel())}</button>
       <p class="subtle" style="text-align:center;margin:9px 0 0">一次完成：將完整 Prompt 帶入 ${esc(runtime.selectedAi)} 並開啟；也會嘗試複製到剪貼簿作為備援。</p>
       <button class="button quiet" style="margin-top:9px;width:100%" data-action="copy-prompt" ${promptReady ? "" : "disabled"}>Copy prompt</button>`;
@@ -392,12 +406,7 @@ function importScreen() {
     return shell(`<p class="eyebrow">STEP 3 / 4 · PASTE JSON</p>
       <h1 class="page-title">Bring your pitch back</h1>
       <p class="page-intro">AI 的第一則預覽不是要貼的內容。先完成傳輸前的 security／privacy 決定，再貼上最終 JSON。</p>
-      <ol class="json-guide">
-        <li><strong>閱讀精簡預覽</strong><span>這不是逐欄 profile 審核；AI 不會問它是否符合你的聊天歷史。</span></li>
-        <li><strong>處理具體風險</strong><span>AI 只列出實際發現的 security／privacy 問題。每個 <code>S1、S2…</code> 都有明確風險與處理選項。</span></li>
-        <li><strong>一次回覆所有選項</strong><span>例如 <code>S1-A、S2-B，確認安全並產生 JSON</code>。若沒有項目，只回覆確認語。</span></li>
-        <li><strong>複製下一則回答</strong><span>它應該只有以 <code>{</code> 開始、以 <code>}</code> 結束的 JSON。</span></li>
-      </ol>
+      ${jsonGuide(true)}
       <form class="form" data-form="parse-json">
         <label class="field"><span class="field-label">Owner pitch JSON</span><textarea class="tall" name="json" required placeholder='{ "summary": "..." }'></textarea></label>
         <button class="button primary">Render editable fields</button>
