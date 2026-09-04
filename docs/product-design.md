@@ -4,11 +4,12 @@ _Canonical product and experience specification · updated 2026-09-04_
 
 _產品與體驗的唯一正式規格 · 更新於 2026-09-04_
 
-The original [`README.md`](../README.md) is a frozen product memo retained for context.
-This document is the current source of truth for what the experience should be.
+The original [`product-memo-v1.md`](product-memo-v1.md) is a frozen product memo
+retained for context. `README.md` at the repo root is now the Hackathon submission
+README. This document is the current source of truth for what the experience should be.
 
-原始 [`README.md`](../README.md) 是保留作為脈絡的凍結產品備忘錄。本文件是目前產品
-體驗的唯一正式依據。
+原始 [`product-memo-v1.md`](product-memo-v1.md) 是保留作為脈絡的凍結產品備忘錄；儲存庫
+根目錄的 `README.md` 現在是 Hackathon 繳交 README。本文件是目前產品體驗的唯一正式依據。
 
 [`design/prototype.html`](../design/prototype.html) is the current interactive visual
 exploration. It still contains alternatives from the decision phase; the next prototype

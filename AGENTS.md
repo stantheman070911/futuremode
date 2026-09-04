@@ -8,12 +8,22 @@ source. Read it before changing this repository.
 [`docs/product-design.md`](docs/product-design.md) 是產品與設計的唯一正式依據。修改此
 儲存庫前，請先閱讀。
 
-[`README.md`](README.md) is the original product memo. It is preserved as historical
-context and must not be edited. When it overlaps with the canonical design brief, follow
-the design brief.
+[`README.md`](README.md) is now the official Hackathon submission README, structured to
+match the organizer-provided [`README-template.md`](README-template.md) and
+[`submission-checklist.md`](submission-checklist.md) at the repo root. Keep it in that
+shape; product/design changes still belong in `docs/product-design.md` first, then get
+summarized here.
 
-[`README.md`](README.md) 是原始產品備忘錄，僅保留作為歷史脈絡，不得修改。當內容與
-正式設計規格重疊時，以設計規格為準。
+[`README.md`](README.md) 現在是符合官方 [`README-template.md`](README-template.md) 與
+[`submission-checklist.md`](submission-checklist.md) 格式的正式繳交 README。請維持此格式；
+產品／設計變更仍先寫入 `docs/product-design.md`，再摘要回此處。
+
+The original product memo moved to [`docs/product-memo-v1.md`](docs/product-memo-v1.md),
+preserved as historical context and must not be edited. When it overlaps with the
+canonical design brief, follow the design brief.
+
+原始產品備忘錄已搬移至 [`docs/product-memo-v1.md`](docs/product-memo-v1.md)，僅保留作為
+歷史脈絡，不得修改。當內容與正式設計規格重疊時，以設計規格為準。
 
 [`design/prototype.html`](design/prototype.html) is a self-contained visual exploration,
 not a source of product truth. Use it to evaluate direction; resolve any conflict in
