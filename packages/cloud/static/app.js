@@ -4,6 +4,7 @@ const HANDOFF_KEY = "pitchyourowner.handoff.v1";
 const DISPLAY_NAME_KEY = "pitchyourowner.display-name.v1";
 const DEMO_KEY = "pitchyourowner.demo.v1";
 const DEMO_DRAFT_KEY = "pitchyourowner.demo-draft.v1";
+const DEMO_MATCH_KEY = "pitchyourowner.demo-match.v1";
 const LAST_PUBLISH_KEY = "pitchyourowner.last-publish.v1";
 const MATCH_SEARCH_WINDOW_MS = 3 * 60 * 1000;
 const MATCH_POLL_INTERVAL_MS = 6 * 1000;
@@ -53,6 +54,7 @@ const DEMO_MATCH = {
   },
   can_invite: true,
 };
+const SAVED_DEMO_MATCH = readJson(DEMO_MATCH_KEY);
 const DEMO_QUERY_ENABLED = new URLSearchParams(location.search).has("demo");
 const PERSISTED_DEMO_ENABLED = readJson(DEMO_KEY)?.enabled === true;
 const DEMO_AVAILABLE = ["127.0.0.1", "localhost"].includes(location.hostname) || DEMO_QUERY_ENABLED || PERSISTED_DEMO_ENABLED;
@@ -81,6 +83,8 @@ const runtime = {
   supportRequestId: null,
   demo: DEMO_QUERY_ENABLED || PERSISTED_DEMO_ENABLED,
   demoDraft: readJson(DEMO_DRAFT_KEY) === true,
+  demoMatch: SAVED_DEMO_MATCH?.match_id === DEMO_MATCH.match_id ? SAVED_DEMO_MATCH : structuredClone(DEMO_MATCH),
+  pendingMatchDecision: null,
   lastPublishAt: Number(readJson(LAST_PUBLISH_KEY)) || 0,
   matchesPollError: false,
 };
@@ -96,6 +100,15 @@ function readJson(key) {
 function writeJson(key, value) {
   if (value === null) localStorage.removeItem(key);
   else localStorage.setItem(key, JSON.stringify(value));
+}
+
+function resetDemoMatch() {
+  runtime.demoMatch = structuredClone(DEMO_MATCH);
+  writeJson(DEMO_MATCH_KEY, runtime.demoMatch);
+}
+
+function saveDemoMatch() {
+  writeJson(DEMO_MATCH_KEY, runtime.demoMatch);
 }
 
 function clearHandoff() {
@@ -142,6 +155,7 @@ function navigate(path) {
   runtime.error = "";
   runtime.notice = "";
   runtime.match = null;
+  runtime.pendingMatchDecision = null;
   window.scrollTo(0, 0);
   render();
 }
@@ -484,10 +498,13 @@ function matchesScreen() {
   }
   if (!visible.length) {
     stopMatchesPolling();
+    if (runtime.demo && runtime.matches.some((match) => match.state === "not_now")) {
+      return shell(`<div class="empty"><p class="eyebrow">DEMO · MATCH PASSED</p><h2>Demo match passed</h2><p>這個決定已記錄且無法復原；Ren H. 不會收到通知，也不會再次被推薦。</p></div>`, { nav: true, active: "matches" });
+    }
     return shell(`<div class="empty"><p class="eyebrow">MATCHES</p><h2>No filler.</h2><p>目前還沒有能具體說明理由的配對。每當有新的 owner 發布 pitch，系統會再次進行配對。</p><button class="button primary" data-action="refresh-matches">Check again</button></div>`, { nav: true, active: "matches" });
   }
   stopMatchesPolling();
-  return shell(`<h1 class="page-title">Matches</h1><p class="page-intro">少量、具體、可以解釋的朋友配對。</p><div class="match-list">${visible.map((match) => `<a class="match-card" href="/matches/${encodeURIComponent(match.match_id)}" data-link><div class="match-card-head"><h2>${esc(match.peer.display_name)}</h2><span class="status-label">${esc(match.state)}</span></div><p>${esc(match.explanation.what_we_both_care_about)}</p><div class="evidence" style="margin-top:12px">${match.explanation.evidence_labels.map((label) => `<span class="evidence-label">${esc(label)}</span>`).join("")}</div></a>`).join("")}</div>`, { nav: true, active: "matches" });
+  return shell(`<h1 class="page-title">Matches</h1><p class="page-intro">少量、具體、可以解釋的朋友配對。</p><div class="match-list">${visible.map((match) => `<a class="match-card" href="/matches/${encodeURIComponent(match.match_id)}" data-link><div class="match-card-head"><h2>${esc(match.peer.display_name)}</h2><span class="status-label">${esc(match.state)}</span></div>${runtime.demo ? '<div class="evidence" style="margin-top:10px"><span class="evidence-label">Demo</span></div>' : ""}<p>${esc(match.explanation.what_we_both_care_about)}</p><div class="evidence" style="margin-top:12px">${match.explanation.evidence_labels.map((label) => `<span class="evidence-label">${esc(label)}</span>`).join("")}</div></a>`).join("")}</div>`, { nav: true, active: "matches" });
 }
 
 async function loadMatches({ polling = false } = {}) {
@@ -495,7 +512,7 @@ async function loadMatches({ polling = false } = {}) {
   if (runtime.demo) {
     runtime.matches = isRecentPublish() && Date.now() - runtime.lastPublishAt < MATCH_POLL_INTERVAL_MS
       ? []
-      : [structuredClone(DEMO_MATCH)];
+      : [structuredClone(runtime.demoMatch)];
     runtime.matchesPollError = false;
     if (wasSearching && runtime.matches.length) announce("找到 1 個配對");
     queueMicrotask(render);
@@ -528,15 +545,30 @@ function matchDetailScreen(matchId) {
     ["02 · Same reason, right now", explanation.why_it_matters_now],
     ["03 · What we could discuss today", explanation.what_we_could_discuss],
   ];
+  const demoMarker = runtime.demo ? '<div class="evidence"><span class="evidence-label">Demo · simulated data</span></div>' : "";
+  const connectedBlock = match.state === "connected" ? `<div class="notice success" style="margin-bottom:18px">
+      ${runtime.demo ? '<div class="evidence"><span class="evidence-label">Demo · simulated acceptance</span></div>' : ""}
+      <h2 style="margin:10px 0 6px">You are connected</h2>
+      <a href="mailto:${esc(match.peer.contact_email)}" style="overflow-wrap:anywhere">${esc(match.peer.contact_email)}</a>
+      <div class="doc-field" style="margin-top:14px"><span class="field-label">Start with this</span><p>${esc(explanation.what_we_could_discuss)}</p></div>
+    </div>` : "";
+  let decisionArea;
+  if (match.state === "connected") decisionArea = "";
+  else if (match.state === "outgoing") decisionArea = `${runtime.demo ? '<div class="notice"><span class="evidence-label">Demo</span><p style="margin:8px 0 0">等待 Ren H. 回覆</p></div><button class="button primary" style="margin-top:9px;width:100%" data-action="simulate-demo-accept">Demo · 模擬 Ren 接受</button>' : '<div class="notice">Invitation sent. Contact appears only after mutual acceptance.</div>'}`;
+  else if (match.state === "not_now") decisionArea = `<div class="notice">已略過。此決定已記錄且無法復原；對方不會收到通知。</div>`;
+  else if (runtime.pendingMatchDecision?.matchId === matchId && runtime.pendingMatchDecision.decision === "not_now") decisionArea = `<div class="notice"><strong>略過 ${esc(match.peer.display_name)}？</strong><p>此決定無法復原，對方不會收到通知。</p><div class="button-row"><button class="button" data-action="cancel-match-decision">Cancel</button><button class="button primary" data-action="confirm-match-decision" data-match-id="${esc(matchId)}">Confirm pass</button></div></div>`;
+  else decisionArea = `<div class="button-row"><button class="button" data-action="match-decision" data-decision="not_now" data-match-id="${esc(matchId)}">Not now</button><button class="button primary" data-action="match-decision" data-decision="${match.state === "incoming" ? "accept" : "invite"}" data-match-id="${esc(matchId)}">${match.state === "incoming" ? "Accept" : `Invite ${esc(match.peer.display_name)}`}</button></div>`;
   return shell(`<a href="/matches" data-link class="eyebrow" style="text-decoration:none">Back to matches</a>
+    ${demoMarker}
     <div class="person"><div class="initial">${esc(initial)}</div><div><h1>${esc(match.peer.display_name)}</h1><p>${esc(match.peer.profile.interests?.[0] || "Owner pitch")}</p></div></div>
+    ${connectedBlock}
     <div class="question-card">${questions.map(([label, text]) => `<section class="question"><div class="step-label">${label}</div><h2>${esc(text)}</h2><div class="evidence">${explanation.evidence_labels.map((evidence) => `<span class="evidence-label">Evidence · ${esc(evidence)}</span>`).join("")}</div></section>`).join("")}</div>
     <div class="provenance"><span>Conversation-derived</span><span>Owner-approved</span><span>Not verified</span></div>
-    ${match.state === "connected" ? `<div class="notice success">You both accepted. Contact: ${esc(match.peer.contact_email)}</div>` : match.state === "outgoing" ? '<div class="notice">Invitation sent. Contact appears only after mutual acceptance.</div>' : `<div class="button-row"><button class="button" data-action="match-decision" data-decision="not_now" data-match-id="${esc(matchId)}">Not now</button><button class="button primary" data-action="match-decision" data-decision="${match.state === "incoming" ? "accept" : "invite"}" data-match-id="${esc(matchId)}">${match.state === "incoming" ? "Accept" : `Invite ${esc(match.peer.display_name)}`}</button></div>`}`, { nav: true, active: "matches" });
+    ${decisionArea}`, { nav: true, active: "matches" });
 }
 
 async function loadMatch(matchId) {
-  if (runtime.demo && matchId === DEMO_MATCH.match_id) { runtime.match = structuredClone(DEMO_MATCH); queueMicrotask(render); return; }
+  if (runtime.demo && matchId === DEMO_MATCH.match_id) { runtime.match = structuredClone(runtime.demoMatch); queueMicrotask(render); return; }
   try { runtime.match = await api(`/v1/matches/${encodeURIComponent(matchId)}`); }
   catch (error) { runtime.error = error.message; runtime.match = { match_id: matchId, peer: { display_name: "Unavailable", profile: {} }, explanation: { what_we_both_care_about: "Match unavailable", why_it_matters_now: "", what_we_could_discuss: "", evidence_labels: [] }, state: "not_now" }; }
   render();
@@ -548,12 +580,12 @@ function invitationsScreen() {
     return shell('<div class="loading">Loading invitations</div>', { nav: true, active: "invitations" });
   }
   const sections = [["Incoming", runtime.invitations.incoming], ["Outgoing", runtime.invitations.outgoing], ["Connected", runtime.invitations.connected]];
-  return shell(`<h1 class="page-title">Invitations</h1><p class="page-intro">邀請需要雙方同意；Not now 的理由不會傳給對方。</p>${sections.map(([label, items]) => `<div class="divider-label">${label} · ${items.length}</div><div class="match-list">${items.length ? items.map((match) => `<a class="match-card" href="/matches/${encodeURIComponent(match.match_id)}" data-link><div class="match-card-head"><h2>${esc(match.peer.display_name)}</h2><span class="status-label">${esc(match.state)}</span></div><p>${esc(match.explanation.what_we_both_care_about)}</p></a>`).join("") : '<div class="notice">目前沒有項目</div>'}</div>`).join("")}`, { nav: true, active: "invitations" });
+  return shell(`<h1 class="page-title">Invitations</h1><p class="page-intro">邀請需要雙方同意；Not now 的理由不會傳給對方。</p>${sections.map(([label, items]) => `<div class="divider-label">${label} · ${items.length}</div><div class="match-list">${items.length ? items.map((match) => `<a class="match-card" href="/matches/${encodeURIComponent(match.match_id)}" data-link><div class="match-card-head"><h2>${esc(match.peer.display_name)}</h2><span class="status-label">${esc(match.state)}</span></div>${runtime.demo ? '<div class="evidence" style="margin-top:10px"><span class="evidence-label">Demo · simulated</span></div>' : ""}<p>${esc(match.explanation.what_we_both_care_about)}</p></a>`).join("") : '<div class="notice">目前沒有項目</div>'}</div>`).join("")}`, { nav: true, active: "invitations" });
 }
 
 async function loadInvitations() {
   if (runtime.demo) {
-    const match = structuredClone(DEMO_MATCH);
+    const match = structuredClone(runtime.demoMatch);
     runtime.invitations = { incoming: [], outgoing: match.state === "outgoing" ? [match] : [], connected: match.state === "connected" ? [match] : [] };
     queueMicrotask(render);
     return;
@@ -616,7 +648,7 @@ document.addEventListener("click", async (event) => {
   try {
     runtime.error = "";
     if (action === "begin") runtime.session ? await routeReturningOwner() : navigate("/signin");
-    if (action === "demo-flow") { runtime.demo = true; runtime.draft = null; runtime.displayName = "Ari C."; writeJson(DEMO_KEY, { enabled: true }); writeJson(DISPLAY_NAME_KEY, runtime.displayName); navigate("/assistant"); }
+    if (action === "demo-flow") { runtime.demo = true; runtime.draft = null; runtime.demoDraft = false; runtime.profile = null; runtime.profileLoaded = false; runtime.matches = null; runtime.invitations = null; runtime.match = null; runtime.displayName = "Ari C."; resetDemoMatch(); writeJson(DEMO_KEY, { enabled: true }); writeJson(DRAFT_KEY, null); writeJson(DEMO_DRAFT_KEY, null); writeJson(DISPLAY_NAME_KEY, runtime.displayName); navigate("/assistant"); }
     if (action === "change-email") { runtime.challengeId = null; runtime.signinEmail = ""; render(); }
     if (action === "select-ai") { runtime.selectedAi = button.dataset.ai; render(); }
     if (action === "select-locale") { runtime.locale = button.dataset.locale === "en" ? "en" : "zh-Hant"; render(); }
@@ -647,7 +679,14 @@ document.addEventListener("click", async (event) => {
     if (action === "refresh-pitch") { runtime.draft = null; writeJson(DRAFT_KEY, null); navigate("/assistant"); }
     if (action === "refresh-matches") { runtime.matchesPollError = false; runtime.matches = null; render(); }
     if (action === "retry-matches") { runtime.error = ""; runtime.matchesPollError = false; runtime.matches = null; render(); }
-    if (action === "match-decision") await decideMatch(button.dataset.matchId, button.dataset.decision);
+    if (action === "match-decision" && runtime.demo && button.dataset.decision === "not_now") {
+      runtime.pendingMatchDecision = { matchId: button.dataset.matchId, decision: "not_now" };
+      render();
+      requestAnimationFrame(() => document.querySelector('[data-action="confirm-match-decision"]')?.scrollIntoView({ block: "center" }));
+    } else if (action === "match-decision") await decideMatch(button.dataset.matchId, button.dataset.decision);
+    if (action === "cancel-match-decision") { runtime.pendingMatchDecision = null; render(); }
+    if (action === "confirm-match-decision") { runtime.pendingMatchDecision = null; await decideMatch(button.dataset.matchId, "not_now"); }
+    if (action === "simulate-demo-accept") connectDemoMatch();
     if (action === "create-upload-session") { runtime.uploadSession = await api("/v1/upload-sessions", { method: "POST", body: "{}" }); render(); }
     if (action === "delete-profile") await deleteProfile();
     if (action === "signout") signout();
@@ -683,6 +722,7 @@ document.addEventListener("submit", async (event) => {
         runtime.match = null;
         runtime.displayName = "";
         writeJson(DEMO_KEY, null);
+        writeJson(DEMO_MATCH_KEY, null);
         writeJson(DISPLAY_NAME_KEY, null);
       }
       if (runtime.demoDraft) {
@@ -729,6 +769,7 @@ async function publishProfile() {
     runtime.profileLoaded = true;
     runtime.draft = null;
     runtime.demoDraft = false;
+    resetDemoMatch();
     runtime.matches = null;
     runtime.lastPublishAt = Date.now();
     writeJson(LAST_PUBLISH_KEY, runtime.lastPublishAt);
@@ -762,19 +803,42 @@ async function publishProfile() {
 
 async function decideMatch(matchId, decision) {
   if (runtime.demo && matchId === DEMO_MATCH.match_id) {
-    DEMO_MATCH.state = decision === "not_now" ? "not_now" : "outgoing";
-    DEMO_MATCH.can_invite = false;
-    runtime.match = structuredClone(DEMO_MATCH);
-    runtime.matches = [structuredClone(DEMO_MATCH)];
+    runtime.demoMatch.state = decision === "not_now" ? "not_now" : "outgoing";
+    runtime.demoMatch.can_invite = false;
+    saveDemoMatch();
+    runtime.match = structuredClone(runtime.demoMatch);
+    runtime.matches = [structuredClone(runtime.demoMatch)];
     runtime.invitations = null;
-    runtime.notice = decision === "not_now" ? "已暫時略過" : "Invitation sent";
-    render();
+    if (decision === "not_now") {
+      navigate("/matches");
+      runtime.notice = "已略過，對方不會收到通知。";
+      announce(runtime.notice);
+      render();
+    } else {
+      runtime.notice = "Demo invitation sent";
+      announce(runtime.notice);
+      render();
+      requestAnimationFrame(() => document.querySelector('[data-action="simulate-demo-accept"]')?.scrollIntoView({ block: "center" }));
+    }
     return;
   }
   runtime.match = await api(`/v1/matches/${encodeURIComponent(matchId)}/invitations`, { method: "POST", body: JSON.stringify({ decision }) });
   runtime.matches = null;
   runtime.invitations = null;
   runtime.notice = decision === "not_now" ? "已暫時略過" : runtime.match.state === "connected" ? "雙方已接受，聯絡方式已開放" : "Invitation sent";
+  render();
+}
+
+function connectDemoMatch() {
+  runtime.demoMatch.state = "connected";
+  runtime.demoMatch.can_invite = false;
+  runtime.demoMatch.peer.contact_email = "ren.demo@example.com";
+  saveDemoMatch();
+  runtime.matches = [structuredClone(runtime.demoMatch)];
+  runtime.invitations = null;
+  navigate(`/matches/${encodeURIComponent(runtime.demoMatch.match_id)}`);
+  runtime.notice = "Demo · Ren H. simulated acceptance";
+  announce(runtime.notice);
   render();
 }
 
@@ -800,6 +864,7 @@ function signout() {
   writeJson(DEMO_DRAFT_KEY, null);
   writeJson(DISPLAY_NAME_KEY, null);
   writeJson(DEMO_KEY, null);
+  writeJson(DEMO_MATCH_KEY, null);
   writeJson(LAST_PUBLISH_KEY, null);
   runtime.lastPublishAt = 0;
   runtime.matchesPollError = false;
