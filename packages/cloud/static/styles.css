@@ -17,11 +17,11 @@ button{cursor:pointer}
 .wordmark a{text-decoration:none}
 .wordmark .text-action{color:var(--blue);letter-spacing:.04em;text-transform:none}
 .text-action{color:var(--blue)}
+.language-toggle{min-height:44px;border:0;background:transparent;color:var(--blue);padding:10px 0 10px 14px;font-weight:700;letter-spacing:.04em}
 .eyebrow,.field-label,.step-label,.evidence-label,.status-label{font:600 10px/1.35 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
 .hero{flex:1;display:flex;flex-direction:column;justify-content:center;padding:54px 0 34px}
 .hero h1{margin:0;font-size:42px;line-height:1.01;letter-spacing:-.045em;font-weight:650}
 .hero h1 span{display:block;color:var(--blue)}
-.hero .zh{margin:22px 0 0;color:var(--muted);font-size:15px;line-height:1.7}
 .promise{margin:28px 0 0;padding-top:20px;border-top:1px solid var(--line);font-size:16px;line-height:1.6}
 .subtle{color:var(--muted);font-size:13px;line-height:1.65}
 .checkpoint{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--line);margin:18px 0 14px}
@@ -50,6 +50,7 @@ button{cursor:pointer}
 .notice{border:1px solid var(--line);background:var(--soft);padding:14px;font-size:13px;line-height:1.6}
 .notice.error{border-color:var(--danger);color:var(--danger);background:#fff8f6}
 .notice.success{border-color:var(--blue);color:var(--blue);background:#f5f8ff}
+.support-link{display:block;margin-top:10px;color:inherit;font-weight:700}
 .json-guide{list-style:none;counter-reset:json-step;margin:0 0 22px;padding:0;border:1px solid var(--line);background:var(--white)}
 .json-guide li{counter-increment:json-step;display:grid;grid-template-columns:28px 1fr;column-gap:10px;padding:13px 14px}
 .json-guide li+li{border-top:1px solid var(--line)}
@@ -62,9 +63,6 @@ button{cursor:pointer}
 .assistant-card strong{font-size:18px}
 .assistant-card span{color:var(--muted);font-size:12px}
 .assistant-card[aria-pressed="true"]{border-color:var(--blue);box-shadow:inset 4px 0 0 var(--blue)}
-.language-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
-.language-card{min-height:48px;border:1px solid var(--line);background:var(--white);padding:10px 12px;font-weight:700}
-.language-card[aria-pressed="true"]{border-color:var(--blue);box-shadow:inset 4px 0 0 var(--blue);color:var(--blue)}
 .progress{display:grid;grid-template-columns:repeat(4,1fr);gap:0;height:3px;background:var(--line);margin:8px 0 16px}
 .progress span{background:transparent}
 .progress span.active{background:var(--blue)}

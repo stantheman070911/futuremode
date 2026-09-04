@@ -3,6 +3,7 @@ const DRAFT_KEY = "pitchyourowner.draft.v1";
 const HANDOFF_KEY = "pitchyourowner.handoff.v1";
 const DISPLAY_NAME_KEY = "pitchyourowner.display-name.v1";
 const AUTH_FLOW_KEY = "pitchyourowner.auth-flow.v1";
+const LOCALE_KEY = "pitchyourowner.locale.v1";
 const DEMO_KEY = "pitchyourowner.demo.v1";
 const DEMO_DRAFT_KEY = "pitchyourowner.demo-draft.v1";
 const DEMO_MATCH_KEY = "pitchyourowner.demo-match.v1";
@@ -13,60 +14,133 @@ let CONFIDENCE_FIELDS = ["summary", "interests", "motivations", "active_problems
 let CONFIDENCE_LEVELS = ["high", "medium", "low"];
 let ARRAY_FIELDS = ["interests", "motivations", "active_problems", "recurring_topics"];
 let PROFILE_SCHEMA_CONFIG = null;
+const COPY = {
+  en: {
+    "skip": "Skip to main content", "nav.label": "Main navigation", "nav.matches": "Matches", "nav.invites": "Invites", "nav.pitch": "My Pitch", "nav.settings": "Settings",
+    "language.switch": "繁中", "language.current": "English", "account": "Account", "common.loading": "Working…", "common.try": "Try again", "common.cancel": "Cancel",
+    "start.title": "Your agent<br>knows you.<span>Let it pitch you.</span>", "start.promise": "Meet someone who cares about the same thing, for the same reason, right now.", "start.checkpoints": "Two owner approval gates", "start.check1": "Resolve privacy risks in your AI", "start.check2": "Approve publishing on this site", "start.begin": "Let my agent pitch me", "start.demo": "Preview seeded flow", "start.duration": "Complete on your phone · about 3 minutes",
+    "signin.step1": "STEP 1 / 2 · SIGN IN", "signin.step2": "STEP 2 / 2 · VERIFY", "signin.title": "Start with your email", "signin.verifyTitle": "Check your email", "signin.intro": "Sign in so one owner controls the prompt, draft, pitch, and invitations.", "signin.sentTo": "A six-digit code was sent to", "signin.email": "Email", "signin.code": "Verification code", "signin.send": "Send verification code", "signin.verify": "Verify and continue", "signin.resend": "Resend code", "signin.change": "Change email", "signin.resendIn": "Resend available in {seconds}s", "signin.resendNow": "You can resend the code now", "signin.codeShort": "Enter the complete six-digit code.", "signin.codeWrong": "That code is incorrect. Edit it and try again; this verification is still active.", "signin.codeExpired": "This code expired. Send a new code.", "signin.sent": "Verification code sent", "signin.resent": "New verification code sent",
+    "assistant.step": "STEP 1 / 4 · CHOOSE AI", "assistant.title": "Who knows you best?", "assistant.intro": "Choose the AI you think with most often and that can access the relevant context.", "assistant.selected": "Selected", "assistant.choose": "Choose", "assistant.create": "Create my prompt",
+    "handoff.step": "STEP 2 / 4 · HAND OFF", "handoff.change": "Change AI", "handoff.beforeTitle": "Hand this to {ai}", "handoff.afterTitle": "Bring your pitch back", "handoff.ready": "Extraction prompt ready", "handoff.show": "Show full prompt", "handoff.hide": "Hide full prompt", "handoff.return": "Back from {ai}? Paste the JSON it gave you.", "handoff.paste": "Paste final JSON", "handoff.openAgain": "Open {ai} again", "handoff.copyAgain": "Copy prompt again", "handoff.loading": "Loading prompt…", "handoff.loadError": "The prompt is not ready. Go back and try again.", "handoff.explainer": "Your AI first shows a short preview and the security or privacy items it actually found. Answer every numbered item and add “Confirm safety and generate JSON,” then copy its next JSON-only reply.", "handoff.launchHelp": "Opens {ai} with the full prompt and also tries to copy it as a fallback.", "handoff.copy": "Copy prompt", "handoff.openChatgpt": "Open ChatGPT with my prompt", "handoff.openClaude": "Open Claude with my prompt", "handoff.share": "Share prompt to my AI", "handoff.promptCopied": "Prompt copied. Open your AI and paste it to continue.",
+    "guide.1.title": "Read the short preview", "guide.1.body": "Your AI first replies with a short preview — do not copy this one.", "guide.2.title": "Answer the privacy items", "guide.2.body": "It lists only the privacy items it actually found. Answer them all in one message and add “Confirm safety and generate JSON.”", "guide.3.title": "Copy the next reply", "guide.3.body": "Copy the next reply — it will be only JSON, starting with {.", "guide.4.title": "If the site shows an error", "guide.4.body": "Return to your AI, finish every safety choice, and copy its next JSON-only reply.",
+    "import.stepPaste": "STEP 3 / 4 · PASTE JSON", "import.stepEdit": "STEP 3 / 4 · EDIT FIELDS", "import.title": "Bring your pitch back", "import.intro": "The first AI preview is not the content to paste. Finish the security and privacy decisions, then paste the final JSON.", "import.jsonLabel": "Owner pitch JSON", "import.render": "Render editable fields", "import.demo": "Load demo pitch", "import.demoCaption": "Sample data for demonstration.", "import.resume": "Resume computer draft", "import.editTitle": "Make it sound like you", "import.editIntro": "Every field is editable. Continue opens a read-only review; it does not publish.", "import.pasteAgain": "Paste again", "import.continue": "Continue to review",
+    "review.step": "STEP 4 / 4 · REVIEW & PUBLISH", "review.title": "Publish this pitch?", "review.intro": "This is the complete version PitchYourOwner will store. This page is read-only; go back to make changes.", "review.name": "Display name", "review.nameHint": "Shown to a match before you connect. Use a first name or handle.", "review.back": "Back to edit", "review.publish": "Confirm & upload", "review.publishing": "Publishing…",
+    "field.history_scope": "History scope", "field.summary": "Summary", "field.interests": "Interests", "field.motivations": "Motivations", "field.active_problems": "Active problems", "field.recurring_topics": "Recurring topics", "field.friend_intent": "Friend intent", "hint.history_scope": "What the AI could and could not access", "hint.summary": "One concrete owner pitch", "hint.interests": "One specific, sustained interest per line", "hint.motivations": "One current motivation per line", "hint.active_problems": "One problem still in progress per line", "hint.recurring_topics": "One recurring discussion topic per line", "hint.friend_intent": "Who you hope to meet and what you want to discuss", "field.confidence": "confidence",
+    "profile.scope": "History scope", "profile.conversation": "Conversation-derived", "profile.approved": "Owner-approved", "profile.exploring": "Currently exploring", "profile.notVerified": "Not verified",
+    "pitch.loading": "Loading your pitch", "pitch.title": "My Pitch", "pitch.approved": "Owner-approved introduction", "pitch.emptyEyebrow": "MY PITCH", "pitch.emptyTitle": "No pitch yet", "pitch.emptyBody": "Ask your AI to create an owner pitch, then bring it back and publish it.", "pitch.create": "Create my pitch", "pitch.refresh": "Refresh my pitch", "pitch.edit": "Edit",
+    "matches.loading": "Looking for specific overlap", "matches.eyebrow": "MATCHES", "matches.searchingEyebrow": "MATCHES · SEARCHING", "matches.searchingTitle": "Your agent is looking", "matches.searchingBody": "It is comparing your pitch with other owners. This usually takes under a minute.", "matches.checking": "Checking again in {seconds}s", "matches.paused": "Matching paused", "matches.pausedBody": "We cannot check for new matches right now. Your pitch is safely saved.", "matches.emptyTitle": "No filler.", "matches.emptyBody": "There is no match with a concrete reason yet. Matching runs again whenever a new owner publishes.", "matches.check": "Check again", "matches.title": "Matches", "matches.intro": "A small number of specific, explainable friend matches.", "matches.found": "{count} match{suffix} found", "matches.demoPassed": "Demo match passed", "matches.demoPassedBody": "This decision is recorded and cannot be undone. Ren H. is not notified and will not be suggested again.",
+    "match.back": "Back to matches", "match.loading": "Opening match reason", "match.ownerPitch": "Owner pitch", "match.q1": "01 · What we both care about", "match.q2": "02 · Same reason, right now", "match.q3": "03 · What we could discuss today", "match.evidence": "Evidence · {label}", "match.connected": "You are connected", "match.start": "Start with this", "match.waiting": "Waiting for Ren H.", "match.simulate": "Demo · Simulate Ren accepting", "match.sent": "Invitation sent. Contact appears only after mutual acceptance.", "match.passed": "Passed. This decision is recorded and cannot be undone; they are not told.", "match.passConfirmTitle": "Pass on {name}?", "match.passConfirmBody": "This cannot be undone. They are not told.", "match.confirmPass": "Confirm pass", "match.notNow": "Not now", "match.accept": "Accept", "match.invite": "Invite {name}", "match.unavailable": "Unavailable", "match.unavailableBody": "Match unavailable", "match.demoData": "Demo · simulated data", "match.demoAcceptance": "Demo · simulated acceptance", "match.demoSent": "Demo invitation sent", "match.demoAccepted": "Demo · Ren H. simulated acceptance", "match.passNotice": "Passed. They are not told.",
+    "invites.loading": "Loading invitations", "invites.title": "Invitations", "invites.intro": "Introductions require mutual consent. A Not now reason is never sent to the other person.", "invites.incoming": "Incoming", "invites.outgoing": "Outgoing", "invites.connected": "Connected", "invites.empty": "No items yet", "demo.marker": "Demo", "demo.simulated": "Demo · simulated",
+    "settings.title": "Settings", "settings.intro": "Account, matching, and Computer API.", "settings.computer": "Computer API", "settings.upload": "24-hour draft upload", "settings.uploadHint": "Single-use and write-only; it can only create a draft", "settings.create": "Create", "settings.submitUrl": "Submit URL", "settings.token": "Bearer token · {expires}", "settings.tokenHint": "This token is shown only on this screen. POST body:", "settings.data": "Data", "settings.delete": "Delete pitch and account data", "settings.deleteAction": "Delete", "settings.signout": "Sign out on this device", "settings.signoutAction": "Sign out", "settings.info": "Information", "settings.privacy": "Privacy", "settings.terms": "Terms", "settings.support": "Support", "settings.language": "Language",
+    "info.back": "Back to settings", "privacy.body": "PitchYourOwner stores only the owner pitch you explicitly publish, account and session records, matches, and invitation decisions. Your selected AI prepares the content before transfer.", "terms.body": "Owner pitches are conversation-derived interpretations, not verified identity or expertise. Use the product respectfully and do not upload information you are not authorized to share.", "support.body": "Send the exact error message and what you were trying to do. Do not include your profile JSON, upload token, verification code, or other secrets.", "support.sent": "Support request {id} was sent.", "support.another": "Send another request", "support.message": "Message", "support.messagePlaceholder": "What happened, what you expected, and the approximate time", "support.contact": "Contact (optional)", "support.contactPlaceholder": "Email or another way to reply", "support.send": "Send support request", "support.sending": "Sending…",
+    "error.session": "Your session ended. Sign in again; your draft is safely saved on this device.", "error.rateVerification": "Too many code requests. Try again in {wait}, or use another email.", "error.rateGeneric": "That happened too often. Please wait and try again.", "error.supportLimit": "You have reached today’s support-request limit. Please try later.", "error.matchMissing": "This match cannot be found and may have expired.", "error.peerMissing": "This match cannot be opened and may have expired.", "error.matchExpired": "This match expired and can no longer be answered.", "error.decisionRecorded": "You already made a decision for this match. It cannot be changed.", "error.invitation": "This invitation action could not be completed. Return to Matches and try again.", "error.publishFirst": "Publish an owner pitch before starting matching.", "error.profileMissing": "You have not published an owner pitch yet.", "error.versionMissing": "This pitch version cannot be found.", "error.publish": "Your pitch could not be published. The draft is safe; please try again.", "error.publishPayload": "This pitch is not ready to publish. Go back, check the fields, and try again.", "error.pairing": "Matches cannot be loaded right now. Please try again.", "error.matching": "Matching could not start. Your pitch is saved; please try again.", "error.codeSend": "The verification code could not be sent. Please try again.", "error.codeConfirm": "This code could not be verified. Please try again.", "error.codeCombined": "The code is incorrect or expired. Check it or send a new one.", "error.emailDisabled": "Verification email is unavailable right now. Please try later.", "error.profileLoad": "Your pitch cannot be loaded right now. Please try again.", "error.draftLoad": "Your computer draft cannot be loaded right now. Please try again.", "error.matchingUnavailable": "New matches cannot be checked right now. Please try again.", "error.generic": "Something went wrong. Please try again.", "error.offline": "PitchYourOwner cannot be reached; this device may be offline.", "error.prompt": "The prompt could not be loaded. Go back and try again.", "action.signin": "Sign in again", "action.matches": "Back to matches", "action.createPitch": "Create my pitch", "action.changeEmail": "Change email", "action.backForm": "Back to form", "action.resend": "Resend code",
+    "validation.json": "JSON must contain one profile object.", "validation.unknown": "The JSON contains unsupported fields. Paste only the final owner pitch JSON from your AI.", "validation.array": "{label} must contain at least one text item.", "validation.maxItems": "{label} can contain at most {count} items.", "validation.itemLong": "One {label} item is too long.", "validation.required": "{label} cannot be blank.", "validation.maxLength": "{label} can contain at most {count} characters.", "validation.confidenceMissing": "Field confidence data is missing.", "validation.confidence": "{label} confidence must be {levels}.", "validation.name": "Display name must be 1–40 characters with no line break.", "validation.notJson": "This is not the final JSON. Return to your AI, answer every numbered security or privacy choice, add “Confirm safety and generate JSON,” and copy its next reply.", "validation.debug": "This looks like debug or transport data, not your Owner Pitch. Return to your AI, finish the security and privacy confirmation, and copy its final JSON-only reply.", "validation.preview": "This is still a preview awaiting confirmation. Finish every numbered security or privacy choice, add “Confirm safety and generate JSON,” and paste the next JSON-only reply.",
+    "confirm.delete": "Delete this pitch, its matches, and account data?", "notice.published": "Pitch published. Matching started.", "notice.decisionPassed": "Passed. They are not told.", "notice.connected": "You both accepted. Contact details are now available.", "notice.invited": "Invitation sent.", "notice.computerNone": "No computer draft is available yet.", "notice.computerLoaded": "Computer draft loaded. Review every field before publishing.", "notice.clipboardUnavailable": "This browser cannot share or copy the prompt. Long-press the prompt to copy it manually.", "notice.promptMissing": "The prompt is not ready. Please try again.", "notice.copyUnavailable": "This browser cannot copy the prompt. Long-press it to copy manually.", "notice.shareCopied": "Prompt copied. Paste it into the AI you chose.",
+    "error.challengeMissing": "This verification ended. Send a new code.", "error.invalidCode": "Enter the complete six-digit code.", "profile.fieldFallback": "Profile field", "time.hour": "{count} hr", "time.minute": "{count} min", "time.second": "{count} sec", "confidence.high": "High", "confidence.medium": "Medium", "confidence.low": "Low", "state.suggested": "Suggested", "state.incoming": "Incoming", "state.outgoing": "Waiting", "state.connected": "Connected", "state.not_now": "Passed", "state.unavailable": "Unavailable", "assistant.other": "Other AI", "prompt.aria": "Full extraction prompt", "progress.aria": "Step 2 of 4", "support.help": "Something not working?", "json.placeholder": "{ \"summary\": \"...\" }", "handoff.shareTitle": "PitchYourOwner profile prompt",
+    "demo.profile.summary": "Portrait photographer exploring how subtle posture and direction change the emotion of a frame.", "demo.profile.interest1": "Subject direction", "demo.profile.interest2": "Posture and tension", "demo.profile.interest3": "Low-light portraiture", "demo.profile.interest4": "Film emulation", "demo.profile.motivation": "Create portraits that feel natural without leaving the subject unsupported", "demo.profile.problem": "Directing a stranger clearly in under 90 seconds", "demo.profile.topic1": "Shoulder-line cues", "demo.profile.topic2": "Skin tone under mixed light", "demo.profile.topic3": "Pre-shoot briefing", "demo.profile.intent": "Someone who practises the same problem weekly, such as a dancer, director, or photographer.", "demo.profile.scope": "Recent ChatGPT conversations and saved memory were available; voice chats and deleted conversations were not available.",
+    "demo.peer.summary": "Contemporary dancer studying how small changes in posture and tension alter emotional expression.", "demo.peer.interest1": "Posture and tension", "demo.peer.interest2": "Choreographic direction", "demo.peer.interest3": "Movement under low light", "demo.peer.motivation": "Help performers communicate emotion without over-directing them", "demo.peer.problem": "Giving a useful physical cue without breaking a performer’s momentum", "demo.peer.topic1": "Shoulder-line cues", "demo.peer.topic2": "Breath before movement", "demo.peer.topic3": "Gesture intensity", "demo.peer.intent": "Someone testing how small cues change what an audience feels.", "demo.match.shared": "How posture and tension carry emotion — yours through a lens, Ren’s through a body.", "demo.match.now": "You are both trying to direct a person clearly without over-directing them.", "demo.match.discuss": "Ren is testing shoulder-line cues in low light while you are rewriting a 90-second pre-shoot brief.",
+  },
+  "zh-Hant": {
+    "skip": "跳到主要內容", "nav.label": "主要導覽", "nav.matches": "配對", "nav.invites": "邀請", "nav.pitch": "我的介紹", "nav.settings": "設定",
+    "language.switch": "EN", "language.current": "繁體中文", "account": "帳號", "common.loading": "處理中…", "common.try": "再試一次", "common.cancel": "取消",
+    "start.title": "你的 Agent<br>了解你。<span>讓它介紹你。</span>", "start.promise": "認識一位此刻因相同理由、關心相同事情的人。", "start.checkpoints": "兩個 owner 確認關卡", "start.check1": "在 AI 處理隱私風險", "start.check2": "在網站授權發布", "start.begin": "讓我的 Agent 介紹我", "start.demo": "預覽示範流程", "start.duration": "手機可完成 · 約 3 分鐘",
+    "signin.step1": "步驟 1 / 2 · 登入", "signin.step2": "步驟 2 / 2 · 驗證", "signin.title": "先用 Email 登入", "signin.verifyTitle": "查看你的 Email", "signin.intro": "登入後，prompt、草稿、介紹與邀請都由同一位 owner 控制。", "signin.sentTo": "六位數驗證碼已寄到", "signin.email": "Email", "signin.code": "驗證碼", "signin.send": "寄送驗證碼", "signin.verify": "驗證並繼續", "signin.resend": "重新寄送驗證碼", "signin.change": "更改 Email", "signin.resendIn": "{seconds} 秒後可重新寄送", "signin.resendNow": "現在可以重新寄送驗證碼", "signin.codeShort": "請輸入完整的六位數驗證碼。", "signin.codeWrong": "驗證碼不正確。請修改後再試；這次驗證仍然有效。", "signin.codeExpired": "這組驗證碼已到期。請重新寄送一組新的代碼。", "signin.sent": "驗證碼已寄出", "signin.resent": "新的驗證碼已寄出",
+    "assistant.step": "步驟 1 / 4 · 選擇 AI", "assistant.title": "哪個 AI 最了解你？", "assistant.intro": "選擇平常最常一起思考、且能存取相關脈絡的 AI。", "assistant.selected": "已選擇", "assistant.choose": "選擇", "assistant.create": "建立我的 Prompt",
+    "handoff.step": "步驟 2 / 4 · 交給 AI", "handoff.change": "更改 AI", "handoff.beforeTitle": "把這份 Prompt 交給 {ai}", "handoff.afterTitle": "把介紹帶回來", "handoff.ready": "擷取 Prompt 已準備好", "handoff.show": "顯示完整 Prompt", "handoff.hide": "收合完整 Prompt", "handoff.return": "從 {ai} 回來了嗎？貼上它給你的 JSON。", "handoff.paste": "貼上最終 JSON", "handoff.openAgain": "再次開啟 {ai}", "handoff.copyAgain": "再次複製 Prompt", "handoff.loading": "正在載入 Prompt…", "handoff.loadError": "Prompt 尚未完成載入，請返回上一步再試。", "handoff.explainer": "AI 會先顯示簡短預覽與實際發現的安全或隱私項目。回答所有編號項目並加上「確認安全並產生 JSON」後，再複製下一則純 JSON。", "handoff.launchHelp": "將完整 Prompt 帶入 {ai} 並開啟，也會嘗試複製到剪貼簿作為備援。", "handoff.copy": "複製 Prompt", "handoff.openChatgpt": "用我的 Prompt 開啟 ChatGPT", "handoff.openClaude": "用我的 Prompt 開啟 Claude", "handoff.share": "把 Prompt 分享到我的 AI", "handoff.promptCopied": "Prompt 已複製，請開啟 AI 並貼上以繼續。",
+    "guide.1.title": "先閱讀簡短預覽", "guide.1.body": "AI 會先回一段簡短預覽 — 這一則不要複製。", "guide.2.title": "回答隱私項目", "guide.2.body": "它只列出實際發現的隱私項目。在同一則訊息回答全部，並加上「確認安全並產生 JSON」。", "guide.3.title": "複製下一則回答", "guide.3.body": "複製下一則回答 — 它只會是 JSON，以 { 開頭。", "guide.4.title": "如果網站顯示錯誤", "guide.4.body": "回到 AI 完成所有安全選項，再複製它輸出的下一則純 JSON。",
+    "import.stepPaste": "步驟 3 / 4 · 貼上 JSON", "import.stepEdit": "步驟 3 / 4 · 編輯欄位", "import.title": "把你的介紹帶回來", "import.intro": "AI 的第一則預覽不是要貼的內容。先完成安全與隱私決定，再貼上最終 JSON。", "import.jsonLabel": "Owner Pitch JSON", "import.render": "顯示可編輯欄位", "import.demo": "載入示範介紹", "import.demoCaption": "示範用資料。", "import.resume": "接續電腦草稿", "import.editTitle": "把它改得更像你", "import.editIntro": "每一個欄位都可編輯。繼續只會打開唯讀審核，不會直接發布。", "import.pasteAgain": "重新貼上", "import.continue": "繼續審核",
+    "review.step": "步驟 4 / 4 · 審核與發布", "review.title": "要發布這份介紹嗎？", "review.intro": "這是 PitchYourOwner 將儲存的完整版本。本頁只能閱讀；若要修改請返回。", "review.name": "顯示名稱", "review.nameHint": "連結前會顯示給配對對象。請使用名字或暱稱。", "review.back": "返回編輯", "review.publish": "確認並上傳", "review.publishing": "發布中…",
+    "field.history_scope": "歷史範圍", "field.summary": "摘要", "field.interests": "興趣", "field.motivations": "動機", "field.active_problems": "目前問題", "field.recurring_topics": "反覆主題", "field.friend_intent": "交友意圖", "hint.history_scope": "AI 實際使用與無法存取的資料範圍", "hint.summary": "一句具體的 owner pitch", "hint.interests": "每行一個具體、持續關注的興趣", "hint.motivations": "每行一個目前重要的動機", "hint.active_problems": "每行一個仍在處理的問題", "hint.recurring_topics": "每行一個反覆討論的主題", "hint.friend_intent": "希望認識怎樣的人，以及想聊什麼", "field.confidence": "信心",
+    "profile.scope": "歷史範圍", "profile.conversation": "源自對話", "profile.approved": "Owner 已核准", "profile.exploring": "目前正在探索", "profile.notVerified": "未經驗證",
+    "pitch.loading": "正在載入你的介紹", "pitch.title": "我的介紹", "pitch.approved": "我的介紹 · owner 已核准", "pitch.emptyEyebrow": "我的介紹", "pitch.emptyTitle": "尚未建立介紹", "pitch.emptyBody": "先讓你的 AI 產生 owner pitch，再貼回並發布。", "pitch.create": "建立我的介紹", "pitch.refresh": "重新產生介紹", "pitch.edit": "編輯",
+    "matches.loading": "正在尋找具體重疊", "matches.eyebrow": "配對", "matches.searchingEyebrow": "配對 · 搜尋中", "matches.searchingTitle": "你的 Agent 正在尋找", "matches.searchingBody": "正在把你的介紹與其他 owners 比較。通常一分鐘內就能完成。", "matches.checking": "{seconds} 秒後再次檢查", "matches.paused": "配對已暫停", "matches.pausedBody": "目前無法檢查新配對。你的介紹已安全保存。", "matches.emptyTitle": "不湊數。", "matches.emptyBody": "目前還沒有能具體說明理由的配對。每當有新的 owner 發布介紹，系統會再次進行配對。", "matches.check": "再次檢查", "matches.title": "配對", "matches.intro": "少量、具體、可以解釋的朋友配對。", "matches.found": "找到 {count} 個配對", "matches.demoPassed": "已略過示範配對", "matches.demoPassedBody": "這個決定已記錄且無法復原；Ren H. 不會收到通知，也不會再次被推薦。",
+    "match.back": "返回配對", "match.loading": "正在開啟配對理由", "match.ownerPitch": "Owner 介紹", "match.q1": "01 · 我們都關心什麼", "match.q2": "02 · 此刻出於相同理由", "match.q3": "03 · 今天可以聊什麼", "match.evidence": "依據 · {label}", "match.connected": "你們已連結", "match.start": "可以這樣開場", "match.waiting": "等待 Ren H. 回覆", "match.simulate": "Demo · 模擬 Ren 接受", "match.sent": "邀請已送出。只有雙方接受後才會顯示聯絡方式。", "match.passed": "已略過。此決定已記錄且無法復原；對方不會收到通知。", "match.passConfirmTitle": "略過 {name}？", "match.passConfirmBody": "此決定無法復原，對方不會收到通知。", "match.confirmPass": "確認略過", "match.notNow": "現在不要", "match.accept": "接受", "match.invite": "邀請 {name}", "match.unavailable": "無法使用", "match.unavailableBody": "配對目前無法使用", "match.demoData": "Demo · 模擬資料", "match.demoAcceptance": "Demo · 模擬接受", "match.demoSent": "Demo 邀請已送出", "match.demoAccepted": "Demo · Ren H. 已模擬接受", "match.passNotice": "已略過，對方不會收到通知。",
+    "invites.loading": "正在載入邀請", "invites.title": "邀請", "invites.intro": "引介需要雙方同意；現在不要的理由不會傳給對方。", "invites.incoming": "收到的邀請", "invites.outgoing": "送出的邀請", "invites.connected": "已連結", "invites.empty": "目前沒有項目", "demo.marker": "Demo", "demo.simulated": "Demo · 模擬",
+    "settings.title": "設定", "settings.intro": "帳號、配對與 Computer API。", "settings.computer": "Computer API", "settings.upload": "24 小時草稿上傳", "settings.uploadHint": "單次、只能寫入，而且只能建立草稿", "settings.create": "建立", "settings.submitUrl": "提交網址", "settings.token": "Bearer token · {expires}", "settings.tokenHint": "Token 只顯示於目前畫面。POST body：", "settings.data": "資料", "settings.delete": "刪除介紹與帳號資料", "settings.deleteAction": "刪除", "settings.signout": "在這台裝置登出", "settings.signoutAction": "登出", "settings.info": "資訊", "settings.privacy": "隱私", "settings.terms": "使用條款", "settings.support": "支援", "settings.language": "語言",
+    "info.back": "返回設定", "privacy.body": "PitchYourOwner 只儲存你明確發布的 owner pitch、帳號與 session 紀錄、配對和邀請決定。內容傳輸前由你選擇的 AI 處理。", "terms.body": "Owner pitch 是根據對話產生的解讀，不是經驗證的身分或專業能力。請尊重他人，也不要上傳你無權分享的資訊。", "support.body": "請提供完整錯誤訊息與當時嘗試的操作。不要附上 profile JSON、upload token、驗證碼或其他秘密。", "support.sent": "支援請求 {id} 已送出。", "support.another": "再送一個請求", "support.message": "訊息", "support.messagePlaceholder": "發生什麼、你原本預期什麼，以及大約時間", "support.contact": "聯絡方式（選填）", "support.contactPlaceholder": "Email 或其他回覆方式", "support.send": "送出支援請求", "support.sending": "送出中…",
+    "error.session": "登入階段已結束。請重新登入；你的草稿仍安全保存在這台裝置上。", "error.rateVerification": "驗證碼請求太頻繁。請在 {wait}後再試，或改用另一個 Email。", "error.rateGeneric": "操作太頻繁。請稍候再試。", "error.supportLimit": "今天送出的支援請求已達上限。請稍後再試。", "error.matchMissing": "找不到這個配對，可能已經失效。", "error.peerMissing": "這個配對目前無法開啟，可能已經失效。", "error.matchExpired": "這個配對已經到期，無法再回覆。", "error.decisionRecorded": "你已經對這個配對做過決定，無法再次更改。", "error.invitation": "這個邀請操作無法完成。請返回配對後再試。", "error.publishFirst": "請先發布 owner pitch，才能開始配對。", "error.profileMissing": "你還沒有發布 owner pitch。", "error.versionMissing": "找不到這個 pitch 版本。", "error.publish": "目前無法發布你的介紹。草稿仍在，請再試一次。", "error.publishPayload": "這份介紹還不能發布。請返回檢查欄位後再試。", "error.pairing": "目前無法載入配對，請再試一次。", "error.matching": "目前無法開始配對。你的介紹已保存，請再試一次。", "error.codeSend": "目前無法寄出驗證碼，請再試一次。", "error.codeConfirm": "目前無法驗證這組代碼，請再試一次。", "error.codeCombined": "驗證碼不正確或已到期。請檢查代碼，或重新寄送。", "error.emailDisabled": "目前無法寄送驗證信。請稍後再試。", "error.profileLoad": "目前無法載入你的介紹，請再試一次。", "error.draftLoad": "目前無法載入電腦草稿，請再試一次。", "error.matchingUnavailable": "目前無法檢查新配對，請再試一次。", "error.generic": "發生問題，請再試一次。", "error.offline": "無法連上 PitchYourOwner；這台裝置可能已離線。", "error.prompt": "無法載入 Prompt。請返回上一步再試。", "action.signin": "重新登入", "action.matches": "返回配對", "action.createPitch": "建立我的介紹", "action.changeEmail": "更改 Email", "action.backForm": "返回表單", "action.resend": "重新寄送驗證碼",
+    "validation.json": "JSON 必須包含一個 profile object。", "validation.unknown": "JSON 包含不支援的欄位。請只貼上 AI 最後輸出的 owner pitch JSON。", "validation.array": "{label} 必須包含至少一項文字。", "validation.maxItems": "{label} 最多 {count} 項。", "validation.itemLong": "{label} 有一項文字過長。", "validation.required": "{label} 不可空白。", "validation.maxLength": "{label} 最多 {count} 字元。", "validation.confidenceMissing": "缺少欄位信心資料。", "validation.confidence": "{label} 的信心只能是 {levels}。", "validation.name": "顯示名稱必須是 1–40 字元，而且不能換行。", "validation.notJson": "這不是最終 JSON。請回到 AI，回答每個編號的安全或隱私選項，加上「確認安全並產生 JSON」，再複製下一則回答。", "validation.debug": "這看起來是除錯／傳輸資料，不是你的 Owner Pitch。請回到 AI 完成安全與隱私確認，再複製最後一則純 JSON。", "validation.preview": "這仍是待確認預覽。請完成每個編號的安全或隱私選項，加上「確認安全並產生 JSON」，再貼上下一則純 JSON。",
+    "confirm.delete": "要刪除這份介紹、相關配對與帳號資料嗎？", "notice.published": "介紹已發布，配對已開始。", "notice.decisionPassed": "已略過，對方不會收到通知。", "notice.connected": "雙方已接受，聯絡方式已開放。", "notice.invited": "邀請已送出。", "notice.computerNone": "目前沒有可接續的電腦草稿。", "notice.computerLoaded": "電腦草稿已載入。發布前請審核每個欄位。", "notice.clipboardUnavailable": "這個瀏覽器無法分享或複製 Prompt，請長按 Prompt 手動複製。", "notice.promptMissing": "Prompt 尚未完成載入，請稍後再試。", "notice.copyUnavailable": "這個瀏覽器無法複製 Prompt，請長按手動複製。", "notice.shareCopied": "Prompt 已複製，請貼到你選擇的 AI。",
+    "error.challengeMissing": "這次驗證已結束，請重新寄送驗證碼。", "error.invalidCode": "請輸入完整的六位數驗證碼。", "profile.fieldFallback": "介紹欄位", "time.hour": "{count} 小時", "time.minute": "{count} 分鐘", "time.second": "{count} 秒", "confidence.high": "高", "confidence.medium": "中", "confidence.low": "低", "state.suggested": "建議認識", "state.incoming": "收到邀請", "state.outgoing": "等待回覆", "state.connected": "已連結", "state.not_now": "已略過", "state.unavailable": "無法使用", "assistant.other": "其他 AI", "prompt.aria": "完整擷取 Prompt", "progress.aria": "步驟 2 / 4", "support.help": "遇到問題？", "json.placeholder": "{ \"summary\": \"...\" }", "handoff.shareTitle": "PitchYourOwner 個人介紹 Prompt",
+    "demo.profile.summary": "人像攝影師，正在探索細微姿勢與引導如何改變畫面情緒。", "demo.profile.interest1": "人物引導", "demo.profile.interest2": "姿勢與張力", "demo.profile.interest3": "低光人像", "demo.profile.interest4": "底片色彩模擬", "demo.profile.motivation": "拍出自然的人像，同時不讓被攝者失去明確引導", "demo.profile.problem": "在 90 秒內清楚引導第一次見面的人", "demo.profile.topic1": "肩線提示", "demo.profile.topic2": "混合光源下的膚色", "demo.profile.topic3": "拍攝前說明", "demo.profile.intent": "每週都在練習同類問題的人，例如舞者、導演或攝影師。", "demo.profile.scope": "可使用近期 ChatGPT 對話與已儲存記憶；無法使用語音聊天與已刪除對話。",
+    "demo.peer.summary": "當代舞者，研究細微姿勢與張力變化如何改變情緒表達。", "demo.peer.interest1": "姿勢與張力", "demo.peer.interest2": "編舞引導", "demo.peer.interest3": "低光下的動作", "demo.peer.motivation": "協助表演者傳達情緒，同時避免過度指導", "demo.peer.problem": "給出有用的肢體提示，同時不打斷表演者的動勢", "demo.peer.topic1": "肩線提示", "demo.peer.topic2": "動作前的呼吸", "demo.peer.topic3": "手勢強度", "demo.peer.intent": "正在測試細微提示如何改變觀眾感受的人。", "demo.match.shared": "你們都關注姿勢與張力如何承載情緒——你透過鏡頭，Ren 透過身體。", "demo.match.now": "你們此刻都在嘗試清楚引導一個人，同時避免過度指導。", "demo.match.discuss": "Ren 正在低光下測試肩線提示，而你正在重寫 90 秒拍攝前說明。",
+  },
+};
+
+let activeLocale = navigator.language.toLowerCase().startsWith("zh") ? "zh-Hant" : "en";
+
+function t(key, variables = {}) {
+  const locale = activeLocale === "zh-Hant" ? "zh-Hant" : "en";
+  const template = COPY[locale][key] ?? COPY.en[key] ?? key;
+  return Object.entries(variables).reduce((value, [name, replacement]) => value.replaceAll(`{${name}}`, String(replacement)), template);
+}
 const FIELD_META = {
-  history_scope: ["History scope", "AI 實際使用與無法存取的資料範圍"],
-  summary: ["Summary", "一句具體的 owner pitch"],
-  interests: ["Interests", "每行一個具體、持續關注的興趣"],
-  motivations: ["Motivations", "每行一個目前重要的動機"],
-  active_problems: ["Active problems", "每行一個仍在處理的問題"],
-  recurring_topics: ["Recurring topics", "每行一個反覆討論的主題"],
-  friend_intent: ["Friend intent", "希望認識怎樣的人，以及想聊什麼"],
+  history_scope: ["field.history_scope", "hint.history_scope"],
+  summary: ["field.summary", "hint.summary"],
+  interests: ["field.interests", "hint.interests"],
+  motivations: ["field.motivations", "hint.motivations"],
+  active_problems: ["field.active_problems", "hint.active_problems"],
+  recurring_topics: ["field.recurring_topics", "hint.recurring_topics"],
+  friend_intent: ["field.friend_intent", "hint.friend_intent"],
 };
 let FIELD_ORDER = ["history_scope", "summary", "interests", "motivations", "active_problems", "recurring_topics", "friend_intent"];
-const SAMPLE_PROFILE = {
-  summary: "Portrait photographer exploring how subtle posture and direction change the emotion of a frame.",
-  interests: ["Subject direction", "Posture and tension", "Low-light portraiture", "Film emulation"],
-  motivations: ["Create portraits that feel natural without leaving the subject unsupported"],
-  active_problems: ["Directing a stranger clearly in under 90 seconds"],
-  recurring_topics: ["Shoulder-line cues", "Skin tone under mixed light", "Pre-shoot briefing"],
-  friend_intent: "Someone who practises the same problem weekly, such as a dancer, director, or photographer.",
-  history_scope: "Recent ChatGPT conversations and saved memory were available; voice chats and deleted conversations were not available.",
+const DEMO_MATCH_ID = "demo-ren-h";
+
+function sampleProfile() {
+  return {
+  summary: t("demo.profile.summary"),
+  interests: [t("demo.profile.interest1"), t("demo.profile.interest2"), t("demo.profile.interest3"), t("demo.profile.interest4")],
+  motivations: [t("demo.profile.motivation")],
+  active_problems: [t("demo.profile.problem")],
+  recurring_topics: [t("demo.profile.topic1"), t("demo.profile.topic2"), t("demo.profile.topic3")],
+  friend_intent: t("demo.profile.intent"),
+  history_scope: t("demo.profile.scope"),
   confidence: { summary: "high", interests: "high", motivations: "medium", active_problems: "medium", recurring_topics: "medium", friend_intent: "low" },
-};
-const DEMO_MATCH = {
-  match_id: "demo-ren-h",
-  state: "suggested",
+  };
+}
+
+function demoMatch(saved = {}) {
+  return {
+  match_id: DEMO_MATCH_ID,
+  state: saved.state || "suggested",
   peer: {
     display_name: "Ren H.",
+    ...(saved.peer?.contact_email ? { contact_email: saved.peer.contact_email } : {}),
     profile: {
-      summary: "Contemporary dancer studying how small changes in posture and tension alter emotional expression.",
-      interests: ["Posture and tension", "Choreographic direction", "Movement under low light"],
-      motivations: ["Help performers communicate emotion without over-directing them"],
-      active_problems: ["Giving a useful physical cue without breaking a performer’s momentum"],
-      recurring_topics: ["Shoulder-line cues", "Breath before movement", "Gesture intensity"],
-      friend_intent: "Someone testing how small cues change what an audience feels.",
+      summary: t("demo.peer.summary"),
+      interests: [t("demo.peer.interest1"), t("demo.peer.interest2"), t("demo.peer.interest3")],
+      motivations: [t("demo.peer.motivation")],
+      active_problems: [t("demo.peer.problem")],
+      recurring_topics: [t("demo.peer.topic1"), t("demo.peer.topic2"), t("demo.peer.topic3")],
+      friend_intent: t("demo.peer.intent"),
     },
   },
   explanation: {
-    what_we_both_care_about: "How posture and tension carry emotion — yours through a lens, Ren’s through a body.",
-    why_it_matters_now: "You are both trying to direct a person clearly without over-directing them.",
-    what_we_could_discuss: "Ren is testing shoulder-line cues in low light while you are rewriting a 90-second pre-shoot brief.",
+    what_we_both_care_about: t("demo.match.shared"),
+    why_it_matters_now: t("demo.match.now"),
+    what_we_could_discuss: t("demo.match.discuss"),
     evidence_labels: ["interests", "active_problems", "recurring_topics"],
   },
-  can_invite: true,
-};
+  can_invite: saved.can_invite ?? true,
+  };
+}
 const SAVED_DEMO_MATCH = readJson(DEMO_MATCH_KEY);
 const DEMO_QUERY_ENABLED = new URLSearchParams(location.search).has("demo");
 const PERSISTED_DEMO_ENABLED = readJson(DEMO_KEY)?.enabled === true;
 const DEMO_AVAILABLE = ["127.0.0.1", "localhost"].includes(location.hostname) || DEMO_QUERY_ENABLED || PERSISTED_DEMO_ENABLED;
 const SAVED_HANDOFF = readJson(HANDOFF_KEY);
 const SAVED_AUTH_FLOW = readJson(AUTH_FLOW_KEY);
+const SAVED_LOCALE = readJson(LOCALE_KEY);
+const INITIAL_LOCALE = ["zh-Hant", "en"].includes(SAVED_LOCALE)
+  ? SAVED_LOCALE
+  : ["zh-Hant", "en"].includes(SAVED_HANDOFF?.locale) ? SAVED_HANDOFF.locale : navigator.language.toLowerCase().startsWith("zh") ? "zh-Hant" : "en";
+activeLocale = INITIAL_LOCALE;
 
 const runtime = {
   session: readJson(STORAGE_KEY),
   draft: readJson(DRAFT_KEY),
   selectedAi: ["ChatGPT", "Claude", "Other AI"].includes(SAVED_HANDOFF?.selectedAi) ? SAVED_HANDOFF.selectedAi : "ChatGPT",
-  locale: ["zh-Hant", "en"].includes(SAVED_HANDOFF?.locale) ? SAVED_HANDOFF.locale : "zh-Hant",
+  locale: INITIAL_LOCALE,
   displayName: readJson(DISPLAY_NAME_KEY) || "",
   challengeId: typeof SAVED_AUTH_FLOW?.challengeId === "string" ? SAVED_AUTH_FLOW.challengeId : null,
   signinEmail: typeof SAVED_AUTH_FLOW?.email === "string" ? SAVED_AUTH_FLOW.email : "",
@@ -74,6 +148,7 @@ const runtime = {
   resendAt: Number(SAVED_AUTH_FLOW?.resendAt) || 0,
   verificationCode: "",
   codeError: "",
+  importJson: "",
   prompt: typeof SAVED_HANDOFF?.prompt === "string" ? SAVED_HANDOFF.prompt : "",
   handoffLaunchedAt: Number(SAVED_HANDOFF?.launchedAt) || 0,
   showFullPrompt: false,
@@ -89,7 +164,7 @@ const runtime = {
   supportRequestId: null,
   demo: DEMO_QUERY_ENABLED || PERSISTED_DEMO_ENABLED,
   demoDraft: readJson(DEMO_DRAFT_KEY) === true,
-  demoMatch: SAVED_DEMO_MATCH?.match_id === DEMO_MATCH.match_id ? SAVED_DEMO_MATCH : structuredClone(DEMO_MATCH),
+  demoMatch: demoMatch(SAVED_DEMO_MATCH?.match_id === DEMO_MATCH_ID ? SAVED_DEMO_MATCH : {}),
   pendingMatchDecision: null,
   lastPublishAt: Number(readJson(LAST_PUBLISH_KEY)) || 0,
   matchesPollError: false,
@@ -110,12 +185,87 @@ function writeJson(key, value) {
 }
 
 function resetDemoMatch() {
-  runtime.demoMatch = structuredClone(DEMO_MATCH);
+  runtime.demoMatch = demoMatch();
   writeJson(DEMO_MATCH_KEY, runtime.demoMatch);
 }
 
 function saveDemoMatch() {
   writeJson(DEMO_MATCH_KEY, runtime.demoMatch);
+}
+
+function fieldLabel(field) {
+  return t(FIELD_META[field]?.[0] || "profile.fieldFallback");
+}
+
+function fieldHint(field) {
+  return t(FIELD_META[field]?.[1] || "profile.fieldFallback");
+}
+
+function confidenceLabel(level) {
+  return t(`confidence.${level}`);
+}
+
+function matchStateLabel(state) {
+  const key = `state.${state}`;
+  return COPY[activeLocale][key] ?? COPY.en[key] ?? String(state || "").replace(/_/g, " ");
+}
+
+function useLocale(locale) {
+  runtime.locale = locale === "zh-Hant" ? "zh-Hant" : "en";
+  activeLocale = runtime.locale;
+  writeJson(LOCALE_KEY, runtime.locale);
+  document.documentElement.lang = runtime.locale;
+}
+
+function preserveVisibleFormState() {
+  const form = document.querySelector("form[data-form]");
+  if (!form) return;
+  const data = new FormData(form);
+  if (form.dataset.form === "request-code") runtime.signinEmail = String(data.get("email") || "");
+  if (form.dataset.form === "confirm-code") runtime.verificationCode = String(data.get("code") || "");
+  if (form.dataset.form === "parse-json") runtime.importJson = String(data.get("json") || "");
+  if (form.dataset.form === "publish-profile") runtime.displayName = String(data.get("display_name") || "");
+  if (form.dataset.form === "review-profile") {
+    const profile = { confidence: {} };
+    for (const field of FIELD_ORDER) {
+      const value = String(data.get(field) || "");
+      profile[field] = ARRAY_FIELDS.includes(field) ? value.split(/\n/).map((item) => item.trim()).filter(Boolean) : value;
+    }
+    for (const field of CONFIDENCE_FIELDS) profile.confidence[field] = String(data.get(`confidence.${field}`) || "low");
+    runtime.draft = profile;
+    writeJson(DRAFT_KEY, runtime.draft);
+  }
+}
+
+async function switchLocale() {
+  preserveVisibleFormState();
+  useLocale(runtime.locale === "en" ? "zh-Hant" : "en");
+  runtime.error = "";
+  runtime.notice = "";
+  announce("");
+  runtime.demoMatch = demoMatch(runtime.demoMatch);
+  if (runtime.demo) {
+    runtime.matches = null;
+    runtime.invitations = null;
+    runtime.match = null;
+  }
+  if (runtime.demo && runtime.profile?.profile_id === "demo-owner" && !runtime.draft) {
+    runtime.profile = { ...runtime.profile, profile: sampleProfile() };
+  }
+  if (runtime.prompt) {
+    try {
+      const response = await fetch(promptFileForLocale(), { cache: "no-store" });
+      if (!response.ok) throw new Error(String(response.status));
+      runtime.prompt = await response.text();
+    } catch (error) {
+      console.error("Prompt locale refresh failed", error);
+      runtime.prompt = "";
+      setRuntimeError(userFacingError(t("error.prompt"), "retry", t("common.try")));
+    }
+    saveHandoff();
+  }
+  writeJson(DEMO_MATCH_KEY, runtime.demo ? runtime.demoMatch : null);
+  render();
 }
 
 function saveAuthFlow() {
@@ -163,7 +313,7 @@ function rehydrateHandoff() {
   const saved = readJson(HANDOFF_KEY);
   if (!saved) return;
   runtime.selectedAi = ["ChatGPT", "Claude", "Other AI"].includes(saved.selectedAi) ? saved.selectedAi : runtime.selectedAi;
-  runtime.locale = ["zh-Hant", "en"].includes(saved.locale) ? saved.locale : runtime.locale;
+  useLocale(["zh-Hant", "en"].includes(saved.locale) ? saved.locale : runtime.locale);
   runtime.prompt = typeof saved.prompt === "string" ? saved.prompt : runtime.prompt;
   runtime.handoffLaunchedAt = Number(saved.launchedAt) || 0;
 }
@@ -182,34 +332,34 @@ function announce(message) {
 }
 
 const ERROR_DEFINITIONS = {
-  invalid_cloud_session: ["登入階段已結束。請重新登入；你的草稿仍安全保存在這台裝置上。", "signin", "Sign in again"],
-  invalid_authorization: ["登入階段已結束。請重新登入；你的草稿仍安全保存在這台裝置上。", "signin", "Sign in again"],
-  verification_request_limited: ["驗證碼請求太頻繁。請稍候再試，或改用另一個 Email。", "change-email", "Change email"],
-  support_request_limited: ["今天送出的支援請求已達上限。請稍後再試。", "retry", "Try again"],
-  match_not_found: ["找不到這個配對，可能已經失效。", "matches", "Back to matches"],
-  peer_profile_not_found: ["這個配對目前無法開啟，可能已經失效。", "matches", "Back to matches"],
-  match_expired: ["這個配對已經到期，無法再回覆。", "matches", "Back to matches"],
-  invitation_decision_already_recorded: ["你已經對這個配對做過決定，無法再次更改。", "matches", "Back to matches"],
-  invalid_invitation_decision: ["這個邀請操作無法完成。請返回配對後再試。", "matches", "Back to matches"],
-  publish_profile_before_matching: ["請先發布 owner pitch，才能開始配對。", "create-pitch", "Create my pitch"],
-  profile_not_found: ["你還沒有發布 owner pitch。", "create-pitch", "Create my pitch"],
-  profile_version_not_found: ["找不到這個 pitch 版本。", "create-pitch", "Create my pitch"],
-  profile_publish_failed: ["目前無法發布你的 pitch。草稿仍在，請再試一次。", "retry", "Try again"],
-  invalid_publish_payload: ["這份 pitch 還不能發布。請返回檢查欄位後再試。", "retry", "Try again"],
-  pairing_failed: ["目前無法載入配對，請再試一次。", "retry", "Try again"],
-  matching_trigger_failed: ["目前無法開始配對。你的 pitch 已保存，請再試一次。", "retry", "Try again"],
-  verification_request_failed: ["目前無法寄出驗證碼，請再試一次。", "retry", "Try again"],
-  verification_confirmation_failed: ["目前無法驗證這組代碼，請再試一次。", "retry", "Try again"],
-  invalid_or_expired_code: ["驗證碼不正確或已到期。請檢查代碼，或重新寄送。", "change-email", "Change email"],
-  invalid_code: ["請輸入完整的六位數驗證碼。", "retry", "Try again"],
-  challenge_id_required: ["這次驗證已失效。請重新寄送驗證碼。", "change-email", "Change email"],
-  email_delivery_disabled: ["目前無法寄送驗證信。請稍後再試。", "retry", "Try again"],
-  profile_access_failed: ["目前無法載入你的 pitch，請再試一次。", "retry", "Try again"],
-  profile_draft_failed: ["目前無法載入電腦草稿，請再試一次。", "retry", "Try again"],
-  matching_unavailable: ["目前無法檢查新配對，請再試一次。", "retry", "Try again"],
+  invalid_cloud_session: ["error.session", "signin", "action.signin"],
+  invalid_authorization: ["error.session", "signin", "action.signin"],
+  verification_request_limited: ["error.rateVerification", "change-email", "action.changeEmail"],
+  support_request_limited: ["error.supportLimit", "retry", "common.try"],
+  match_not_found: ["error.matchMissing", "matches", "action.matches"],
+  peer_profile_not_found: ["error.peerMissing", "matches", "action.matches"],
+  match_expired: ["error.matchExpired", "matches", "action.matches"],
+  invitation_decision_already_recorded: ["error.decisionRecorded", "matches", "action.matches"],
+  invalid_invitation_decision: ["error.invitation", "matches", "action.matches"],
+  publish_profile_before_matching: ["error.publishFirst", "create-pitch", "action.createPitch"],
+  profile_not_found: ["error.profileMissing", "create-pitch", "action.createPitch"],
+  profile_version_not_found: ["error.versionMissing", "create-pitch", "action.createPitch"],
+  profile_publish_failed: ["error.publish", "retry", "common.try"],
+  invalid_publish_payload: ["error.publishPayload", "retry", "common.try"],
+  pairing_failed: ["error.pairing", "retry", "common.try"],
+  matching_trigger_failed: ["error.matching", "retry", "common.try"],
+  verification_request_failed: ["error.codeSend", "retry", "common.try"],
+  verification_confirmation_failed: ["error.codeConfirm", "retry", "common.try"],
+  invalid_or_expired_code: ["error.codeCombined", "change-email", "action.changeEmail"],
+  invalid_code: ["error.invalidCode", "retry", "common.try"],
+  challenge_id_required: ["error.challengeMissing", "change-email", "action.changeEmail"],
+  email_delivery_disabled: ["error.emailDisabled", "retry", "common.try"],
+  profile_access_failed: ["error.profileLoad", "retry", "common.try"],
+  profile_draft_failed: ["error.draftLoad", "retry", "common.try"],
+  matching_unavailable: ["error.matchingUnavailable", "retry", "common.try"],
 };
 
-function userFacingError(message, action = "retry", actionLabel = "Try again", options = {}) {
+function userFacingError(message, action = "retry", actionLabel = t("common.try"), options = {}) {
   const error = new Error(message);
   error.userFacing = true;
   error.action = action;
@@ -223,27 +373,27 @@ function mapError(identifier, status, body = {}) {
   if (normalized === "verification_request_limited") {
     const waitSeconds = Math.max(1, Number(body.retryAfterSeconds) || 30);
     const waitText = waitSeconds >= 3600
-      ? `${Math.ceil(waitSeconds / 3600)} 小時`
-      : waitSeconds >= 60 ? `${Math.ceil(waitSeconds / 60)} 分鐘` : `${waitSeconds} 秒`;
-    return userFacingError(`驗證碼請求太頻繁。請在 ${waitText}後再試，或改用另一個 Email。`, "change-email", "Change email", { identifier: normalized, status, body });
+      ? t("time.hour", { count: Math.ceil(waitSeconds / 3600) })
+      : waitSeconds >= 60 ? t("time.minute", { count: Math.ceil(waitSeconds / 60) }) : t("time.second", { count: waitSeconds });
+    return userFacingError(t("error.rateVerification", { wait: waitText }), "change-email", t("action.changeEmail"), { identifier: normalized, status, body });
   }
   const definition = ERROR_DEFINITIONS[normalized]
     || (status === 401 ? ERROR_DEFINITIONS.invalid_cloud_session : null)
-    || (status === 429 ? ["操作太頻繁。請稍候再試。", "retry", "Try again"] : null);
-  if (definition) return userFacingError(definition[0], definition[1], definition[2], { identifier: normalized, status, body });
+    || (status === 429 ? ["error.rateGeneric", "retry", "common.try"] : null);
+  if (definition) return userFacingError(t(definition[0]), definition[1], t(definition[2]), { identifier: normalized, status, body });
   console.error("Unmapped API error", { identifier: normalized || "unknown", status });
-  return userFacingError("發生問題，請再試一次。", "retry", "Try again", { identifier: normalized, status, body });
+  return userFacingError(t("error.generic"), "retry", t("common.try"), { identifier: normalized, status, body });
 }
 
 function normalizeError(error) {
   if (error?.userFacing) return error;
   if (error instanceof TypeError || /failed to fetch|networkerror|load failed/i.test(String(error?.message || ""))) {
     console.error("Network request failed", error);
-    return userFacingError("無法連上 PitchYourOwner；這台裝置可能已離線。", "retry", "Try again", { identifier: "network_offline" });
+    return userFacingError(t("error.offline"), "retry", t("common.try"), { identifier: "network_offline" });
   }
-  if (error instanceof Error && error.message) return userFacingError(error.message, "dismiss", "Back to form");
+  if (error instanceof Error && error.message) return userFacingError(error.message, "dismiss", t("action.backForm"));
   console.error("Unknown application error", error);
-  return userFacingError("發生問題，請再試一次。", "retry", "Try again");
+  return userFacingError(t("error.generic"), "retry", t("common.try"));
 }
 
 function setRuntimeError(error) {
@@ -262,7 +412,7 @@ function setRuntimeError(error) {
 function errorNotice() {
   if (!runtime.error) return "";
   const error = typeof runtime.error === "string" ? userFacingError(runtime.error) : runtime.error;
-  return `<div class="notice error" role="alert" tabindex="-1"><div>${esc(error.message)}</div>${error.action ? `<button class="button quiet" style="margin-top:10px" data-action="error-${esc(error.action)}">${esc(error.actionLabel)}</button>` : ""}</div>`;
+  return `<div class="notice error" role="alert" tabindex="-1"><div>${esc(error.message)}</div>${error.action ? `<button class="button quiet" style="margin-top:10px" data-action="error-${esc(error.action)}">${esc(error.actionLabel)}</button>` : ""}<a class="support-link" href="/support" data-link>${esc(t("support.help"))}</a></div>`;
 }
 
 function navigate(path) {
@@ -296,7 +446,7 @@ function updateMatchCountdown() {
   const line = document.querySelector("[data-match-countdown]");
   if (!line) return;
   const seconds = Math.max(0, Math.ceil((nextMatchCheckAt - Date.now()) / 1000));
-  line.textContent = `Checking again in ${seconds}s`;
+  line.textContent = t("matches.checking", { seconds });
 }
 
 function ensureMatchesPolling() {
@@ -348,27 +498,27 @@ function focusErrorNotice() {
 }
 
 function bottomNav(active) {
-  const links = [["matches", "/matches", "Matches"], ["invitations", "/invitations", "Invites"], ["pitch", "/pitch", "My Pitch"], ["settings", "/settings", "Settings"]];
-  return `<nav class="bottom-nav" aria-label="主要導覽">${links.map(([key, href, label]) => `<a href="${href}" data-link class="${active === key ? "active" : ""}" ${active === key ? 'aria-current="page"' : ""}>${label}</a>`).join("")}</nav>`;
+  const links = [["matches", "/matches", "nav.matches"], ["invitations", "/invitations", "nav.invites"], ["pitch", "/pitch", "nav.pitch"], ["settings", "/settings", "nav.settings"]];
+  return `<nav class="bottom-nav" aria-label="${esc(t("nav.label"))}">${links.map(([key, href, label]) => `<a href="${href}" data-link class="${active === key ? "active" : ""}" ${active === key ? 'aria-current="page"' : ""}>${esc(t(label))}</a>`).join("")}</nav>`;
 }
 
 function handoffButtonLabel() {
-  if (runtime.selectedAi === "ChatGPT") return "Open ChatGPT with my prompt";
-  if (runtime.selectedAi === "Claude") return "Open Claude with my prompt";
-  return "Share prompt to my AI";
+  if (runtime.selectedAi === "ChatGPT") return t("handoff.openChatgpt");
+  if (runtime.selectedAi === "Claude") return t("handoff.openClaude");
+  return t("handoff.share");
 }
 
 const JSON_GUIDE_STEPS = [
-  ["先閱讀簡短預覽", "AI 會先回一段簡短預覽 — 這一則不要複製。"],
-  ["回答隱私項目", "它只列出實際發現的隱私項目。在同一則訊息回答全部，並加上「確認安全並產生 JSON」。"],
-  ["複製下一則回答", "複製下一則回答 — 它只會是 JSON，以 { 開頭。"],
+  ["guide.1.title", "guide.1.body"],
+  ["guide.2.title", "guide.2.body"],
+  ["guide.3.title", "guide.3.body"],
 ];
 
 function jsonGuide(includeRecoveryStep = false) {
   const steps = includeRecoveryStep
-    ? [...JSON_GUIDE_STEPS, ["如果網站顯示錯誤", "回到 AI 完成所有安全選項，再複製它輸出的下一則純 JSON。"]]
+    ? [...JSON_GUIDE_STEPS, ["guide.4.title", "guide.4.body"]]
     : JSON_GUIDE_STEPS;
-  return `<ol class="json-guide">${steps.map(([title, detail]) => `<li><strong>${esc(title)}</strong><span>${esc(detail)}</span></li>`).join("")}</ol>`;
+  return `<ol class="json-guide">${steps.map(([title, detail]) => `<li><strong>${esc(t(title))}</strong><span>${esc(t(detail))}</span></li>`).join("")}</ol>`;
 }
 
 function promptFileForLocale() {
@@ -387,20 +537,20 @@ async function copyPromptBestEffort(prompt) {
 
 async function launchAiWithPrompt() {
   const prompt = String(runtime.prompt || "").trim();
-  if (!prompt) throw new Error("Prompt 尚未完成載入，請稍後再試。");
+  if (!prompt) throw new Error(t("notice.promptMissing"));
   runtime.handoffLaunchedAt = Date.now();
   runtime.showFullPrompt = false;
   saveHandoff();
 
   if (runtime.selectedAi === "Other AI") {
     if (navigator.share) {
-      await navigator.share({ title: "PitchYourOwner owner pitch prompt", text: prompt });
+      await navigator.share({ title: t("handoff.shareTitle"), text: prompt });
       render();
       return;
     }
     const copied = await copyPromptBestEffort(prompt);
-    if (!copied) throw new Error("這個瀏覽器無法分享或複製 Prompt，請長按上方 Prompt 手動複製。");
-    runtime.notice = "Prompt 已複製，現在可貼到你選擇的 AI。";
+    if (!copied) throw new Error(t("notice.clipboardUnavailable"));
+    runtime.notice = t("notice.shareCopied");
     announce(runtime.notice);
     render();
     return;
@@ -414,16 +564,16 @@ async function launchAiWithPrompt() {
 
 async function copyPrompt() {
   const prompt = String(runtime.prompt || "").trim();
-  if (!prompt) throw new Error("Prompt 尚未完成載入，請稍後再試。");
-  if (!await copyPromptBestEffort(prompt)) throw new Error("這個瀏覽器無法複製 Prompt，請長按上方 Prompt 手動複製。");
-  runtime.notice = "Prompt copied. Open your AI and paste it to continue.";
+  if (!prompt) throw new Error(t("notice.promptMissing"));
+  if (!await copyPromptBestEffort(prompt)) throw new Error(t("notice.copyUnavailable"));
+  runtime.notice = t("handoff.promptCopied");
   announce(runtime.notice);
   render();
 }
 
 async function createPrompt() {
   const response = await fetch(promptFileForLocale(), { cache: "no-store" });
-  if (!response.ok) throw userFacingError("無法載入 prompt。請返回上一步再試。", "retry", "Try again");
+  if (!response.ok) throw userFacingError(t("error.prompt"), "retry", t("common.try"));
   runtime.prompt = await response.text();
   runtime.handoffLaunchedAt = 0;
   runtime.showFullPrompt = false;
@@ -452,7 +602,7 @@ function updateOtpCountdown() {
   const remaining = resendSecondsRemaining();
   const status = document.querySelector("[data-resend-countdown]");
   const button = document.querySelector('[data-action="resend-code"]');
-  if (status) status.textContent = remaining ? `${remaining} 秒後可重新寄送` : "現在可以重新寄送驗證碼";
+  if (status) status.textContent = remaining ? t("signin.resendIn", { seconds: remaining }) : t("signin.resendNow");
   if (button) button.disabled = runtime.busy || remaining > 0;
   if (!remaining) {
     clearInterval(otpCountdownTimer);
@@ -480,7 +630,7 @@ async function requestVerificationCode({ resend = false } = {}) {
     runtime.verificationCode = "";
     runtime.codeError = "";
     saveAuthFlow();
-    runtime.notice = resend ? "新的驗證碼已寄出" : "驗證碼已寄出";
+    runtime.notice = resend ? t("signin.resent") : t("signin.sent");
     announce(runtime.notice);
   } catch (error) {
     if (error?.identifier === "verification_request_limited") {
@@ -507,17 +657,16 @@ async function resendVerificationCode({ ignoreCountdown = false } = {}) {
 
 function startScreen() {
   return shell(`<div class="hero">
-    <h1>Your agent<br>knows you.<span>Let it pitch you.</span></h1>
-    <p class="zh">你的 Agent 了解你，<br>讓它來介紹你。</p>
-    <p class="promise">認識一位此刻因相同理由、關心相同事情的人。</p>
+    <h1>${t("start.title")}</h1>
+    <p class="promise">${esc(t("start.promise"))}</p>
   </div>
-  <div class="checkpoint" aria-label="兩個 owner 確認關卡">
-    <div><strong>1</strong><span>在 AI 處理安全決定<br>Resolve privacy risks</span></div>
-    <div><strong>2</strong><span>在網站授權發布<br>Approve publishing</span></div>
+  <div class="checkpoint" aria-label="${esc(t("start.checkpoints"))}">
+    <div><strong>1</strong><span>${esc(t("start.check1"))}</span></div>
+    <div><strong>2</strong><span>${esc(t("start.check2"))}</span></div>
   </div>
-  <button class="button primary" data-action="begin">Let my agent pitch me</button>
-  ${DEMO_AVAILABLE ? '<button class="button quiet" style="margin-top:9px" data-action="demo-flow">Preview seeded flow</button>' : ""}
-  <p class="subtle" style="text-align:center;margin:10px 0 0">手機可完成 · 約 3 分鐘</p>`);
+  <button class="button primary" data-action="begin">${esc(t("start.begin"))}</button>
+  ${DEMO_AVAILABLE ? `<button class="button quiet" style="margin-top:9px" data-action="demo-flow">${esc(t("start.demo"))}</button>` : ""}
+  <p class="subtle" style="text-align:center;margin:10px 0 0">${esc(t("start.duration"))}</p>`, { action: `<button class="language-toggle" data-action="switch-locale" aria-label="${esc(t("settings.language"))}">${esc(t("language.switch"))}</button>` });
 }
 
 function signinScreen() {
@@ -525,50 +674,49 @@ function signinScreen() {
   if (codeStep) queueMicrotask(ensureOtpCountdown);
   const remaining = resendSecondsRemaining();
   return shell(`<div>
-    <p class="eyebrow">${codeStep ? "STEP 2 / 2 · VERIFY" : "STEP 1 / 2 · SIGN IN"}</p>
-    <h1 class="page-title">${codeStep ? "Check your email" : "Start with your email"}</h1>
-    <p class="page-intro">${codeStep ? `六位數驗證碼已寄到<br><strong style="color:var(--ink);overflow-wrap:anywhere">${esc(runtime.signinEmail)}</strong>` : "登入後，prompt、draft、pitch 與 invitation 才能由同一位 owner 控制。"}</p>
+    <p class="eyebrow">${esc(t(codeStep ? "signin.step2" : "signin.step1"))}</p>
+    <h1 class="page-title">${esc(t(codeStep ? "signin.verifyTitle" : "signin.title"))}</h1>
+    <p class="page-intro">${codeStep ? `${esc(t("signin.sentTo"))}<br><strong style="color:var(--ink);overflow-wrap:anywhere">${esc(runtime.signinEmail)}</strong>` : esc(t("signin.intro"))}</p>
     <form class="form" data-form="${codeStep ? "confirm-code" : "request-code"}" ${codeStep ? "novalidate" : ""}>
-      ${codeStep ? `<label class="field"><span class="field-label">Verification code</span><input name="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required value="${esc(runtime.verificationCode)}" aria-describedby="code-error" ${runtime.codeError ? 'aria-invalid="true"' : ""}><span class="field-hint" id="code-error" ${runtime.codeError ? 'role="alert"' : ""}>${esc(runtime.codeError)}</span></label>` : `<label class="field"><span class="field-label">Email</span><input name="email" type="email" inputmode="email" autocomplete="email" required placeholder="owner@example.com" value="${esc(runtime.signinEmail)}"></label>`}
-      <button class="button primary" ${runtime.busy ? "disabled" : ""}>${runtime.busy ? "處理中" : codeStep ? "Verify and continue" : "Send verification code"}</button>
+      ${codeStep ? `<label class="field"><span class="field-label">${esc(t("signin.code"))}</span><input name="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required value="${esc(runtime.verificationCode)}" aria-describedby="code-error" ${runtime.codeError ? 'aria-invalid="true"' : ""}><span class="field-hint" id="code-error" ${runtime.codeError ? 'role="alert"' : ""}>${esc(runtime.codeError)}</span></label>` : `<label class="field"><span class="field-label">${esc(t("signin.email"))}</span><input name="email" type="email" inputmode="email" autocomplete="email" required placeholder="owner@example.com" value="${esc(runtime.signinEmail)}"></label>`}
+      <button class="button primary" ${runtime.busy ? "disabled" : ""}>${esc(runtime.busy ? t("common.loading") : t(codeStep ? "signin.verify" : "signin.send"))}</button>
     </form>
-    ${codeStep ? `<button class="button quiet" style="margin-top:9px;width:100%" data-action="resend-code" ${runtime.busy || remaining ? "disabled" : ""}>Resend code</button><p class="subtle" style="text-align:center;margin:7px 0 0" data-resend-countdown aria-live="polite">${remaining ? `${remaining} 秒後可重新寄送` : "現在可以重新寄送驗證碼"}</p><button class="button quiet" style="margin-top:9px;width:100%" data-action="change-email">Change email</button>` : ""}
+    ${codeStep ? `<button class="button quiet" style="margin-top:9px;width:100%" data-action="resend-code" ${runtime.busy || remaining ? "disabled" : ""}>${esc(t("signin.resend"))}</button><p class="subtle" style="text-align:center;margin:7px 0 0" data-resend-countdown aria-live="polite">${esc(remaining ? t("signin.resendIn", { seconds: remaining }) : t("signin.resendNow"))}</p><button class="button quiet" style="margin-top:9px;width:100%" data-action="change-email">${esc(t("signin.change"))}</button>` : ""}
   </div>`);
 }
 
 function assistantScreen() {
-  return shell(`<p class="eyebrow">STEP 1 / 4 · CHOOSE AI</p>
-    <h1 class="page-title">Who knows you best?</h1>
-    <p class="page-intro">選擇平常最常一起思考、且能存取相關脈絡的 AI。</p>
-    <div class="assistant-grid">${["ChatGPT", "Claude", "Other AI"].map((name) => `<button class="assistant-card" data-action="select-ai" data-ai="${name}" aria-pressed="${runtime.selectedAi === name}"><strong>${name}</strong><span>${runtime.selectedAi === name ? "Selected" : "Choose"}</span></button>`).join("")}</div>
-    <div class="divider-label">Prompt language</div>
-    <div class="language-grid" role="group" aria-label="Prompt language">${[["zh-Hant", "繁體中文"], ["en", "English"]].map(([locale, label]) => `<button class="language-card" data-action="select-locale" data-locale="${locale}" aria-pressed="${runtime.locale === locale}">${label}</button>`).join("")}</div>
-    <div style="margin-top:auto;padding-top:28px"><button class="button primary" style="width:100%" data-action="create-prompt">Create my prompt</button></div>`, { action: '<a href="/settings" data-link class="text-action">Account</a>' });
+  const aiOptions = [["ChatGPT", "ChatGPT"], ["Claude", "Claude"], ["Other AI", t("assistant.other")]];
+  return shell(`<p class="eyebrow">${esc(t("assistant.step"))}</p>
+    <h1 class="page-title">${esc(t("assistant.title"))}</h1>
+    <p class="page-intro">${esc(t("assistant.intro"))}</p>
+    <div class="assistant-grid">${aiOptions.map(([value, label]) => `<button class="assistant-card" data-action="select-ai" data-ai="${value}" aria-pressed="${runtime.selectedAi === value}"><strong>${esc(label)}</strong><span>${esc(t(runtime.selectedAi === value ? "assistant.selected" : "assistant.choose"))}</span></button>`).join("")}</div>
+    <div style="margin-top:auto;padding-top:28px"><button class="button primary" style="width:100%" data-action="create-prompt">${esc(t("assistant.create"))}</button></div>`, { action: `<a href="/settings" data-link class="text-action">${esc(t("account"))}</a>` });
 }
 
 function handoffScreen() {
   const promptReady = Boolean(String(runtime.prompt || "").trim());
   const afterHandoff = runtime.handoffLaunchedAt > 0;
-  const prompt = `<div class="prompt-box" aria-label="完整 extraction prompt">${esc(runtime.prompt || "正在載入 prompt…")}</div>`;
+  const prompt = `<div class="prompt-box" aria-label="${esc(t("prompt.aria"))}">${esc(runtime.prompt || t("handoff.loading"))}</div>`;
   const actions = afterHandoff
-    ? `<p class="page-intro">從 ${esc(runtime.selectedAi)} 回來了嗎？貼上它給你的 JSON。</p>
-      <button class="button primary" style="width:100%" data-action="go-import">貼上最終 JSON</button>
-      <button class="button quiet" style="margin-top:9px;width:100%" data-action="launch-ai-with-prompt" ${promptReady ? "" : "disabled"}>再次開啟 ${esc(runtime.selectedAi)}</button>
-      <button class="text-action handoff-text-action" data-action="copy-prompt" ${promptReady ? "" : "disabled"}>Copy prompt again</button>`
+    ? `<p class="page-intro">${esc(t("handoff.return", { ai: runtime.selectedAi }))}</p>
+      <button class="button primary" style="width:100%" data-action="go-import">${esc(t("handoff.paste"))}</button>
+      <button class="button quiet" style="margin-top:9px;width:100%" data-action="launch-ai-with-prompt" ${promptReady ? "" : "disabled"}>${esc(t("handoff.openAgain", { ai: runtime.selectedAi }))}</button>
+      <button class="text-action handoff-text-action" data-action="copy-prompt" ${promptReady ? "" : "disabled"}>${esc(t("handoff.copyAgain"))}</button>`
     : `${prompt}
-      <p class="subtle">AI 第一則會顯示精簡預覽，並一次列出實際發現的 security／privacy 項目；不會問介紹是否符合聊天歷史。選完所有 S 編號並加上「確認安全並產生 JSON」後，再複製下一則純 JSON。</p>
+      <p class="subtle">${esc(t("handoff.explainer"))}</p>
       ${jsonGuide()}
       <button class="button primary" style="width:100%" data-action="launch-ai-with-prompt" ${promptReady ? "" : "disabled"}>${esc(handoffButtonLabel())}</button>
-      <p class="subtle" style="text-align:center;margin:9px 0 0">一次完成：將完整 Prompt 帶入 ${esc(runtime.selectedAi)} 並開啟；也會嘗試複製到剪貼簿作為備援。</p>
-      <button class="button quiet" style="margin-top:9px;width:100%" data-action="copy-prompt" ${promptReady ? "" : "disabled"}>Copy prompt</button>`;
+      <p class="subtle" style="text-align:center;margin:9px 0 0">${esc(t("handoff.launchHelp", { ai: runtime.selectedAi }))}</p>
+      <button class="button quiet" style="margin-top:9px;width:100%" data-action="copy-prompt" ${promptReady ? "" : "disabled"}>${esc(t("handoff.copy"))}</button>`;
   const collapsedPrompt = afterHandoff
-    ? `<div class="settings-row"><span>Extraction prompt ready</span><button data-action="toggle-full-prompt">${runtime.showFullPrompt ? "Hide full prompt" : "Show full prompt"}</button></div>${runtime.showFullPrompt ? prompt : ""}`
+    ? `<div class="settings-row"><span>${esc(t("handoff.ready"))}</span><button data-action="toggle-full-prompt">${esc(t(runtime.showFullPrompt ? "handoff.hide" : "handoff.show"))}</button></div>${runtime.showFullPrompt ? prompt : ""}`
     : "";
-  return shell(`<p class="eyebrow">STEP 2 / 4 · HAND OFF</p>
-    <div class="prompt-meta"><a href="/assistant" data-link>更改 AI 或語言</a><span>${runtime.locale === "en" ? "English" : "繁體中文"}</span></div>
-    <h1 class="page-title">${afterHandoff ? "Bring your pitch back" : `Hand this to ${esc(runtime.selectedAi)}`}</h1>
-    <div class="progress" aria-label="Step 2 of 4"><span></span><span class="active"></span><span></span><span></span></div>
-    ${!promptReady ? '<div class="notice error">Prompt 尚未完成載入，請返回上一步再試。</div>' : ""}
+  return shell(`<p class="eyebrow">${esc(t("handoff.step"))}</p>
+    <div class="prompt-meta"><a href="/assistant" data-link>${esc(t("handoff.change"))}</a><span>${esc(t("language.current"))}</span></div>
+    <h1 class="page-title">${esc(afterHandoff ? t("handoff.afterTitle") : t("handoff.beforeTitle", { ai: runtime.selectedAi }))}</h1>
+    <div class="progress" aria-label="${esc(t("progress.aria"))}"><span></span><span class="active"></span><span></span><span></span></div>
+    ${!promptReady ? `<div class="notice error">${esc(t("handoff.loadError"))}</div>` : ""}
     ${collapsedPrompt}
     ${actions}`);
 }
@@ -579,65 +727,66 @@ function parseJsonCandidate(value) {
   try {
     parsed = JSON.parse(cleaned);
   } catch {
-    throw new Error("這不是最終 JSON。請回到 AI，逐項回覆它列出的 S 編號 security／privacy 選項，並在同一則訊息最後加上「確認安全並產生 JSON」，再複製下一則回答。");
+    throw new Error(t("validation.notJson"));
   }
   if (parsed?.schema === "routec.message_debug_info.v1" || parsed?.matrix_event_id || parsed?.host_session_id) {
-    throw new Error("這看起來是除錯／傳輸資料，不是你的 Owner Pitch。請回到 AI，完成 security／privacy 確認後，再複製它輸出的最後一則純 JSON。");
+    throw new Error(t("validation.debug"));
   }
   if (parsed?.status === "review_required") {
-    throw new Error("這仍是待確認預覽。請回到 AI，選完所有 S 編號 security／privacy 項目並加上「確認安全並產生 JSON」，再貼上下一則純 JSON。");
+    throw new Error(t("validation.preview"));
   }
   return parsed && typeof parsed === "object" && parsed.profile ? parsed.profile : parsed;
 }
 
 function validateProfileClient(profile) {
-  if (!profile || typeof profile !== "object" || Array.isArray(profile)) throw new Error("JSON 必須是一個 profile object");
+  if (!profile || typeof profile !== "object" || Array.isArray(profile)) throw new Error(t("validation.json"));
   const allowed = new Set([...FIELD_ORDER, "confidence"]);
   const unknown = Object.keys(profile).filter((key) => !allowed.has(key));
-  if (unknown.length) throw new Error("JSON 包含不支援的欄位。請只貼上 AI 最後輸出的 owner pitch JSON。");
+  if (unknown.length) throw new Error(t("validation.unknown"));
   for (const field of FIELD_ORDER) {
     const config = PROFILE_SCHEMA_CONFIG?.core_fields?.[field];
-    const label = FIELD_META[field]?.[0] || "Profile field";
+    const label = fieldLabel(field);
     if (ARRAY_FIELDS.includes(field)) {
-      if (!Array.isArray(profile[field]) || profile[field].some((item) => typeof item !== "string" || !item.trim())) throw new Error(`${label} 必須包含至少一項文字。`);
-      if (config?.max_items && profile[field].length > config.max_items) throw new Error(`${label} 最多 ${config.max_items} 項。`);
-      if (config?.item_max_length && profile[field].some((item) => item.trim().length > config.item_max_length)) throw new Error(`${label} 有一項文字過長。`);
-    } else if (typeof profile[field] !== "string" || !profile[field].trim()) throw new Error(`${label} 不可空白。`);
-    else if (config?.max_length && profile[field].trim().length > config.max_length) throw new Error(`${label} 最多 ${config.max_length} 字元。`);
+      if (!Array.isArray(profile[field]) || profile[field].some((item) => typeof item !== "string" || !item.trim())) throw new Error(t("validation.array", { label }));
+      if (config?.max_items && profile[field].length > config.max_items) throw new Error(t("validation.maxItems", { label, count: config.max_items }));
+      if (config?.item_max_length && profile[field].some((item) => item.trim().length > config.item_max_length)) throw new Error(t("validation.itemLong", { label }));
+    } else if (typeof profile[field] !== "string" || !profile[field].trim()) throw new Error(t("validation.required", { label }));
+    else if (config?.max_length && profile[field].trim().length > config.max_length) throw new Error(t("validation.maxLength", { label, count: config.max_length }));
   }
-  if (!profile.confidence || typeof profile.confidence !== "object") throw new Error("缺少欄位信心資料。");
-  for (const field of CONFIDENCE_FIELDS) if (!CONFIDENCE_LEVELS.includes(profile.confidence[field])) throw new Error(`${FIELD_META[field]?.[0] || "Profile field"} 的信心只能是 ${CONFIDENCE_LEVELS.join("、")}。`);
+  if (!profile.confidence || typeof profile.confidence !== "object") throw new Error(t("validation.confidenceMissing"));
+  for (const field of CONFIDENCE_FIELDS) if (!CONFIDENCE_LEVELS.includes(profile.confidence[field])) throw new Error(t("validation.confidence", { label: fieldLabel(field), levels: CONFIDENCE_LEVELS.map(confidenceLabel).join(runtime.locale === "zh-Hant" ? "、" : ", ") }));
   return profile;
 }
 
 function importScreen() {
   if (!runtime.draft) {
-    return shell(`<p class="eyebrow">STEP 3 / 4 · PASTE JSON</p>
-      <h1 class="page-title">Bring your pitch back</h1>
-      <p class="page-intro">AI 的第一則預覽不是要貼的內容。先完成傳輸前的 security／privacy 決定，再貼上最終 JSON。</p>
+    return shell(`<p class="eyebrow">${esc(t("import.stepPaste"))}</p>
+      <h1 class="page-title">${esc(t("import.title"))}</h1>
+      <p class="page-intro">${esc(t("import.intro"))}</p>
       ${jsonGuide(true)}
       <form class="form" data-form="parse-json">
-        <label class="field"><span class="field-label">Owner pitch JSON</span><textarea class="tall" name="json" required placeholder='{ "summary": "..." }'></textarea></label>
-        <button class="button primary">Render editable fields</button>
+        <label class="field"><span class="field-label">${esc(t("import.jsonLabel"))}</span><textarea class="tall" name="json" required placeholder="${esc(t("json.placeholder"))}">${esc(runtime.importJson)}</textarea></label>
+        <button class="button primary">${esc(t("import.render"))}</button>
       </form>
-      ${DEMO_AVAILABLE && runtime.demo && !runtime.session ? '<button class="button quiet" style="margin-top:9px" data-action="load-sample">載入示範介紹</button><p class="subtle" style="margin:7px 0 0">示範用資料。</p>' : ""}
-      ${runtime.session && !runtime.demo ? '<button class="button quiet" style="margin-top:9px" data-action="resume-computer-draft">Resume computer draft</button>' : ""}`);
+      ${DEMO_AVAILABLE && runtime.demo && !runtime.session ? `<button class="button quiet" style="margin-top:9px" data-action="load-sample">${esc(t("import.demo"))}</button><p class="subtle" style="margin:7px 0 0">${esc(t("import.demoCaption"))}</p>` : ""}
+      ${runtime.session && !runtime.demo ? `<button class="button quiet" style="margin-top:9px" data-action="resume-computer-draft">${esc(t("import.resume"))}</button>` : ""}`);
   }
-  return shell(`<p class="eyebrow">STEP 3 / 4 · EDIT FIELDS</p>
-    <h1 class="page-title">Make it sound like you</h1>
-    <p class="page-intro">每一個欄位都可編輯。Continue 只會打開唯讀審核，不會直接發布。</p>
+  return shell(`<p class="eyebrow">${esc(t("import.stepEdit"))}</p>
+    <h1 class="page-title">${esc(t("import.editTitle"))}</h1>
+    <p class="page-intro">${esc(t("import.editIntro"))}</p>
     <form data-form="review-profile">
       ${editableFields(runtime.draft)}
-      <div class="button-row"><button type="button" class="button" data-action="replace-json">Paste again</button><button class="button primary">Continue to review</button></div>
+      <div class="button-row"><button type="button" class="button" data-action="replace-json">${esc(t("import.pasteAgain"))}</button><button class="button primary">${esc(t("import.continue"))}</button></div>
     </form>`);
 }
 
 function editableFields(profile) {
   return FIELD_ORDER.map((field) => {
-    const [label, hint] = FIELD_META[field];
+    const label = fieldLabel(field);
+    const hint = fieldHint(field);
     const value = ARRAY_FIELDS.includes(field) ? profile[field].join("\n") : profile[field];
-    const confidence = CONFIDENCE_FIELDS.includes(field) ? `<select name="confidence.${field}" aria-label="${label} confidence">${CONFIDENCE_LEVELS.map((level) => `<option value="${level}" ${profile.confidence[field] === level ? "selected" : ""}>${level}</option>`).join("")}</select>` : "";
-    return `<section class="edit-card"><div class="confidence-row"><div><div class="field-label">${label}</div><p class="field-hint">${hint}</p></div>${confidence}</div><textarea name="${field}" aria-label="${label}" required>${esc(value)}</textarea></section>`;
+    const confidence = CONFIDENCE_FIELDS.includes(field) ? `<select name="confidence.${field}" aria-label="${esc(`${label} ${t("field.confidence")}`)}">${CONFIDENCE_LEVELS.map((level) => `<option value="${level}" ${profile.confidence[field] === level ? "selected" : ""}>${esc(confidenceLabel(level))}</option>`).join("")}</select>` : "";
+    return `<section class="edit-card"><div class="confidence-row"><div><div class="field-label">${esc(label)}</div><p class="field-hint">${esc(hint)}</p></div>${confidence}</div><textarea name="${field}" aria-label="${esc(label)}" required>${esc(value)}</textarea></section>`;
   }).join("");
 }
 
@@ -654,13 +803,13 @@ function profileFromForm(form) {
 
 function reviewScreen() {
   if (!runtime.draft) return importScreen();
-  return shell(`<p class="eyebrow">STEP 4 / 4 · REVIEW & PUBLISH</p>
-    <h1 class="page-title">Publish this pitch?</h1>
-    <p class="page-intro">這是 PitchYourOwner 將儲存的完整版本。此頁唯讀；若要修改，請返回上一頁。</p>
+  return shell(`<p class="eyebrow">${esc(t("review.step"))}</p>
+    <h1 class="page-title">${esc(t("review.title"))}</h1>
+    <p class="page-intro">${esc(t("review.intro"))}</p>
     ${profileDocument(runtime.draft, true)}
     <form class="form" data-form="publish-profile">
-      <label class="field"><span class="field-label">Display name</span><span class="field-hint">Shown to a match before you connect. Use a first name or a handle.</span><input name="display_name" autocomplete="nickname" minlength="1" maxlength="40" required value="${esc(runtime.displayName)}"></label>
-      <div class="button-row"><button type="button" class="button" data-action="back-edit">Back to edit</button><button class="button primary" ${runtime.busy ? "disabled" : ""}>${runtime.busy ? "Publishing" : "Confirm & upload"}</button></div>
+      <label class="field"><span class="field-label">${esc(t("review.name"))}</span><span class="field-hint">${esc(t("review.nameHint"))}</span><input name="display_name" autocomplete="nickname" minlength="1" maxlength="40" required value="${esc(runtime.displayName)}"></label>
+      <div class="button-row"><button type="button" class="button" data-action="back-edit">${esc(t("review.back"))}</button><button class="button primary" ${runtime.busy ? "disabled" : ""}>${esc(t(runtime.busy ? "review.publishing" : "review.publish"))}</button></div>
     </form>`);
 }
 
@@ -669,32 +818,31 @@ function profileDocument(profile, showConfidence) {
     ? `<div class="tag-list">${profile[field].map((item) => `<span class="tag">${esc(item)}</span>`).join("")}</div>`
     : `<p>${esc(profile[field])}</p>`;
   return `<div class="document">
-    <section class="scope-block"><div class="field-label">History scope · 歷史範圍</div><p>${esc(profile.history_scope)}</p></section>
+    <section class="scope-block"><div class="field-label">${esc(t("profile.scope"))}</div><p>${esc(profile.history_scope)}</p></section>
     <p class="doc-summary">${esc(profile.summary)}</p>
-    ${["interests", "motivations", "active_problems", "recurring_topics", "friend_intent"].map((field) => `<section class="doc-field"><div class="doc-field-head"><span class="field-label">${FIELD_META[field][0]}</span>${showConfidence ? `<span class="confidence">${esc(profile.confidence[field])}</span>` : ""}</div>${listOrText(field)}</section>`).join("")}
-    <div class="provenance"><span>Conversation-derived</span><span>Owner-approved</span><span>Currently exploring</span></div>
+    ${["interests", "motivations", "active_problems", "recurring_topics", "friend_intent"].map((field) => `<section class="doc-field"><div class="doc-field-head"><span class="field-label">${esc(fieldLabel(field))}</span>${showConfidence ? `<span class="confidence">${esc(confidenceLabel(profile.confidence[field]))}</span>` : ""}</div>${listOrText(field)}</section>`).join("")}
+    <div class="provenance"><span>${esc(t("profile.conversation"))}</span><span>${esc(t("profile.approved"))}</span><span>${esc(t("profile.exploring"))}</span></div>
   </div>`;
 }
 
 function evidenceLabel(field) {
-  return FIELD_META[field]?.[0] || String(field || "").replace(/_/g, " ");
+  return FIELD_META[field] ? fieldLabel(field) : String(field || "").replace(/_/g, " ");
 }
 
 function pitchScreen() {
   if (!runtime.profileLoaded) {
     loadProfile();
-    return shell('<div class="loading">Loading your pitch</div>', { nav: true, active: "pitch" });
+    return shell(`<div class="loading">${esc(t("pitch.loading"))}</div>`, { nav: true, active: "pitch" });
   }
-  if (!runtime.profile) return shell(`<div class="empty"><p class="eyebrow">MY PITCH</p><h2>No pitch yet</h2><p>先讓你的 AI 產生 owner pitch，再貼回並發布。</p><a class="button primary" href="/assistant" data-link>Create my pitch</a></div>`, { nav: true, active: "pitch" });
-  return shell(`<h1 class="page-title">My Pitch</h1><p class="page-intro">我的介紹 · owner 已核准</p>${profileDocument(runtime.profile.profile, false)}<button class="button" style="width:100%" data-action="refresh-pitch">Refresh my pitch</button>`, { nav: true, active: "pitch", action: '<a href="/settings" data-link class="text-action">Edit</a>' });
+  if (!runtime.profile) return shell(`<div class="empty"><p class="eyebrow">${esc(t("pitch.emptyEyebrow"))}</p><h2>${esc(t("pitch.emptyTitle"))}</h2><p>${esc(t("pitch.emptyBody"))}</p><a class="button primary" href="/assistant" data-link>${esc(t("pitch.create"))}</a></div>`, { nav: true, active: "pitch" });
+  return shell(`<h1 class="page-title">${esc(t("pitch.title"))}</h1><p class="page-intro">${esc(t("pitch.approved"))}</p>${profileDocument(runtime.profile.profile, false)}<button class="button" style="width:100%" data-action="refresh-pitch">${esc(t("pitch.refresh"))}</button>`, { nav: true, active: "pitch", action: `<a href="/settings" data-link class="text-action">${esc(t("pitch.edit"))}</a>` });
 }
 
 async function loadProfile() {
   runtime.profileLoaded = true;
-  if (runtime.demo) { runtime.profile = { profile: structuredClone(SAMPLE_PROFILE), profile_id: "demo-owner" }; queueMicrotask(render); return; }
+  if (runtime.demo) { runtime.profile = { profile: sampleProfile(), profile_id: "demo-owner" }; queueMicrotask(render); return; }
   try {
     runtime.profile = await api("/v1/profiles/me");
-    runtime.locale = runtime.profile.locale === "en" ? "en" : "zh-Hant";
     if (runtime.profile.display_name) {
       runtime.displayName = runtime.profile.display_name;
       writeJson(DISPLAY_NAME_KEY, runtime.displayName);
@@ -707,26 +855,26 @@ async function loadProfile() {
 function matchesScreen() {
   if (!runtime.matches) {
     loadMatches();
-    return shell('<div class="loading">Looking for specific overlap</div>', { nav: true, active: "matches" });
+    return shell(`<div class="loading">${esc(t("matches.loading"))}</div>`, { nav: true, active: "matches" });
   }
   const visible = runtime.matches.filter((match) => match.state !== "not_now");
   if (!visible.length && runtime.matchesPollError) {
     stopMatchesPolling();
-    return shell(`<div class="empty"><p class="eyebrow">MATCHES</p><h2>Matching paused</h2><p>我們暫時無法檢查新配對。你的 pitch 已安全保存。</p></div>`, { nav: true, active: "matches" });
+    return shell(`<div class="empty"><p class="eyebrow">${esc(t("matches.eyebrow"))}</p><h2>${esc(t("matches.paused"))}</h2><p>${esc(t("matches.pausedBody"))}</p></div>`, { nav: true, active: "matches" });
   }
   if (!visible.length && isRecentPublish()) {
     queueMicrotask(ensureMatchesPolling);
-    return shell(`<div class="empty"><p class="eyebrow">MATCHES · SEARCHING</p><h2>你的 Agent 正在尋找</h2><p>正在把你的 pitch 與其他 owners 比較。通常一分鐘內就能完成。</p><p class="status-label" data-match-countdown aria-live="polite">Checking again in 6s</p></div>`, { nav: true, active: "matches" });
+    return shell(`<div class="empty"><p class="eyebrow">${esc(t("matches.searchingEyebrow"))}</p><h2>${esc(t("matches.searchingTitle"))}</h2><p>${esc(t("matches.searchingBody"))}</p><p class="status-label" data-match-countdown aria-live="polite">${esc(t("matches.checking", { seconds: 6 }))}</p></div>`, { nav: true, active: "matches" });
   }
   if (!visible.length) {
     stopMatchesPolling();
     if (runtime.demo && runtime.matches.some((match) => match.state === "not_now")) {
-      return shell(`<div class="empty"><p class="eyebrow">DEMO · MATCH PASSED</p><h2>Demo match passed</h2><p>這個決定已記錄且無法復原；Ren H. 不會收到通知，也不會再次被推薦。</p></div>`, { nav: true, active: "matches" });
+      return shell(`<div class="empty"><p class="eyebrow">${esc(`${t("demo.marker")} · ${t("matches.eyebrow")}`)}</p><h2>${esc(t("matches.demoPassed"))}</h2><p>${esc(t("matches.demoPassedBody"))}</p></div>`, { nav: true, active: "matches" });
     }
-    return shell(`<div class="empty"><p class="eyebrow">MATCHES</p><h2>No filler.</h2><p>目前還沒有能具體說明理由的配對。每當有新的 owner 發布 pitch，系統會再次進行配對。</p><button class="button primary" data-action="refresh-matches">Check again</button></div>`, { nav: true, active: "matches" });
+    return shell(`<div class="empty"><p class="eyebrow">${esc(t("matches.eyebrow"))}</p><h2>${esc(t("matches.emptyTitle"))}</h2><p>${esc(t("matches.emptyBody"))}</p><button class="button primary" data-action="refresh-matches">${esc(t("matches.check"))}</button></div>`, { nav: true, active: "matches" });
   }
   stopMatchesPolling();
-  return shell(`<h1 class="page-title">Matches</h1><p class="page-intro">少量、具體、可以解釋的朋友配對。</p><div class="match-list">${visible.map((match) => `<a class="match-card" href="/matches/${encodeURIComponent(match.match_id)}" data-link><div class="match-card-head"><h2>${esc(match.peer.display_name)}</h2><span class="status-label">${esc(match.state)}</span></div>${runtime.demo ? '<div class="evidence" style="margin-top:10px"><span class="evidence-label">Demo</span></div>' : ""}<p>${esc(match.explanation.what_we_both_care_about)}</p><div class="evidence" style="margin-top:12px">${match.explanation.evidence_labels.map((label) => `<span class="evidence-label">${esc(evidenceLabel(label))}</span>`).join("")}</div></a>`).join("")}</div>`, { nav: true, active: "matches" });
+  return shell(`<h1 class="page-title">${esc(t("matches.title"))}</h1><p class="page-intro">${esc(t("matches.intro"))}</p><div class="match-list">${visible.map((match) => `<a class="match-card" href="/matches/${encodeURIComponent(match.match_id)}" data-link><div class="match-card-head"><h2>${esc(match.peer.display_name)}</h2><span class="status-label">${esc(matchStateLabel(match.state))}</span></div>${runtime.demo ? `<div class="evidence" style="margin-top:10px"><span class="evidence-label">${esc(t("demo.marker"))}</span></div>` : ""}<p>${esc(match.explanation.what_we_both_care_about)}</p><div class="evidence" style="margin-top:12px">${match.explanation.evidence_labels.map((label) => `<span class="evidence-label">${esc(evidenceLabel(label))}</span>`).join("")}</div></a>`).join("")}</div>`, { nav: true, active: "matches" });
 }
 
 async function loadMatches({ polling = false } = {}) {
@@ -736,14 +884,14 @@ async function loadMatches({ polling = false } = {}) {
       ? []
       : [structuredClone(runtime.demoMatch)];
     runtime.matchesPollError = false;
-    if (wasSearching && runtime.matches.length) announce("找到 1 個配對");
+    if (wasSearching && runtime.matches.length) announce(t("matches.found", { count: 1, suffix: "" }));
     queueMicrotask(render);
     return;
   }
   try {
     runtime.matches = (await api("/v1/matches")).matches || [];
     runtime.matchesPollError = false;
-    if (wasSearching && runtime.matches.length) announce(`${runtime.matches.length} match${runtime.matches.length === 1 ? "" : "es"} found`);
+    if (wasSearching && runtime.matches.length) announce(t("matches.found", { count: runtime.matches.length, suffix: runtime.locale === "en" && runtime.matches.length !== 1 ? "es" : "" }));
   }
   catch (error) {
     runtime.matches = [];
@@ -757,53 +905,53 @@ async function loadMatches({ polling = false } = {}) {
 function matchDetailScreen(matchId) {
   if (!runtime.match || runtime.match.match_id !== matchId) {
     loadMatch(matchId);
-    return shell('<div class="loading">Opening match reason</div>', { nav: true, active: "matches" });
+    return shell(`<div class="loading">${esc(t("match.loading"))}</div>`, { nav: true, active: "matches" });
   }
   const match = runtime.match;
   const initial = match.peer.display_name === "Another owner" ? "O" : match.peer.display_name.slice(0, 1).toUpperCase();
   const explanation = match.explanation;
   const questions = [
-    ["01 · What we both care about", explanation.what_we_both_care_about],
-    ["02 · Same reason, right now", explanation.why_it_matters_now],
-    ["03 · What we could discuss today", explanation.what_we_could_discuss],
+    [t("match.q1"), explanation.what_we_both_care_about],
+    [t("match.q2"), explanation.why_it_matters_now],
+    [t("match.q3"), explanation.what_we_could_discuss],
   ];
-  const demoMarker = runtime.demo ? '<div class="evidence"><span class="evidence-label">Demo · simulated data</span></div>' : "";
+  const demoMarker = runtime.demo ? `<div class="evidence"><span class="evidence-label">${esc(t("match.demoData"))}</span></div>` : "";
   const connectedBlock = match.state === "connected" ? `<div class="notice success" style="margin-bottom:18px">
-      ${runtime.demo ? '<div class="evidence"><span class="evidence-label">Demo · simulated acceptance</span></div>' : ""}
-      <h2 style="margin:10px 0 6px">You are connected</h2>
+      ${runtime.demo ? `<div class="evidence"><span class="evidence-label">${esc(t("match.demoAcceptance"))}</span></div>` : ""}
+      <h2 style="margin:10px 0 6px">${esc(t("match.connected"))}</h2>
       <a href="mailto:${esc(match.peer.contact_email)}" style="overflow-wrap:anywhere">${esc(match.peer.contact_email)}</a>
-      <div class="doc-field" style="margin-top:14px"><span class="field-label">Start with this</span><p>${esc(explanation.what_we_could_discuss)}</p></div>
+      <div class="doc-field" style="margin-top:14px"><span class="field-label">${esc(t("match.start"))}</span><p>${esc(explanation.what_we_could_discuss)}</p></div>
     </div>` : "";
   let decisionArea;
   if (match.state === "connected") decisionArea = "";
-  else if (match.state === "outgoing") decisionArea = `${runtime.demo ? '<div class="notice"><span class="evidence-label">Demo</span><p style="margin:8px 0 0">等待 Ren H. 回覆</p></div><button class="button primary" style="margin-top:9px;width:100%" data-action="simulate-demo-accept">Demo · 模擬 Ren 接受</button>' : '<div class="notice">Invitation sent. Contact appears only after mutual acceptance.</div>'}`;
-  else if (match.state === "not_now") decisionArea = `<div class="notice">已略過。此決定已記錄且無法復原；對方不會收到通知。</div>`;
+  else if (match.state === "outgoing") decisionArea = `${runtime.demo ? `<div class="notice"><span class="evidence-label">${esc(t("demo.marker"))}</span><p style="margin:8px 0 0">${esc(t("match.waiting"))}</p></div><button class="button primary" style="margin-top:9px;width:100%" data-action="simulate-demo-accept">${esc(t("match.simulate"))}</button>` : `<div class="notice">${esc(t("match.sent"))}</div>`}`;
+  else if (match.state === "not_now") decisionArea = `<div class="notice">${esc(t("match.passed"))}</div>`;
   else if (match.state === "unavailable") decisionArea = "";
-  else if (runtime.pendingMatchDecision?.matchId === matchId && runtime.pendingMatchDecision.decision === "not_now") decisionArea = `<div class="notice"><strong>略過 ${esc(match.peer.display_name)}？</strong><p>此決定無法復原，對方不會收到通知。</p><div class="button-row"><button class="button" data-action="cancel-match-decision">Cancel</button><button class="button primary" data-action="confirm-match-decision" data-match-id="${esc(matchId)}">Confirm pass</button></div></div>`;
-  else decisionArea = `<div class="button-row"><button class="button" data-action="match-decision" data-decision="not_now" data-match-id="${esc(matchId)}">Not now</button><button class="button primary" data-action="match-decision" data-decision="${match.state === "incoming" ? "accept" : "invite"}" data-match-id="${esc(matchId)}">${match.state === "incoming" ? "Accept" : `Invite ${esc(match.peer.display_name)}`}</button></div>`;
-  return shell(`<a href="/matches" data-link class="eyebrow" style="text-decoration:none">Back to matches</a>
+  else if (runtime.pendingMatchDecision?.matchId === matchId && runtime.pendingMatchDecision.decision === "not_now") decisionArea = `<div class="notice"><strong>${esc(t("match.passConfirmTitle", { name: match.peer.display_name }))}</strong><p>${esc(t("match.passConfirmBody"))}</p><div class="button-row"><button class="button" data-action="cancel-match-decision">${esc(t("common.cancel"))}</button><button class="button primary" data-action="confirm-match-decision" data-match-id="${esc(matchId)}">${esc(t("match.confirmPass"))}</button></div></div>`;
+  else decisionArea = `<div class="button-row"><button class="button" data-action="match-decision" data-decision="not_now" data-match-id="${esc(matchId)}">${esc(t("match.notNow"))}</button><button class="button primary" data-action="match-decision" data-decision="${match.state === "incoming" ? "accept" : "invite"}" data-match-id="${esc(matchId)}">${esc(match.state === "incoming" ? t("match.accept") : t("match.invite", { name: match.peer.display_name }))}</button></div>`;
+  return shell(`<a href="/matches" data-link class="eyebrow" style="text-decoration:none">${esc(t("match.back"))}</a>
     ${demoMarker}
-    <div class="person"><div class="initial">${esc(initial)}</div><div><h1>${esc(match.peer.display_name)}</h1><p>${esc(match.peer.profile.interests?.[0] || "Owner pitch")}</p></div></div>
+    <div class="person"><div class="initial">${esc(initial)}</div><div><h1>${esc(match.peer.display_name)}</h1><p>${esc(match.peer.profile.interests?.[0] || t("match.ownerPitch"))}</p></div></div>
     ${connectedBlock}
-    <div class="question-card">${questions.map(([label, text]) => `<section class="question"><div class="step-label">${label}</div><h2>${esc(text)}</h2><div class="evidence">${explanation.evidence_labels.map((evidence) => `<span class="evidence-label">Evidence · ${esc(evidenceLabel(evidence))}</span>`).join("")}</div></section>`).join("")}</div>
-    <div class="provenance"><span>Conversation-derived</span><span>Owner-approved</span><span>Not verified</span></div>
+    <div class="question-card">${questions.map(([label, text]) => `<section class="question"><div class="step-label">${esc(label)}</div><h2>${esc(text)}</h2><div class="evidence">${explanation.evidence_labels.map((evidence) => `<span class="evidence-label">${esc(t("match.evidence", { label: evidenceLabel(evidence) }))}</span>`).join("")}</div></section>`).join("")}</div>
+    <div class="provenance"><span>${esc(t("profile.conversation"))}</span><span>${esc(t("profile.approved"))}</span><span>${esc(t("profile.notVerified"))}</span></div>
     ${decisionArea}`, { nav: true, active: "matches" });
 }
 
 async function loadMatch(matchId) {
-  if (runtime.demo && matchId === DEMO_MATCH.match_id) { runtime.match = structuredClone(runtime.demoMatch); queueMicrotask(render); return; }
+  if (runtime.demo && matchId === DEMO_MATCH_ID) { runtime.match = structuredClone(runtime.demoMatch); queueMicrotask(render); return; }
   try { runtime.match = await api(`/v1/matches/${encodeURIComponent(matchId)}`); }
-  catch (error) { setRuntimeError(error); runtime.match = { match_id: matchId, peer: { display_name: "Unavailable", profile: {} }, explanation: { what_we_both_care_about: "Match unavailable", why_it_matters_now: "", what_we_could_discuss: "", evidence_labels: [] }, state: "unavailable" }; }
+  catch (error) { setRuntimeError(error); runtime.match = { match_id: matchId, peer: { display_name: t("match.unavailable"), profile: {} }, explanation: { what_we_both_care_about: t("match.unavailableBody"), why_it_matters_now: "", what_we_could_discuss: "", evidence_labels: [] }, state: "unavailable" }; }
   render();
 }
 
 function invitationsScreen() {
   if (!runtime.invitations) {
     loadInvitations();
-    return shell('<div class="loading">Loading invitations</div>', { nav: true, active: "invitations" });
+    return shell(`<div class="loading">${esc(t("invites.loading"))}</div>`, { nav: true, active: "invitations" });
   }
-  const sections = [["Incoming", runtime.invitations.incoming], ["Outgoing", runtime.invitations.outgoing], ["Connected", runtime.invitations.connected]];
-  return shell(`<h1 class="page-title">Invitations</h1><p class="page-intro">邀請需要雙方同意；Not now 的理由不會傳給對方。</p>${sections.map(([label, items]) => `<div class="divider-label">${label} · ${items.length}</div><div class="match-list">${items.length ? items.map((match) => `<a class="match-card" href="/matches/${encodeURIComponent(match.match_id)}" data-link><div class="match-card-head"><h2>${esc(match.peer.display_name)}</h2><span class="status-label">${esc(match.state)}</span></div>${runtime.demo ? '<div class="evidence" style="margin-top:10px"><span class="evidence-label">Demo · simulated</span></div>' : ""}<p>${esc(match.explanation.what_we_both_care_about)}</p></a>`).join("") : '<div class="notice">目前沒有項目</div>'}</div>`).join("")}`, { nav: true, active: "invitations" });
+  const sections = [["invites.incoming", runtime.invitations.incoming], ["invites.outgoing", runtime.invitations.outgoing], ["invites.connected", runtime.invitations.connected]];
+  return shell(`<h1 class="page-title">${esc(t("invites.title"))}</h1><p class="page-intro">${esc(t("invites.intro"))}</p>${sections.map(([label, items]) => `<div class="divider-label">${esc(t(label))} · ${items.length}</div><div class="match-list">${items.length ? items.map((match) => `<a class="match-card" href="/matches/${encodeURIComponent(match.match_id)}" data-link><div class="match-card-head"><h2>${esc(match.peer.display_name)}</h2><span class="status-label">${esc(matchStateLabel(match.state))}</span></div>${runtime.demo ? `<div class="evidence" style="margin-top:10px"><span class="evidence-label">${esc(t("demo.simulated"))}</span></div>` : ""}<p>${esc(match.explanation.what_we_both_care_about)}</p></a>`).join("") : `<div class="notice">${esc(t("invites.empty"))}</div>`}</div>`).join("")}`, { nav: true, active: "invitations" });
 }
 
 async function loadInvitations() {
@@ -819,28 +967,32 @@ async function loadInvitations() {
 }
 
 function settingsScreen() {
-  return shell(`<h1 class="page-title">Settings</h1><p class="page-intro">Account、matching 與 computer API。</p>
-    <div class="settings-group"><div class="divider-label">Computer API</div><div class="settings-row"><div><strong>24-hour draft upload</strong><div class="subtle">單次、write-only，只能建立 draft</div></div><button data-action="create-upload-session">Create</button></div></div>
-    ${runtime.uploadSession ? `<div class="notice">Submit URL</div><div class="api-token">${esc(runtime.uploadSession.submit_url)}</div><div class="notice" style="margin-top:8px">Bearer token · ${esc(runtime.uploadSession.expires_at)}</div><div class="api-token">${esc(runtime.uploadSession.upload_token)}</div><p class="subtle">此 token 只顯示於目前畫面。POST body：<code>{"profile": {…}, "locale": "${esc(runtime.locale)}"}</code></p>` : ""}
-    <div class="settings-group"><div class="divider-label">Data</div><div class="settings-row"><span>Delete pitch and account data</span><button data-action="delete-profile">Delete</button></div><div class="settings-row"><span>Sign out on this device</span><button data-action="signout">Sign out</button></div></div>
-    <div class="settings-group"><div class="divider-label">Information</div><div class="settings-row"><a href="/privacy" data-link>Privacy</a></div><div class="settings-row"><a href="/terms" data-link>Terms</a></div><div class="settings-row"><a href="/support" data-link>Support</a></div></div>`, { nav: true, active: "settings" });
+  return shell(`<h1 class="page-title">${esc(t("settings.title"))}</h1><p class="page-intro">${esc(t("settings.intro"))}</p>
+    <div class="settings-group"><div class="divider-label">${esc(t("settings.language"))}</div><div class="settings-row"><span>${esc(t("language.current"))}</span><button data-action="switch-locale">${esc(t("language.switch"))}</button></div></div>
+    <div class="settings-group"><div class="divider-label">${esc(t("settings.computer"))}</div><div class="settings-row"><div><strong>${esc(t("settings.upload"))}</strong><div class="subtle">${esc(t("settings.uploadHint"))}</div></div><button data-action="create-upload-session">${esc(t("settings.create"))}</button></div></div>
+    ${runtime.uploadSession ? `<div class="notice">${esc(t("settings.submitUrl"))}</div><div class="api-token">${esc(runtime.uploadSession.submit_url)}</div><div class="notice" style="margin-top:8px">${esc(t("settings.token", { expires: runtime.uploadSession.expires_at }))}</div><div class="api-token">${esc(runtime.uploadSession.upload_token)}</div><p class="subtle">${esc(t("settings.tokenHint"))} <code>{"profile": {…}, "locale": "${esc(runtime.locale)}"}</code></p>` : ""}
+    <div class="settings-group"><div class="divider-label">${esc(t("settings.data"))}</div><div class="settings-row"><span>${esc(t("settings.delete"))}</span><button data-action="delete-profile">${esc(t("settings.deleteAction"))}</button></div><div class="settings-row"><span>${esc(t("settings.signout"))}</span><button data-action="signout">${esc(t("settings.signoutAction"))}</button></div></div>
+    <div class="settings-group"><div class="divider-label">${esc(t("settings.info"))}</div><div class="settings-row"><a href="/privacy" data-link>${esc(t("settings.privacy"))}</a></div><div class="settings-row"><a href="/terms" data-link>${esc(t("settings.terms"))}</a></div><div class="settings-row"><a href="/support" data-link>${esc(t("settings.support"))}</a></div></div>`, { nav: true, active: "settings" });
 }
 
 function infoScreen(kind) {
   const copy = {
-    privacy: ["Privacy", "PitchYourOwner stores only the owner pitch you explicitly publish, account/session records, matches, and invitation decisions. The selected AI handles content preparation before transfer."],
-    terms: ["Terms", "Owner pitches are conversation-derived interpretations, not verified identity or expertise. Use the product respectfully and do not upload information you are not authorized to share."],
-    support: ["Support", "Send the exact error message and what you were trying to do. Do not include your profile JSON, upload token, verification code, or other secrets."],
+    privacy: ["settings.privacy", "privacy.body"],
+    terms: ["settings.terms", "terms.body"],
+    support: ["settings.support", "support.body"],
   }[kind];
   const support = kind === "support" ? (runtime.supportRequestId
-    ? `<div class="notice success" role="status">Support request ${esc(runtime.supportRequestId)} was sent.</div><button class="button quiet" style="margin-top:16px;width:100%" data-action="new-support-request">Send another request</button>`
-    : `<form class="form" data-form="support-request"><label class="field"><span class="field-label">Message</span><textarea name="message" minlength="20" maxlength="5000" required placeholder="What happened, what you expected, and the approximate time"></textarea></label><label class="field"><span class="field-label">Contact (optional)</span><input name="contact" maxlength="320" placeholder="Email or another way to reply"></label><button class="button primary" ${runtime.busy ? "disabled" : ""}>${runtime.busy ? "Sending" : "Send support request"}</button></form>`)
+    ? `<div class="notice success" role="status">${esc(t("support.sent", { id: runtime.supportRequestId }))}</div><button class="button quiet" style="margin-top:16px;width:100%" data-action="new-support-request">${esc(t("support.another"))}</button>`
+    : `<form class="form" data-form="support-request"><label class="field"><span class="field-label">${esc(t("support.message"))}</span><textarea name="message" minlength="20" maxlength="5000" required placeholder="${esc(t("support.messagePlaceholder"))}"></textarea></label><label class="field"><span class="field-label">${esc(t("support.contact"))}</span><input name="contact" maxlength="320" placeholder="${esc(t("support.contactPlaceholder"))}"></label><button class="button primary" ${runtime.busy ? "disabled" : ""}>${esc(t(runtime.busy ? "support.sending" : "support.send"))}</button></form>`)
     : "";
-  return shell(`<a href="/settings" data-link class="eyebrow" style="text-decoration:none">Back to settings</a><h1 class="page-title">${copy[0]}</h1><p class="page-intro" style="color:var(--ink)">${copy[1]}</p>${support}`);
+  return shell(`<a href="/settings" data-link class="eyebrow" style="text-decoration:none">${esc(t("info.back"))}</a><h1 class="page-title">${esc(t(copy[0]))}</h1><p class="page-intro" style="color:var(--ink)">${esc(t(copy[1]))}</p>${support}`);
 }
 
 function render() {
   const app = document.getElementById("app");
+  document.documentElement.lang = runtime.locale;
+  const skipLink = document.querySelector(".skip-link");
+  if (skipLink) skipLink.textContent = t("skip");
   const path = location.pathname.replace(/\/$/, "") || "/";
   if (!runtime.session && !runtime.demo && !["/", "/signin", "/privacy", "/terms", "/support"].includes(path)) {
     history.replaceState({}, "", "/signin");
@@ -875,7 +1027,7 @@ document.addEventListener("click", async (event) => {
     if (action === "change-email") { clearAuthFlow(); render(); }
     if (action === "resend-code") await resendVerificationCode();
     if (action === "select-ai") { runtime.selectedAi = button.dataset.ai; render(); }
-    if (action === "select-locale") { runtime.locale = button.dataset.locale === "en" ? "en" : "zh-Hant"; render(); }
+    if (action === "switch-locale") await switchLocale();
     if (action === "create-prompt") {
       await createPrompt();
     }
@@ -883,7 +1035,7 @@ document.addEventListener("click", async (event) => {
     if (action === "copy-prompt") await copyPrompt();
     if (action === "toggle-full-prompt") { runtime.showFullPrompt = !runtime.showFullPrompt; render(); }
     if (action === "go-import") navigate("/import");
-    if (action === "load-sample") { runtime.draft = structuredClone(SAMPLE_PROFILE); runtime.demoDraft = true; writeJson(DRAFT_KEY, runtime.draft); writeJson(DEMO_DRAFT_KEY, true); render(); }
+    if (action === "load-sample") { runtime.draft = sampleProfile(); runtime.demoDraft = true; writeJson(DRAFT_KEY, runtime.draft); writeJson(DEMO_DRAFT_KEY, true); render(); }
     if (action === "resume-computer-draft") await resumeComputerDraft();
     if (action === "replace-json") { runtime.draft = null; runtime.demoDraft = false; writeJson(DRAFT_KEY, null); writeJson(DEMO_DRAFT_KEY, null); render(); }
     if (action === "back-edit") {
@@ -928,6 +1080,29 @@ document.addEventListener("input", (event) => {
     runtime.verificationCode = event.target.value.replace(/\D/g, "").slice(0, 6);
     if (event.target.value !== runtime.verificationCode) event.target.value = runtime.verificationCode;
   }
+  if (event.target.matches('input[name="email"]')) runtime.signinEmail = event.target.value;
+  if (event.target.matches('input[name="display_name"]')) {
+    runtime.displayName = event.target.value;
+    writeJson(DISPLAY_NAME_KEY, runtime.displayName);
+  }
+  if (event.target.matches('textarea[name="json"]')) runtime.importJson = event.target.value;
+  const draftForm = event.target.closest('form[data-form="review-profile"]');
+  if (draftForm && runtime.draft) {
+    const field = event.target.name;
+    if (FIELD_ORDER.includes(field)) {
+      runtime.draft[field] = ARRAY_FIELDS.includes(field)
+        ? event.target.value.split(/\n/).map((item) => item.trim()).filter(Boolean)
+        : event.target.value;
+      writeJson(DRAFT_KEY, runtime.draft);
+    }
+  }
+});
+
+document.addEventListener("change", (event) => {
+  const field = String(event.target.name || "");
+  if (!event.target.closest('form[data-form="review-profile"]') || !field.startsWith("confidence.") || !runtime.draft?.confidence) return;
+  runtime.draft.confidence[field.slice("confidence.".length)] = event.target.value;
+  writeJson(DRAFT_KEY, runtime.draft);
 });
 
 document.addEventListener("submit", async (event) => {
@@ -939,7 +1114,7 @@ document.addEventListener("submit", async (event) => {
   if (form.dataset.form === "confirm-code") {
     runtime.verificationCode = String(formData.get("code") || "").replace(/\D/g, "").slice(0, 6);
     if (!/^\d{6}$/.test(runtime.verificationCode)) {
-      runtime.codeError = "請輸入完整的六位數驗證碼。";
+      runtime.codeError = t("signin.codeShort");
       render();
       requestAnimationFrame(() => document.querySelector('input[name="code"]')?.focus());
       return;
@@ -998,10 +1173,10 @@ document.addEventListener("submit", async (event) => {
   } catch (error) {
     if (form.dataset.form === "confirm-code" && error?.identifier === "invalid_or_expired_code") {
       if (runtime.challengeExpiresAt && Date.now() >= runtime.challengeExpiresAt) {
-        setRuntimeError(userFacingError("這組驗證碼已到期。請重新寄送一組新的代碼。", "resend", "Resend code", { identifier: error.identifier }));
+        setRuntimeError(userFacingError(t("signin.codeExpired"), "resend", t("signin.resend"), { identifier: error.identifier }));
       } else {
         runtime.error = "";
-        runtime.codeError = "驗證碼不正確。請修改後再試；這次驗證仍然有效。";
+        runtime.codeError = t("signin.codeWrong");
         announce(runtime.codeError);
       }
     } else setRuntimeError(error);
@@ -1048,12 +1223,12 @@ async function publishProfile() {
   writeJson(DRAFT_KEY, null);
   writeJson(DEMO_DRAFT_KEY, null);
   clearHandoff();
-  runtime.notice = "Pitch published. Matching started.";
+  runtime.notice = t("notice.published");
   navigate("/matches");
 }
 
 async function decideMatch(matchId, decision) {
-  if (runtime.demo && matchId === DEMO_MATCH.match_id) {
+  if (runtime.demo && matchId === DEMO_MATCH_ID) {
     runtime.demoMatch.state = decision === "not_now" ? "not_now" : "outgoing";
     runtime.demoMatch.can_invite = false;
     saveDemoMatch();
@@ -1062,11 +1237,11 @@ async function decideMatch(matchId, decision) {
     runtime.invitations = null;
     if (decision === "not_now") {
       navigate("/matches");
-      runtime.notice = "已略過，對方不會收到通知。";
+      runtime.notice = t("notice.decisionPassed");
       announce(runtime.notice);
       render();
     } else {
-      runtime.notice = "Demo invitation sent";
+      runtime.notice = t("match.demoSent");
       announce(runtime.notice);
       render();
       requestAnimationFrame(() => document.querySelector('[data-action="simulate-demo-accept"]')?.scrollIntoView({ block: "center" }));
@@ -1076,7 +1251,7 @@ async function decideMatch(matchId, decision) {
   runtime.match = await api(`/v1/matches/${encodeURIComponent(matchId)}/invitations`, { method: "POST", body: JSON.stringify({ decision }) });
   runtime.matches = null;
   runtime.invitations = null;
-  runtime.notice = decision === "not_now" ? "已暫時略過" : runtime.match.state === "connected" ? "雙方已接受，聯絡方式已開放" : "Invitation sent";
+  runtime.notice = decision === "not_now" ? t("notice.decisionPassed") : runtime.match.state === "connected" ? t("notice.connected") : t("notice.invited");
   render();
 }
 
@@ -1088,13 +1263,13 @@ function connectDemoMatch() {
   runtime.matches = [structuredClone(runtime.demoMatch)];
   runtime.invitations = null;
   navigate(`/matches/${encodeURIComponent(runtime.demoMatch.match_id)}`);
-  runtime.notice = "Demo · Ren H. simulated acceptance";
+  runtime.notice = t("match.demoAccepted");
   announce(runtime.notice);
   render();
 }
 
 async function deleteProfile() {
-  if (!window.confirm("Delete this pitch, its matches, and account data?")) return;
+  if (!window.confirm(t("confirm.delete"))) return;
   try { await api("/v1/profiles/me", { method: "DELETE", body: JSON.stringify({ confirm: "DELETE" }) }); } catch (error) { if (error.status !== 404) throw error; }
   signout();
 }
@@ -1126,7 +1301,7 @@ function signout() {
 
 function validateDisplayName(value) {
   const displayName = String(value || "").trim();
-  if (!displayName || displayName.length > 40 || /[\r\n]/.test(displayName)) throw new Error("Display name 必須是 1–40 字元，且不能換行。");
+  if (!displayName || displayName.length > 40 || /[\r\n]/.test(displayName)) throw new Error(t("validation.name"));
   return displayName;
 }
 
@@ -1134,7 +1309,6 @@ async function routeReturningOwner() {
   try {
     runtime.profile = await api("/v1/profiles/me");
     runtime.profileLoaded = true;
-    runtime.locale = runtime.profile.locale === "en" ? "en" : "zh-Hant";
     runtime.displayName = runtime.profile.display_name || runtime.displayName;
     if (runtime.displayName) writeJson(DISPLAY_NAME_KEY, runtime.displayName);
     navigate("/matches");
@@ -1152,16 +1326,15 @@ async function resumeComputerDraft() {
     ? [...result.drafts].sort((left, right) => String(right.createdAt || right.created_at || "").localeCompare(String(left.createdAt || left.created_at || "")))[0]
     : null;
   if (!draft?.profile) {
-    runtime.notice = "No computer draft is available yet.";
+    runtime.notice = t("notice.computerNone");
     render();
     return;
   }
   runtime.draft = validateProfileClient(draft.profile);
   runtime.demoDraft = false;
-  runtime.locale = draft.locale === "en" ? "en" : "zh-Hant";
   writeJson(DRAFT_KEY, runtime.draft);
   writeJson(DEMO_DRAFT_KEY, null);
-  runtime.notice = "Computer draft loaded. Review every field before publishing.";
+  runtime.notice = t("notice.computerLoaded");
   render();
 }
 
