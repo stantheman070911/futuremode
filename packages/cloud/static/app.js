@@ -3,6 +3,7 @@ const DRAFT_KEY = "pitchyourowner.draft.v1";
 const HANDOFF_KEY = "pitchyourowner.handoff.v1";
 const DISPLAY_NAME_KEY = "pitchyourowner.display-name.v1";
 const DEMO_KEY = "pitchyourowner.demo.v1";
+const DEMO_DRAFT_KEY = "pitchyourowner.demo-draft.v1";
 const LAST_PUBLISH_KEY = "pitchyourowner.last-publish.v1";
 const MATCH_SEARCH_WINDOW_MS = 3 * 60 * 1000;
 const MATCH_POLL_INTERVAL_MS = 6 * 1000;
@@ -79,6 +80,7 @@ const runtime = {
   uploadSession: null,
   supportRequestId: null,
   demo: DEMO_QUERY_ENABLED || PERSISTED_DEMO_ENABLED,
+  demoDraft: readJson(DEMO_DRAFT_KEY) === true,
   lastPublishAt: Number(readJson(LAST_PUBLISH_KEY)) || 0,
   matchesPollError: false,
 };
@@ -386,7 +388,7 @@ function importScreen() {
         <label class="field"><span class="field-label">Owner pitch JSON</span><textarea class="tall" name="json" required placeholder='{ "summary": "..." }'></textarea></label>
         <button class="button primary">Render editable fields</button>
       </form>
-      <button class="button quiet" style="margin-top:9px" data-action="load-sample">Load hackathon sample</button>
+      ${DEMO_AVAILABLE && runtime.demo && !runtime.session ? '<button class="button quiet" style="margin-top:9px" data-action="load-sample">載入示範介紹</button><p class="subtle" style="margin:7px 0 0">示範用資料。</p>' : ""}
       ${runtime.session && !runtime.demo ? '<button class="button quiet" style="margin-top:9px" data-action="resume-computer-draft">Resume computer draft</button>' : ""}`);
   }
   return shell(`<p class="eyebrow">STEP 3 / 4 · EDIT FIELDS</p>
@@ -631,9 +633,9 @@ document.addEventListener("click", async (event) => {
     if (action === "copy-prompt") await copyPrompt();
     if (action === "toggle-full-prompt") { runtime.showFullPrompt = !runtime.showFullPrompt; render(); }
     if (action === "go-import") navigate("/import");
-    if (action === "load-sample") { runtime.draft = structuredClone(SAMPLE_PROFILE); writeJson(DRAFT_KEY, runtime.draft); render(); }
+    if (action === "load-sample") { runtime.draft = structuredClone(SAMPLE_PROFILE); runtime.demoDraft = true; writeJson(DRAFT_KEY, runtime.draft); writeJson(DEMO_DRAFT_KEY, true); render(); }
     if (action === "resume-computer-draft") await resumeComputerDraft();
-    if (action === "replace-json") { runtime.draft = null; writeJson(DRAFT_KEY, null); render(); }
+    if (action === "replace-json") { runtime.draft = null; runtime.demoDraft = false; writeJson(DRAFT_KEY, null); writeJson(DEMO_DRAFT_KEY, null); render(); }
     if (action === "back-edit") {
       const displayName = String(document.querySelector('input[name="display_name"]')?.value || "").trim();
       if (displayName && displayName.length <= 40 && !/[\r\n]/.test(displayName)) {
@@ -673,13 +675,31 @@ document.addEventListener("submit", async (event) => {
       runtime.notice = "驗證碼已寄出";
     } else if (form.dataset.form === "confirm-code") {
       const result = await api(`/v1/email-verifications/${encodeURIComponent(runtime.challengeId)}/confirm`, { method: "POST", body: JSON.stringify({ email: runtime.signinEmail, code: String(formData.get("code") || "") }) });
+      const wasDemo = runtime.demo;
+      if (wasDemo) {
+        runtime.demo = false;
+        runtime.matches = null;
+        runtime.invitations = null;
+        runtime.match = null;
+        runtime.displayName = "";
+        writeJson(DEMO_KEY, null);
+        writeJson(DISPLAY_NAME_KEY, null);
+      }
+      if (runtime.demoDraft) {
+        runtime.draft = null;
+        runtime.demoDraft = false;
+        writeJson(DRAFT_KEY, null);
+        writeJson(DEMO_DRAFT_KEY, null);
+      }
       runtime.session = { accessToken: result.accessToken, email: runtime.signinEmail };
       writeJson(STORAGE_KEY, runtime.session);
       runtime.profileLoaded = false;
       await routeReturningOwner();
     } else if (form.dataset.form === "parse-json") {
       runtime.draft = validateProfileClient(parseJsonCandidate(String(formData.get("json") || "")));
+      runtime.demoDraft = false;
       writeJson(DRAFT_KEY, runtime.draft);
+      writeJson(DEMO_DRAFT_KEY, null);
     } else if (form.dataset.form === "review-profile") {
       runtime.draft = profileFromForm(form);
       writeJson(DRAFT_KEY, runtime.draft);
@@ -708,10 +728,12 @@ async function publishProfile() {
     runtime.profile = { profile: structuredClone(runtime.draft), profile_id: "demo-owner", version_id: "demo-v1" };
     runtime.profileLoaded = true;
     runtime.draft = null;
+    runtime.demoDraft = false;
     runtime.matches = null;
     runtime.lastPublishAt = Date.now();
     writeJson(LAST_PUBLISH_KEY, runtime.lastPublishAt);
     writeJson(DRAFT_KEY, null);
+    writeJson(DEMO_DRAFT_KEY, null);
     clearHandoff();
     runtime.busy = false;
     navigate("/matches");
@@ -727,10 +749,12 @@ async function publishProfile() {
   runtime.profile = { profile: runtime.draft, profile_id: result.profile_id, version_id: result.version_id };
   runtime.profileLoaded = true;
   runtime.draft = null;
+  runtime.demoDraft = false;
   runtime.matches = null;
   runtime.lastPublishAt = Date.now();
   writeJson(LAST_PUBLISH_KEY, runtime.lastPublishAt);
   writeJson(DRAFT_KEY, null);
+  writeJson(DEMO_DRAFT_KEY, null);
   clearHandoff();
   runtime.notice = "Pitch published. Matching started.";
   navigate("/matches");
@@ -767,11 +791,13 @@ function signout() {
   runtime.matches = null;
   runtime.invitations = null;
   runtime.draft = null;
+  runtime.demoDraft = false;
   runtime.demo = false;
   runtime.displayName = "";
   clearHandoff();
   writeJson(STORAGE_KEY, null);
   writeJson(DRAFT_KEY, null);
+  writeJson(DEMO_DRAFT_KEY, null);
   writeJson(DISPLAY_NAME_KEY, null);
   writeJson(DEMO_KEY, null);
   writeJson(LAST_PUBLISH_KEY, null);
@@ -814,8 +840,10 @@ async function resumeComputerDraft() {
     return;
   }
   runtime.draft = validateProfileClient(draft.profile);
+  runtime.demoDraft = false;
   runtime.locale = draft.locale === "en" ? "en" : "zh-Hant";
   writeJson(DRAFT_KEY, runtime.draft);
+  writeJson(DEMO_DRAFT_KEY, null);
   runtime.notice = "Computer draft loaded. Review every field before publishing.";
   render();
 }
