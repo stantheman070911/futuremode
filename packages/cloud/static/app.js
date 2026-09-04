@@ -149,6 +149,83 @@ function announce(message) {
   document.getElementById("live-region").textContent = message;
 }
 
+const ERROR_DEFINITIONS = {
+  invalid_cloud_session: ["登入階段已結束。請重新登入；你的草稿仍安全保存在這台裝置上。", "signin", "Sign in again"],
+  invalid_authorization: ["登入階段已結束。請重新登入；你的草稿仍安全保存在這台裝置上。", "signin", "Sign in again"],
+  verification_request_limited: ["驗證碼請求太頻繁。請稍候再試，或改用另一個 Email。", "change-email", "Change email"],
+  support_request_limited: ["今天送出的支援請求已達上限。請稍後再試。", "retry", "Try again"],
+  match_not_found: ["找不到這個配對，可能已經失效。", "matches", "Back to matches"],
+  peer_profile_not_found: ["這個配對目前無法開啟，可能已經失效。", "matches", "Back to matches"],
+  match_expired: ["這個配對已經到期，無法再回覆。", "matches", "Back to matches"],
+  invitation_decision_already_recorded: ["你已經對這個配對做過決定，無法再次更改。", "matches", "Back to matches"],
+  invalid_invitation_decision: ["這個邀請操作無法完成。請返回配對後再試。", "matches", "Back to matches"],
+  publish_profile_before_matching: ["請先發布 owner pitch，才能開始配對。", "create-pitch", "Create my pitch"],
+  profile_not_found: ["你還沒有發布 owner pitch。", "create-pitch", "Create my pitch"],
+  profile_version_not_found: ["找不到這個 pitch 版本。", "create-pitch", "Create my pitch"],
+  profile_publish_failed: ["目前無法發布你的 pitch。草稿仍在，請再試一次。", "retry", "Try again"],
+  invalid_publish_payload: ["這份 pitch 還不能發布。請返回檢查欄位後再試。", "retry", "Try again"],
+  pairing_failed: ["目前無法載入配對，請再試一次。", "retry", "Try again"],
+  matching_trigger_failed: ["目前無法開始配對。你的 pitch 已保存，請再試一次。", "retry", "Try again"],
+  verification_request_failed: ["目前無法寄出驗證碼，請再試一次。", "retry", "Try again"],
+  verification_confirmation_failed: ["目前無法驗證這組代碼，請再試一次。", "retry", "Try again"],
+  invalid_or_expired_code: ["驗證碼不正確或已到期。請檢查代碼，或重新寄送。", "change-email", "Change email"],
+  invalid_code: ["請輸入完整的六位數驗證碼。", "retry", "Try again"],
+  challenge_id_required: ["這次驗證已失效。請重新寄送驗證碼。", "change-email", "Change email"],
+  email_delivery_disabled: ["目前無法寄送驗證信。請稍後再試。", "retry", "Try again"],
+  profile_access_failed: ["目前無法載入你的 pitch，請再試一次。", "retry", "Try again"],
+  profile_draft_failed: ["目前無法載入電腦草稿，請再試一次。", "retry", "Try again"],
+  matching_unavailable: ["目前無法檢查新配對，請再試一次。", "retry", "Try again"],
+};
+
+function userFacingError(message, action = "retry", actionLabel = "Try again", options = {}) {
+  const error = new Error(message);
+  error.userFacing = true;
+  error.action = action;
+  error.actionLabel = actionLabel;
+  Object.assign(error, options);
+  return error;
+}
+
+function mapError(identifier, status, body = {}) {
+  const normalized = String(identifier || "").trim();
+  const definition = ERROR_DEFINITIONS[normalized]
+    || (status === 401 ? ERROR_DEFINITIONS.invalid_cloud_session : null)
+    || (status === 429 ? ["操作太頻繁。請稍候再試。", "retry", "Try again"] : null);
+  if (definition) return userFacingError(definition[0], definition[1], definition[2], { identifier: normalized, status, body });
+  console.error("Unmapped API error", { identifier: normalized || "unknown", status });
+  return userFacingError("發生問題，請再試一次。", "retry", "Try again", { identifier: normalized, status, body });
+}
+
+function normalizeError(error) {
+  if (error?.userFacing) return error;
+  if (error instanceof TypeError || /failed to fetch|networkerror|load failed/i.test(String(error?.message || ""))) {
+    console.error("Network request failed", error);
+    return userFacingError("無法連上 PitchYourOwner；這台裝置可能已離線。", "retry", "Try again", { identifier: "network_offline" });
+  }
+  if (error instanceof Error && error.message) return userFacingError(error.message, "dismiss", "Back to form");
+  console.error("Unknown application error", error);
+  return userFacingError("發生問題，請再試一次。", "retry", "Try again");
+}
+
+function setRuntimeError(error) {
+  const normalized = normalizeError(error);
+  runtime.error = normalized;
+  if (normalized.action === "signin") {
+    if (runtime.draft) writeJson(DRAFT_KEY, runtime.draft);
+    runtime.session = null;
+    runtime.challengeId = null;
+    writeJson(STORAGE_KEY, null);
+    history.replaceState({}, "", "/signin");
+  }
+  return normalized;
+}
+
+function errorNotice() {
+  if (!runtime.error) return "";
+  const error = typeof runtime.error === "string" ? userFacingError(runtime.error) : runtime.error;
+  return `<div class="notice error" role="alert" tabindex="-1"><div>${esc(error.message)}</div>${error.action ? `<button class="button quiet" style="margin-top:10px" data-action="error-${esc(error.action)}">${esc(error.actionLabel)}</button>` : ""}</div>`;
+}
+
 function navigate(path) {
   if (path !== "/matches") stopMatchesPolling();
   history.pushState({}, "", path);
@@ -197,13 +274,15 @@ function ensureMatchesPolling() {
 async function api(path, options = {}) {
   const headers = { "content-type": "application/json", ...(options.headers || {}) };
   if (runtime.session?.accessToken && !headers.authorization) headers.authorization = `Bearer ${runtime.session.accessToken}`;
-  const response = await fetch(path, { ...options, headers });
+  let response;
+  try {
+    response = await fetch(path, { ...options, headers });
+  } catch (error) {
+    throw normalizeError(error);
+  }
   const body = await response.json().catch(() => ({}));
   if (!response.ok) {
-    const error = new Error(body.detail || body.error || `HTTP ${response.status}`);
-    error.status = response.status;
-    error.body = body;
-    throw error;
+    throw mapError(body.error, response.status, body);
   }
   return body;
 }
@@ -211,7 +290,7 @@ async function api(path, options = {}) {
 function shell(content, { nav = false, active = "", action = "" } = {}) {
   return `<div class="app-shell"><section class="screen ${nav ? "" : "no-nav"}">
     <header class="wordmark"><a href="/" data-link>PITCHYOUROWNER</a>${action}</header>
-    ${runtime.error ? `<div class="notice error" role="alert" tabindex="-1">${esc(runtime.error)}</div>` : ""}
+    ${errorNotice()}
     ${runtime.notice ? `<div class="notice success">${esc(runtime.notice)}</div>` : ""}
     ${content}
   </section>${nav ? bottomNav(active) : ""}</div>`;
@@ -299,6 +378,29 @@ async function copyPrompt() {
   render();
 }
 
+async function createPrompt() {
+  const response = await fetch(promptFileForLocale(), { cache: "no-store" });
+  if (!response.ok) throw userFacingError("無法載入 prompt。請返回上一步再試。", "retry", "Try again");
+  runtime.prompt = await response.text();
+  runtime.handoffLaunchedAt = 0;
+  runtime.showFullPrompt = false;
+  saveHandoff();
+  navigate("/handoff");
+}
+
+async function retryCurrentScreen() {
+  const path = location.pathname.replace(/\/$/, "") || "/";
+  runtime.error = "";
+  if (path === "/matches") { runtime.matchesPollError = false; runtime.matches = null; render(); return; }
+  if (/^\/matches\/[^/]+$/.test(path)) { runtime.match = null; render(); return; }
+  if (path === "/invitations") { runtime.invitations = null; render(); return; }
+  if (path === "/pitch") { runtime.profileLoaded = false; render(); return; }
+  if (path === "/assistant") { await createPrompt(); return; }
+  if (path === "/import" && runtime.session && !runtime.draft) { await resumeComputerDraft(); return; }
+  if (path === "/review" && runtime.draft && runtime.displayName) { await publishProfile(); return; }
+  render();
+}
+
 function startScreen() {
   return shell(`<div class="hero">
     <h1>Your agent<br>knows you.<span>Let it pitch you.</span></h1>
@@ -374,7 +476,7 @@ function parseJsonCandidate(value) {
     throw new Error("這不是最終 JSON。請回到 AI，逐項回覆它列出的 S 編號 security／privacy 選項，並在同一則訊息最後加上「確認安全並產生 JSON」，再複製下一則回答。");
   }
   if (parsed?.schema === "routec.message_debug_info.v1" || parsed?.matrix_event_id || parsed?.host_session_id) {
-    throw new Error("這看起來是除錯／傳輸資料，不是你的 Owner Pitch。請回到 AI，完成 security／privacy 確認後，只複製包含 summary、interests、motivations、active_problems、recurring_topics、friend_intent、history_scope 與 confidence 的最後一則 JSON。");
+    throw new Error("這看起來是除錯／傳輸資料，不是你的 Owner Pitch。請回到 AI，完成 security／privacy 確認後，再複製它輸出的最後一則純 JSON。");
   }
   if (parsed?.status === "review_required") {
     throw new Error("這仍是待確認預覽。請回到 AI，選完所有 S 編號 security／privacy 項目並加上「確認安全並產生 JSON」，再貼上下一則純 JSON。");
@@ -386,18 +488,19 @@ function validateProfileClient(profile) {
   if (!profile || typeof profile !== "object" || Array.isArray(profile)) throw new Error("JSON 必須是一個 profile object");
   const allowed = new Set([...FIELD_ORDER, "confidence"]);
   const unknown = Object.keys(profile).filter((key) => !allowed.has(key));
-  if (unknown.length) throw new Error(`包含不支援欄位：${unknown.join(", ")}`);
+  if (unknown.length) throw new Error("JSON 包含不支援的欄位。請只貼上 AI 最後輸出的 owner pitch JSON。");
   for (const field of FIELD_ORDER) {
     const config = PROFILE_SCHEMA_CONFIG?.core_fields?.[field];
+    const label = FIELD_META[field]?.[0] || "Profile field";
     if (ARRAY_FIELDS.includes(field)) {
-      if (!Array.isArray(profile[field]) || profile[field].some((item) => typeof item !== "string" || !item.trim())) throw new Error(`${field} 必須是非空字串陣列`);
-      if (config?.max_items && profile[field].length > config.max_items) throw new Error(`${field} 最多 ${config.max_items} 項`);
-      if (config?.item_max_length && profile[field].some((item) => item.trim().length > config.item_max_length)) throw new Error(`${field} 的單項文字過長`);
-    } else if (typeof profile[field] !== "string" || !profile[field].trim()) throw new Error(`${field} 必須是非空字串`);
-    else if (config?.max_length && profile[field].trim().length > config.max_length) throw new Error(`${field} 最多 ${config.max_length} 字元`);
+      if (!Array.isArray(profile[field]) || profile[field].some((item) => typeof item !== "string" || !item.trim())) throw new Error(`${label} 必須包含至少一項文字。`);
+      if (config?.max_items && profile[field].length > config.max_items) throw new Error(`${label} 最多 ${config.max_items} 項。`);
+      if (config?.item_max_length && profile[field].some((item) => item.trim().length > config.item_max_length)) throw new Error(`${label} 有一項文字過長。`);
+    } else if (typeof profile[field] !== "string" || !profile[field].trim()) throw new Error(`${label} 不可空白。`);
+    else if (config?.max_length && profile[field].trim().length > config.max_length) throw new Error(`${label} 最多 ${config.max_length} 字元。`);
   }
-  if (!profile.confidence || typeof profile.confidence !== "object") throw new Error("缺少 confidence");
-  for (const field of CONFIDENCE_FIELDS) if (!CONFIDENCE_LEVELS.includes(profile.confidence[field])) throw new Error(`confidence.${field} 必須是 ${CONFIDENCE_LEVELS.join("、")}`);
+  if (!profile.confidence || typeof profile.confidence !== "object") throw new Error("缺少欄位信心資料。");
+  for (const field of CONFIDENCE_FIELDS) if (!CONFIDENCE_LEVELS.includes(profile.confidence[field])) throw new Error(`${FIELD_META[field]?.[0] || "Profile field"} 的信心只能是 ${CONFIDENCE_LEVELS.join("、")}。`);
   return profile;
 }
 
@@ -467,6 +570,10 @@ function profileDocument(profile, showConfidence) {
   </div>`;
 }
 
+function evidenceLabel(field) {
+  return FIELD_META[field]?.[0] || String(field || "").replace(/_/g, " ");
+}
+
 function pitchScreen() {
   if (!runtime.profileLoaded) {
     loadProfile();
@@ -487,7 +594,7 @@ async function loadProfile() {
       writeJson(DISPLAY_NAME_KEY, runtime.displayName);
     }
   }
-  catch (error) { if (error.status !== 404) runtime.error = error.message; }
+  catch (error) { if (error.status !== 404) setRuntimeError(error); }
   render();
 }
 
@@ -499,7 +606,7 @@ function matchesScreen() {
   const visible = runtime.matches.filter((match) => match.state !== "not_now");
   if (!visible.length && runtime.matchesPollError) {
     stopMatchesPolling();
-    return shell(`<div class="empty"><p class="eyebrow">MATCHES</p><h2>Matching paused</h2><p>我們暫時無法檢查新配對。你的 pitch 已安全保存。</p><button class="button primary" data-action="retry-matches">Try again</button></div>`, { nav: true, active: "matches" });
+    return shell(`<div class="empty"><p class="eyebrow">MATCHES</p><h2>Matching paused</h2><p>我們暫時無法檢查新配對。你的 pitch 已安全保存。</p></div>`, { nav: true, active: "matches" });
   }
   if (!visible.length && isRecentPublish()) {
     queueMicrotask(ensureMatchesPolling);
@@ -513,7 +620,7 @@ function matchesScreen() {
     return shell(`<div class="empty"><p class="eyebrow">MATCHES</p><h2>No filler.</h2><p>目前還沒有能具體說明理由的配對。每當有新的 owner 發布 pitch，系統會再次進行配對。</p><button class="button primary" data-action="refresh-matches">Check again</button></div>`, { nav: true, active: "matches" });
   }
   stopMatchesPolling();
-  return shell(`<h1 class="page-title">Matches</h1><p class="page-intro">少量、具體、可以解釋的朋友配對。</p><div class="match-list">${visible.map((match) => `<a class="match-card" href="/matches/${encodeURIComponent(match.match_id)}" data-link><div class="match-card-head"><h2>${esc(match.peer.display_name)}</h2><span class="status-label">${esc(match.state)}</span></div>${runtime.demo ? '<div class="evidence" style="margin-top:10px"><span class="evidence-label">Demo</span></div>' : ""}<p>${esc(match.explanation.what_we_both_care_about)}</p><div class="evidence" style="margin-top:12px">${match.explanation.evidence_labels.map((label) => `<span class="evidence-label">${esc(label)}</span>`).join("")}</div></a>`).join("")}</div>`, { nav: true, active: "matches" });
+  return shell(`<h1 class="page-title">Matches</h1><p class="page-intro">少量、具體、可以解釋的朋友配對。</p><div class="match-list">${visible.map((match) => `<a class="match-card" href="/matches/${encodeURIComponent(match.match_id)}" data-link><div class="match-card-head"><h2>${esc(match.peer.display_name)}</h2><span class="status-label">${esc(match.state)}</span></div>${runtime.demo ? '<div class="evidence" style="margin-top:10px"><span class="evidence-label">Demo</span></div>' : ""}<p>${esc(match.explanation.what_we_both_care_about)}</p><div class="evidence" style="margin-top:12px">${match.explanation.evidence_labels.map((label) => `<span class="evidence-label">${esc(evidenceLabel(label))}</span>`).join("")}</div></a>`).join("")}</div>`, { nav: true, active: "matches" });
 }
 
 async function loadMatches({ polling = false } = {}) {
@@ -535,7 +642,7 @@ async function loadMatches({ polling = false } = {}) {
   catch (error) {
     runtime.matches = [];
     runtime.matchesPollError = true;
-    runtime.error = error.message;
+    setRuntimeError(error);
     stopMatchesPolling();
   }
   render();
@@ -565,13 +672,14 @@ function matchDetailScreen(matchId) {
   if (match.state === "connected") decisionArea = "";
   else if (match.state === "outgoing") decisionArea = `${runtime.demo ? '<div class="notice"><span class="evidence-label">Demo</span><p style="margin:8px 0 0">等待 Ren H. 回覆</p></div><button class="button primary" style="margin-top:9px;width:100%" data-action="simulate-demo-accept">Demo · 模擬 Ren 接受</button>' : '<div class="notice">Invitation sent. Contact appears only after mutual acceptance.</div>'}`;
   else if (match.state === "not_now") decisionArea = `<div class="notice">已略過。此決定已記錄且無法復原；對方不會收到通知。</div>`;
+  else if (match.state === "unavailable") decisionArea = "";
   else if (runtime.pendingMatchDecision?.matchId === matchId && runtime.pendingMatchDecision.decision === "not_now") decisionArea = `<div class="notice"><strong>略過 ${esc(match.peer.display_name)}？</strong><p>此決定無法復原，對方不會收到通知。</p><div class="button-row"><button class="button" data-action="cancel-match-decision">Cancel</button><button class="button primary" data-action="confirm-match-decision" data-match-id="${esc(matchId)}">Confirm pass</button></div></div>`;
   else decisionArea = `<div class="button-row"><button class="button" data-action="match-decision" data-decision="not_now" data-match-id="${esc(matchId)}">Not now</button><button class="button primary" data-action="match-decision" data-decision="${match.state === "incoming" ? "accept" : "invite"}" data-match-id="${esc(matchId)}">${match.state === "incoming" ? "Accept" : `Invite ${esc(match.peer.display_name)}`}</button></div>`;
   return shell(`<a href="/matches" data-link class="eyebrow" style="text-decoration:none">Back to matches</a>
     ${demoMarker}
     <div class="person"><div class="initial">${esc(initial)}</div><div><h1>${esc(match.peer.display_name)}</h1><p>${esc(match.peer.profile.interests?.[0] || "Owner pitch")}</p></div></div>
     ${connectedBlock}
-    <div class="question-card">${questions.map(([label, text]) => `<section class="question"><div class="step-label">${label}</div><h2>${esc(text)}</h2><div class="evidence">${explanation.evidence_labels.map((evidence) => `<span class="evidence-label">Evidence · ${esc(evidence)}</span>`).join("")}</div></section>`).join("")}</div>
+    <div class="question-card">${questions.map(([label, text]) => `<section class="question"><div class="step-label">${label}</div><h2>${esc(text)}</h2><div class="evidence">${explanation.evidence_labels.map((evidence) => `<span class="evidence-label">Evidence · ${esc(evidenceLabel(evidence))}</span>`).join("")}</div></section>`).join("")}</div>
     <div class="provenance"><span>Conversation-derived</span><span>Owner-approved</span><span>Not verified</span></div>
     ${decisionArea}`, { nav: true, active: "matches" });
 }
@@ -579,7 +687,7 @@ function matchDetailScreen(matchId) {
 async function loadMatch(matchId) {
   if (runtime.demo && matchId === DEMO_MATCH.match_id) { runtime.match = structuredClone(runtime.demoMatch); queueMicrotask(render); return; }
   try { runtime.match = await api(`/v1/matches/${encodeURIComponent(matchId)}`); }
-  catch (error) { runtime.error = error.message; runtime.match = { match_id: matchId, peer: { display_name: "Unavailable", profile: {} }, explanation: { what_we_both_care_about: "Match unavailable", why_it_matters_now: "", what_we_could_discuss: "", evidence_labels: [] }, state: "not_now" }; }
+  catch (error) { setRuntimeError(error); runtime.match = { match_id: matchId, peer: { display_name: "Unavailable", profile: {} }, explanation: { what_we_both_care_about: "Match unavailable", why_it_matters_now: "", what_we_could_discuss: "", evidence_labels: [] }, state: "unavailable" }; }
   render();
 }
 
@@ -600,7 +708,7 @@ async function loadInvitations() {
     return;
   }
   try { runtime.invitations = await api("/v1/invitations"); }
-  catch (error) { runtime.invitations = { incoming: [], outgoing: [], connected: [] }; runtime.error = error.message; }
+  catch (error) { runtime.invitations = { incoming: [], outgoing: [], connected: [] }; setRuntimeError(error); }
   render();
 }
 
@@ -662,13 +770,7 @@ document.addEventListener("click", async (event) => {
     if (action === "select-ai") { runtime.selectedAi = button.dataset.ai; render(); }
     if (action === "select-locale") { runtime.locale = button.dataset.locale === "en" ? "en" : "zh-Hant"; render(); }
     if (action === "create-prompt") {
-      const response = await fetch(promptFileForLocale(), { cache: "no-store" });
-      if (!response.ok) throw new Error(`Prompt 載入失敗（HTTP ${response.status}）`);
-      runtime.prompt = await response.text();
-      runtime.handoffLaunchedAt = 0;
-      runtime.showFullPrompt = false;
-      saveHandoff();
-      navigate("/handoff");
+      await createPrompt();
     }
     if (action === "launch-ai-with-prompt") await launchAiWithPrompt();
     if (action === "copy-prompt") await copyPrompt();
@@ -688,6 +790,12 @@ document.addEventListener("click", async (event) => {
     if (action === "refresh-pitch") { runtime.draft = null; writeJson(DRAFT_KEY, null); navigate("/assistant"); }
     if (action === "refresh-matches") { runtime.matchesPollError = false; runtime.matches = null; render(); }
     if (action === "retry-matches") { runtime.error = ""; runtime.matchesPollError = false; runtime.matches = null; render(); }
+    if (action === "error-retry") await retryCurrentScreen();
+    if (action === "error-dismiss") { runtime.error = ""; render(); }
+    if (action === "error-matches") navigate("/matches");
+    if (action === "error-create-pitch") navigate("/assistant");
+    if (action === "error-change-email") { runtime.error = ""; runtime.challengeId = null; runtime.signinEmail = ""; render(); }
+    if (action === "error-signin") { runtime.error = ""; runtime.challengeId = null; history.replaceState({}, "", "/signin"); render(); requestAnimationFrame(() => document.querySelector('input[name="email"]')?.focus()); }
     if (action === "match-decision" && runtime.demo && button.dataset.decision === "not_now") {
       runtime.pendingMatchDecision = { matchId: button.dataset.matchId, decision: "not_now" };
       render();
@@ -701,7 +809,7 @@ document.addEventListener("click", async (event) => {
     if (action === "signout") signout();
     if (action === "new-support-request") { runtime.supportRequestId = null; render(); }
   } catch (error) {
-    runtime.error = error.message || "操作失敗";
+    setRuntimeError(error);
     render();
     focusErrorNotice();
   }
@@ -762,7 +870,7 @@ document.addEventListener("submit", async (event) => {
       runtime.supportRequestId = result.requestId;
     }
   } catch (error) {
-    runtime.error = error.message || "操作失敗";
+    setRuntimeError(error);
   } finally {
     runtime.busy = false;
     render();
