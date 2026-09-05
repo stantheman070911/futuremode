@@ -63,14 +63,15 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
   }
   if (!loaded.profile || !loaded.version || !loaded.displayName) return event.rawPath.startsWith("/v1/") ? json(404, { error: "public_profile_not_found" }) : html(404, "找不到這份介紹");
   const { profile, displayName, current, version } = loaded;
+  const isManualTest = current.isManualTestProfile === true;
   const image = `${origin}/og/profile/${encodeURIComponent(slug)}.png?version=${encodeURIComponent(String(version.versionId ?? current.versionId))}`;
   const profileImage = profileImageUrl(current, origin, "detail");
-  if (event.rawPath.startsWith("/v1/")) return json(200, { visibility: "public", public_slug: slug, version_id: version.versionId, display_name: displayName, profile, profile_image_url: profileImage });
+  if (event.rawPath.startsWith("/v1/")) return json(200, { visibility: "public", public_slug: slug, version_id: version.versionId, display_name: displayName, profile, profile_image_url: profileImage, test_data: isManualTest });
   const portrait = profileImage
     ? `<img class="portrait" src="${escapeHtml(profileImage)}" alt="${escapeHtml(displayName)}的動物角色" width="768" height="768">`
     : `<div class="portrait portrait-placeholder" aria-label="角色圖片準備中">${escapeHtml(displayName.slice(0, 1))}</div>`;
-  const body = `<article class="card"><div class="hero">${portrait}<h1>${escapeHtml(displayName)}</h1></div><div class="content"><p>${escapeHtml(profile.summary)}</p>${list("興趣", profile.interests)}${list("動機", profile.motivations)}${list("正在解的問題", profile.active_problems)}${list("反覆討論", profile.recurring_topics)}<section><h2>想認識的人</h2><p>${escapeHtml(profile.friend_intent)}</p></section><a class="cta" href="/">讓你的 Agent 也介紹你</a></div></article>`;
-  return html(200, shell({ title: `${displayName}｜PitchYourOwner`, description: String(profile.summary).slice(0, 180), canonical, image, body }), {
+  const body = `<article class="card"><div class="hero">${portrait}${isManualTest ? '<p class="animal">測試資料 · 非真實人物</p>' : ""}<h1>${escapeHtml(displayName)}</h1></div><div class="content"><p>${escapeHtml(profile.summary)}</p>${list("興趣", profile.interests)}${list("動機", profile.motivations)}${list("正在解的問題", profile.active_problems)}${list("反覆討論", profile.recurring_topics)}<section><h2>想認識的人</h2><p>${escapeHtml(profile.friend_intent)}</p></section><a class="cta" href="/">讓你的 Agent 也介紹你</a></div></article>`;
+  return html(200, shell({ title: `${displayName}｜PitchYourOwner`, description: String(profile.summary).slice(0, 180), canonical, image, body, privateProfile: isManualTest }), {
     "cache-control": "public, max-age=0, s-maxage=60",
     "content-security-policy": "default-src 'none'; style-src 'unsafe-inline'; img-src 'self' data:; base-uri 'none'; frame-ancestors 'none'; form-action 'self'",
   });

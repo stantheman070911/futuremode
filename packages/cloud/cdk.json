@@ -18,6 +18,8 @@
     "sesDailyWarningThreshold": 160,
     "monthlyBudgetUsd": 100,
     "matchingEmailDeliveryEnabled": true,
+    "manualTestAccountsEnabled": true,
+    "manualTestCohortId": "hackathon-manual-20260905",
     "matchingSchedule": "cron(0 1 ? * MON *)"
   }
 }

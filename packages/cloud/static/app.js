@@ -346,6 +346,8 @@ let matchesPollTimer = null;
 let matchesCountdownTimer = null;
 let nextMatchCheckAt = 0;
 let otpCountdownTimer = null;
+let profileImagePollTimer = null;
+let profileImagePollStartedAt = 0;
 
 function readJson(key) {
   try { return JSON.parse(localStorage.getItem(key) || "null"); } catch { return null; }
@@ -1448,7 +1450,28 @@ async function loadProfile() {
   if (loadError && loadError.status !== 404) setRuntimeError(loadError);
   runtime.profileLoaded = true;
   runtime.profileLoading = false;
+  ensureProfileImagePolling();
   render();
+}
+
+function ensureProfileImagePolling() {
+  clearTimeout(profileImagePollTimer);
+  profileImagePollTimer = null;
+  if (!runtime.session || !runtime.profile || profileImageFor(runtime.profile, "detail")) {
+    profileImagePollStartedAt = 0;
+    return;
+  }
+  if (!profileImagePollStartedAt) profileImagePollStartedAt = Date.now();
+  if (Date.now() - profileImagePollStartedAt >= 90_000) return;
+  profileImagePollTimer = setTimeout(async () => {
+    if (!runtime.session) return;
+    try {
+      const profile = await api("/v1/profiles/me");
+      runtime.profile = profile;
+      render();
+    } catch { /* Keep the stable placeholder and try again inside the time window. */ }
+    ensureProfileImagePolling();
+  }, 3_000);
 }
 
 function matchesScreen() {
@@ -1574,7 +1597,9 @@ function invitationsScreen() {
     return shell(`<div class="loading">${esc(t("invites.loading"))}</div>`, { nav: true, active: "invitations" });
   }
   const sections = [["invites.incoming", runtime.invitations.incoming], ["invites.outgoing", runtime.invitations.outgoing], ["invites.connected", runtime.invitations.connected]];
-  return shell(`<h1 class="page-title invitations-title">${esc(t("invites.title"))}</h1>${sections.map(([label, items]) => `<div class="divider-label">${esc(t(label))} · ${items.length}</div><div class="match-list">${items.length ? items.map((match) => `<a class="match-card" href="${match.state === "connected" ? `/connections/${encodeURIComponent(match.connection_id)}` : `/matches/${encodeURIComponent(match.match_id)}`}" data-link><div class="match-card-head"><div class="match-card-identity">${profilePortrait(match.peer, "thumbnail")}<h2 class="animal-persona compact">${esc(peerPresentationName(match.peer))}</h2></div><span class="status-label">${esc(matchStateLabel(match.state))}</span></div><p>${esc(match.explanation?.what_we_both_care_about || match.peer?.summary || "")}</p></a>`).join("") : `<div class="notice">${esc(t("invites.empty"))}</div>`}</div>`).join("")}`, { nav: true, active: "invitations" });
+  const inbox = Array.isArray(runtime.invitations.test_inbox) ? runtime.invitations.test_inbox : [];
+  const testInbox = runtime.profile?.manual_test ? `<div class="notice" style="margin-bottom:18px"><span class="field-label">測試收件匣 · ${inbox.length}</span>${inbox.length ? inbox.map((message) => `<p style="margin:12px 0 0"><strong>${esc(message.from_display_name || "另一位測試 owner")}</strong><br><a class="text-action" href="${esc(message.accept_url)}">開啟邀請並選擇接受或現在不要</a></p>`).join("") : `<p style="margin:8px 0 0">寄給這個測試帳號的邀請會出現在這裡，不會寄到外部信箱。</p>`}</div>` : "";
+  return shell(`<h1 class="page-title invitations-title">${esc(t("invites.title"))}</h1>${testInbox}${sections.map(([label, items]) => `<div class="divider-label">${esc(t(label))} · ${items.length}</div><div class="match-list">${items.length ? items.map((match) => `<a class="match-card" href="${match.state === "connected" ? `/connections/${encodeURIComponent(match.connection_id)}` : `/matches/${encodeURIComponent(match.match_id)}`}" data-link><div class="match-card-head"><div class="match-card-identity">${profilePortrait(match.peer, "thumbnail")}<h2 class="animal-persona compact">${esc(peerPresentationName(match.peer))}</h2></div><span class="status-label">${esc(matchStateLabel(match.state))}</span></div><p>${esc(match.explanation?.what_we_both_care_about || match.peer?.summary || "")}</p></a>`).join("") : `<div class="notice">${esc(t("invites.empty"))}</div>`}</div>`).join("")}`, { nav: true, active: "invitations" });
 }
 
 async function loadInvitations() {
@@ -1584,7 +1609,13 @@ async function loadInvitations() {
     queueMicrotask(render);
     return;
   }
-  try { runtime.invitations = await api("/v1/invitations"); }
+  try {
+    runtime.invitations = await api("/v1/invitations");
+    if (runtime.profile?.manual_test) {
+      const inbox = await api("/v1/manual-test/inbox");
+      runtime.invitations.test_inbox = inbox.messages || [];
+    }
+  }
   catch (error) { runtime.invitations = { incoming: [], outgoing: [], connected: [] }; setRuntimeError(error); }
   render();
 }
@@ -1878,6 +1909,11 @@ document.addEventListener("submit", async (event) => {
       writeJson(STORAGE_KEY, runtime.session);
       clearAuthFlow();
       runtime.profileLoaded = false;
+      if (result.manualTestAccount) {
+        await api("/v1/manual-test/bootstrap", { method: "POST", body: "{}" });
+        runtime.lastPublishAt = Date.now();
+        writeJson(LAST_PUBLISH_KEY, runtime.lastPublishAt);
+      }
       await routeReturningOwner();
     } else if (form.dataset.form === "parse-json") {
       runtime.draft = validateProfileClient(parseJsonCandidate(String(formData.get("json") || "")));

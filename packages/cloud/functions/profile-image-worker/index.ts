@@ -140,7 +140,16 @@ export async function generateCurrentProfileImage(input: DirectProfileImageEvent
   const tableName = requiredEnvironment("TABLE_NAME");
   const { current, version } = await currentAndVersion(tableName, input.profileId, input.versionId);
   if (!current || !version?.profile) return { status: "STALE" };
-  if (current.isTestProfile === true || current.isFixtureProfile === true) return { status: "SKIPPED_FIXTURE" };
+  if (current.isFixtureProfile === true) return { status: "SKIPPED_FIXTURE" };
+  if (current.isTestProfile === true) {
+    const cohortId = process.env.MANUAL_TEST_COHORT_ID;
+    const allowed = Boolean(cohortId
+      && current.isManualTestProfile === true
+      && current.cleanupSafe === true
+      && current.testCohortId === cohortId
+      && current.testRunId === cohortId);
+    if (!allowed) return { status: "SKIPPED_FIXTURE" };
+  }
   const existing = current.profileImage as { status?: string; versionId?: string } | undefined;
   if (readyProfileImage(current) && !input.replaceRejected) return { status: "READY" };
   if (existing?.status === "FAILED" && existing.versionId === input.versionId && !input.retryFailed) return { status: "FAILED" };

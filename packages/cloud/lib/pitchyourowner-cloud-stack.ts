@@ -46,6 +46,8 @@ export class PitchYourOwnerCloudStack extends cdk.Stack {
     const embeddingDimensions = Number(this.node.tryGetContext("embeddingDimensions") ?? 1_024);
     const verificationEmailEnabled = String(this.node.tryGetContext("verificationEmailEnabled") ?? "true") === "true";
     const matchingEmailDeliveryEnabled = String(this.node.tryGetContext("matchingEmailDeliveryEnabled") ?? "false") === "true";
+    const manualTestAccountsEnabled = String(this.node.tryGetContext("manualTestAccountsEnabled") ?? "false") === "true";
+    const manualTestCohortId = String(this.node.tryGetContext("manualTestCohortId") ?? "hackathon-manual-20260905");
     const emailProvider = String(this.node.tryGetContext("emailProvider") ?? "resend").trim().toLowerCase();
     if (!["ses", "resend"].includes(emailProvider)) throw new Error("emailProvider must be ses or resend");
     const vectorIndexName = "profile-matching-v1";
@@ -195,6 +197,11 @@ export class PitchYourOwnerCloudStack extends cdk.Stack {
       "GeminiImageApiKey",
       `pitchyourowner/${environment}/gemini-image-api-key`,
     );
+    const manualTestAccountsSecret = secretsmanager.Secret.fromSecretNameV2(
+      this,
+      "ManualTestAccountsSecret",
+      `pitchyourowner/${environment}/manual-test-accounts`,
+    );
     const responseHeaders = new cloudfront.ResponseHeadersPolicy(this, "CloudWebsiteSecurityHeaders", {
       responseHeadersPolicyName: `${prefix}-website-security`,
       securityHeadersBehavior: {
@@ -257,15 +264,21 @@ export class PitchYourOwnerCloudStack extends cdk.Stack {
         VERIFICATION_EMAIL_HOURLY_LIMIT: String(this.node.tryGetContext("verificationEmailHourlyLimit") ?? 5),
         VERIFICATION_IP_HOURLY_LIMIT: String(this.node.tryGetContext("verificationIpHourlyLimit") ?? 20),
         PUBLIC_SITE_ORIGIN: publicSiteOrigin,
+        MANUAL_TEST_ACCOUNTS_ENABLED: String(manualTestAccountsEnabled),
+        MANUAL_TEST_ACCOUNTS_SECRET_ARN: manualTestAccountsSecret.secretArn,
       },
     });
-    const confirmVerification = functionFor("VerificationConfirm", "verification-confirm");
+    const confirmVerification = functionFor("VerificationConfirm", "verification-confirm", { environment: {
+      MANUAL_TEST_ACCOUNTS_ENABLED: String(manualTestAccountsEnabled),
+      MANUAL_TEST_ACCOUNTS_SECRET_ARN: manualTestAccountsSecret.secretArn,
+    } });
     const publishProfile = functionFor("ProfilePublish", "profile-publish", {
       timeout: cdk.Duration.seconds(60),
       memorySize: 1_024,
       environment: {
         EMBEDDING_MODEL_ID: embeddingModelId,
         EMBEDDING_DIMENSIONS: String(embeddingDimensions),
+        MANUAL_TEST_COHORT_ID: manualTestCohortId,
       },
     });
     const accessProfile = functionFor("ProfileAccess", "profile-access", {
@@ -314,6 +327,7 @@ export class PitchYourOwnerCloudStack extends cdk.Stack {
         GEMINI_IMAGE_REVIEW_MODEL_ID: geminiImageReviewModelId,
         GEMINI_IMAGE_SECRET_ARN: geminiImageSecret.secretArn,
         PROFILE_IMAGE_BUCKET_NAME: profileImageBucket.bucketName,
+        MANUAL_TEST_COHORT_ID: manualTestCohortId,
       },
     });
     const profileImage = functionFor("ProfileImage", "profile-image", {
@@ -322,7 +336,7 @@ export class PitchYourOwnerCloudStack extends cdk.Stack {
     const profileDrafts = functionFor("ProfileDrafts", "profile-drafts", {
       environment: { PUBLIC_SITE_ORIGIN: publicSiteOrigin },
     });
-    const pairing = functionFor("Pairing", "pairing", { environment: { PUBLIC_SITE_ORIGIN: publicSiteOrigin } });
+    const pairing = functionFor("Pairing", "pairing", { environment: { PUBLIC_SITE_ORIGIN: publicSiteOrigin, MANUAL_TEST_COHORT_ID: manualTestCohortId } });
     const runMatching = functionFor("MatchingRun", "matching-run", {
       timeout: cdk.Duration.minutes(10),
       memorySize: 1_024,
@@ -332,6 +346,18 @@ export class PitchYourOwnerCloudStack extends cdk.Stack {
         ENVIRONMENT: environment,
         MATCH_JUDGE_MODEL_ID: matchJudgeModelId,
         MATCH_JUDGE_MIN_MUTUAL_SCORE: String(this.node.tryGetContext("matchJudgeMinMutualScore") ?? 70),
+        MANUAL_TEST_COHORT_ID: manualTestCohortId,
+      },
+    });
+    const manualTestBootstrap = functionFor("ManualTestBootstrap", "manual-test-bootstrap", {
+      timeout: cdk.Duration.seconds(60),
+      memorySize: 1_024,
+      environment: {
+        MANUAL_TEST_ACCOUNTS_ENABLED: String(manualTestAccountsEnabled),
+        MANUAL_TEST_ACCOUNTS_SECRET_ARN: manualTestAccountsSecret.secretArn,
+        MANUAL_TEST_COHORT_ID: manualTestCohortId,
+        PROFILE_PUBLISH_FUNCTION_NAME: publishProfile.functionName,
+        MATCHING_RUN_FUNCTION_NAME: runMatching.functionName,
       },
     });
     const triggerMatching = functionFor("MatchingTrigger", "matching-trigger", {
@@ -352,7 +378,7 @@ export class PitchYourOwnerCloudStack extends cdk.Stack {
       environment: { OPERATIONS_TOPIC_ARN: operationsTopic.topicArn },
     });
 
-    for (const fn of [requestVerification, confirmVerification, publishProfile, accessProfile, profileDrafts, pairing, runMatching, dispatchEmail]) {
+    for (const fn of [requestVerification, confirmVerification, publishProfile, accessProfile, profileDrafts, pairing, runMatching, manualTestBootstrap, dispatchEmail]) {
       table.grantReadWriteData(fn);
     }
     table.grantReadData(publicProfile);
@@ -364,6 +390,11 @@ export class PitchYourOwnerCloudStack extends cdk.Stack {
     profileImageBucket.grantRead(profileImage);
     profileImageBucket.grantRead(profileOgImage);
     geminiImageSecret.grantRead(profileImageWorker);
+    manualTestAccountsSecret.grantRead(requestVerification);
+    manualTestAccountsSecret.grantRead(confirmVerification);
+    manualTestAccountsSecret.grantRead(manualTestBootstrap);
+    publishProfile.grantInvoke(manualTestBootstrap);
+    runMatching.grantInvoke(manualTestBootstrap);
     table.grant(supportRequest, "dynamodb:PutItem", "dynamodb:UpdateItem");
     table.grantStreamRead(relayOutbox);
     outboxQueue.grantSendMessages(relayOutbox);
@@ -451,6 +482,8 @@ export class PitchYourOwnerCloudStack extends cdk.Stack {
     addRoute("/v1/profile-drafts", apigwv2.HttpMethod.GET, profileDrafts);
     addRoute("/v1/profile-drafts/{draftId}", apigwv2.HttpMethod.GET, profileDrafts);
     addRoute("/v1/matching-runs", apigwv2.HttpMethod.POST, triggerMatching);
+    addRoute("/v1/manual-test/bootstrap", apigwv2.HttpMethod.POST, manualTestBootstrap);
+    addRoute("/v1/manual-test/inbox", apigwv2.HttpMethod.GET, pairing);
     addRoute("/v1/matches", apigwv2.HttpMethod.GET, pairing);
     addRoute("/v1/matches/refresh", apigwv2.HttpMethod.POST, pairing);
     addRoute("/v1/matches/{matchId}", apigwv2.HttpMethod.GET, pairing);

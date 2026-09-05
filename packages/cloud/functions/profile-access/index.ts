@@ -122,6 +122,7 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
         public_slug: publicSlug,
         visibility: current.visibility === "private" || current.matchingState === "paused" ? "private" : "public",
         matching_state: current.matchingState ?? "active",
+        manual_test: current.isManualTestProfile === true,
         profile_image: {
           thumbnail_url: profileImageUrl(current, requiredEnvironment("PUBLIC_SITE_ORIGIN"), "thumbnail"),
           detail_url: profileImageUrl(current, requiredEnvironment("PUBLIC_SITE_ORIGIN"), "detail"),

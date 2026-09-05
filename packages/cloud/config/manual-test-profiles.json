@@ -1,0 +1,112 @@
+{
+  "public_finance_analyst": {
+    "animal_persona": "戴著圓框眼鏡的稅務老鷹",
+    "summary": "把跨境稅制拆成可驗證決策的公共財政分析師，長期追蹤租稅協定、雙重課稅與穿透課稅如何改變企業行為，也擅長把複雜條文轉成一般人看得懂的政策影響。",
+    "interests": ["跨境租稅協定與雙重課稅", "穿透課稅與受控外國公司規則", "公共預算透明與政策證據", "複雜制度的視覺化解釋"],
+    "motivations": ["讓稅制討論回到可查核的實際效果", "幫非專業讀者看懂政策取捨", "建立能被重複檢驗的財政分析方法"],
+    "active_problems": ["比較不同租稅協定對同一筆所得的處理", "辨識名目稅率與實際負擔的落差", "在資料不完整時清楚標示推論邊界"],
+    "recurring_topics": ["treaty benefits 與 beneficial ownership", "pass-through rule 與 CFC", "公共資料可追溯性", "政策敘事與證據限制"],
+    "friend_intent": "想認識會追資料來源、調查公共政策或把技術規則講清楚的人，一起比較證據、盲點與真正影響。",
+    "history_scope": "依據此測試 persona 的十組虛構專業對話整理；內容只用於 PitchYourOwner 測試，不代表真實人物。",
+    "confidence": {"summary":"high","interests":"high","motivations":"high","active_problems":"high","recurring_topics":"high","friend_intent":"medium"}
+  },
+  "contemporary_dancer_choreographer": {
+    "animal_persona": "踩著拍點的粉色羊駝",
+    "summary": "以呼吸、重量轉移與微小動作編排關係的當代舞者，重視排練中的信任與身體同意，也在探索低光影像如何保留舞台上稍縱即逝的張力。",
+    "interests": ["當代舞與即興編舞", "身體重量、呼吸與節奏", "排練現場的信任與同意", "低光下的動作影像"],
+    "motivations": ["讓觀眾看見難以言說的身體關係", "建立表演者能安全冒險的創作空間", "把短暫動作保存成有情緒的影像"],
+    "active_problems": ["在鏡頭介入時保留表演者的自主性", "讓微小動作在低光舞台仍可被看見", "把即興素材整理成可重演但不僵化的結構"],
+    "recurring_topics": ["movement quality", "performer consent", "舞台光線與構圖", "即興規則與排練語言"],
+    "friend_intent": "想認識懂表演攝影、紀錄影像或身體研究的人，從一次排練中的具體片段交換觀看與創作方法。",
+    "history_scope": "依據此測試 persona 的十組虛構專業對話整理；內容只用於 PitchYourOwner 測試，不代表真實人物。",
+    "confidence": {"summary":"high","interests":"high","motivations":"high","active_problems":"high","recurring_topics":"high","friend_intent":"medium"}
+  },
+  "documentary_filmmaker_cinematographer": {
+    "animal_persona": "扛著小攝影機的黑熊",
+    "summary": "在真實場域用小型團隊拍攝的紀錄片導演，關注鏡頭權力、被攝者同意與低光敘事，習慣在不打斷現場的前提下找到能承載情緒的畫面。",
+    "interests": ["觀察式紀錄片與攝影", "被攝者同意與影像倫理", "自然光和低光敘事", "小型團隊的現場決策"],
+    "motivations": ["讓被攝者保有對自身故事的主體性", "用節制的畫面呈現複雜關係", "建立可長期合作的紀錄方法"],
+    "active_problems": ["拍攝親密場景時維持可撤回的同意", "在低照度下兼顧情緒與可用畫質", "如何讓剪輯不扭曲現場脈絡"],
+    "recurring_topics": ["camera presence", "informed consent", "低光攝影與收音", "敘事弧線和素材脈絡"],
+    "friend_intent": "想認識舞者、表演攝影師或在真實場域工作的人，討論鏡頭、信任與動作如何共同形成故事。",
+    "history_scope": "依據此測試 persona 的十組虛構專業對話整理；內容只用於 PitchYourOwner 測試，不代表真實人物。",
+    "confidence": {"summary":"high","interests":"high","motivations":"high","active_problems":"high","recurring_topics":"high","friend_intent":"medium"}
+  },
+  "portrait_performance_photographer": {
+    "animal_persona": "追著側光的銀狐",
+    "summary": "擅長在表演與肖像之間捕捉細微身體語言的攝影師，會先建立安全的拍攝關係，再用光線、距離與連拍節奏留下不做作的瞬間。",
+    "interests": ["表演與舞蹈攝影", "肖像中的身體語言", "自然光和低光控制", "拍攝關係與影像同意"],
+    "motivations": ["讓人在鏡頭前仍保有自己的節奏", "捕捉表演中不可重複的微小變化", "建立攝影師與被攝者共同決定的工作方式"],
+    "active_problems": ["在快速動作與低光間維持情緒細節", "設計不干擾排練的拍攝位置", "交付前確認影像公開邊界"],
+    "recurring_topics": ["movement photography", "光線方向與膚質", "consent-based portraiture", "選片節奏與敘事"],
+    "friend_intent": "想認識舞者、編舞者與紀錄片創作者，一起拆解一個動作如何被觀看、拍攝與尊重。",
+    "history_scope": "依據此測試 persona 的十組虛構專業對話整理；內容只用於 PitchYourOwner 測試，不代表真實人物。",
+    "confidence": {"summary":"high","interests":"high","motivations":"high","active_problems":"high","recurring_topics":"high","friend_intent":"medium"}
+  },
+  "agent_infrastructure_engineer": {
+    "animal_persona": "鑽進管線的護目鏡羊駝",
+    "summary": "專注把長時間 AI agent 從 demo 變成可恢復系統的基礎設施工程師，反覆處理 user-owned compute、狀態持久化、隔離、遠端連線與失敗後續跑。",
+    "interests": ["長時間 agent runtime 與 recovery", "user-owned compute 和 local-first 架構", "microVM、container 與多租戶隔離", "NAT、relay 與遠端 host connectivity"],
+    "motivations": ["讓非技術使用者不用 terminal 也能使用 agent", "讓跨天任務可恢復、可觀察且可驗證", "把資料與執行控制留在使用者手上"],
+    "active_problems": ["保存 authenticated browser state 並安全恢復", "在有限 VM 中隔離多使用者 profile", "處理斷線、重複事件與長任務續跑"],
+    "recurring_topics": ["agent orchestration", "persistent session state", "VM isolation", "relay 與 NAT traversal"],
+    "friend_intent": "想認識做 browser automation、agent runtime、local-first 系統或 human verification 的人，直接交換失敗案例與架構邊界。",
+    "history_scope": "依據此測試 persona 的十組虛構專業對話整理；內容只用於 PitchYourOwner 測試，不代表真實人物。",
+    "confidence": {"summary":"high","interests":"high","motivations":"high","active_problems":"high","recurring_topics":"high","friend_intent":"high"}
+  },
+  "browser_automation_product_engineer": {
+    "animal_persona": "抱著分頁的工作犬",
+    "summary": "把 authenticated browser automation 包成一般人能操作產品的工程師，專攻 Chrome profile 隔離、登入狀態保存、可恢復步驟與需要人類確認的操作邊界。",
+    "interests": ["persistent browser session", "多使用者 Chrome profile 隔離", "browser automation 的人機交接", "手機控制遠端瀏覽器"],
+    "motivations": ["讓使用者不必重複登入或操作 terminal", "把高風險瀏覽器動作留給人類確認", "讓自動化失敗後能從正確步驟恢復"],
+    "active_problems": ["跨重啟保存 cookie 與 authenticated state", "避免不同使用者讀到彼此的 browser profile", "在 CAPTCHA、付款與權限畫面安全暫停"],
+    "recurring_topics": ["Chrome profile lifecycle", "session persistence", "human-in-the-loop automation", "remote browser control"],
+    "friend_intent": "想認識做 agent infrastructure、可恢復 workflow 或 assistive interface 的人，討論瀏覽器狀態到底該由誰擁有與保護。",
+    "history_scope": "依據此測試 persona 的十組虛構專業對話整理；內容只用於 PitchYourOwner 測試，不代表真實人物。",
+    "confidence": {"summary":"high","interests":"high","motivations":"high","active_problems":"high","recurring_topics":"high","friend_intent":"high"}
+  },
+  "climate_adaptation_urban_planner": {
+    "animal_persona": "攤開城市圖的水獺",
+    "summary": "把熱風險、積淹水與街道使用轉成可執行方案的氣候調適規劃師，重視街區尺度證據、弱勢居民經驗與工程決策之間的落差。",
+    "interests": ["城市熱島與熱韌性", "街道積淹水與藍綠基盤", "參與式規劃和環境正義", "街區尺度資料與公共決策"],
+    "motivations": ["讓調適資源優先到真正高風險的居民", "把現場經驗帶進工程與預算決策", "建立可持續追蹤的街道改善證據"],
+    "active_problems": ["整合感測、巡查與居民回報的尺度差異", "判斷樹蔭、透水與排水改善的真實成效", "避免風險地圖遮蔽資料不足的街區"],
+    "recurring_topics": ["heat vulnerability", "street-level evidence", "藍綠基盤維護", "公共參與與資料偏差"],
+    "friend_intent": "想認識做城市感測、交通安全、edge AI 或公共資料的人，一起把街道證據變成能被居民與決策者使用的語言。",
+    "history_scope": "依據此測試 persona 的十組虛構專業對話整理；內容只用於 PitchYourOwner 測試，不代表真實人物。",
+    "confidence": {"summary":"high","interests":"high","motivations":"high","active_problems":"high","recurring_topics":"high","friend_intent":"medium"}
+  },
+  "mobility_safety_edge_ai_engineer": {
+    "animal_persona": "巡著路口的安全獵犬",
+    "summary": "在列車、道路與工業場域部署即時視覺系統的 edge AI 工程師，關心的不只模型準確率，還包括延遲、遮擋、設備失效與現場人員能否驗證警報。",
+    "interests": ["交通安全與 real-time edge CV", "道路裂縫和危險事件偵測", "edge device 部署與監控", "human verification 的告警設計"],
+    "motivations": ["讓模型在真實場域穩定降低安全風險", "把不確定性變成現場人員可判斷的訊號", "建立部署後可追蹤的效能證據"],
+    "active_problems": ["在夜間、雨天與遮擋下維持偵測品質", "控制 edge inference 延遲與功耗", "設計不造成告警疲勞的人工覆核流程"],
+    "recurring_topics": ["edge inference", "交通與街道安全", "domain shift", "human path verification"],
+    "friend_intent": "想認識城市規劃、公共安全與 human factors 的實作者，討論感測結果怎麼真正進入現場決策。",
+    "history_scope": "依據此測試 persona 的十組虛構專業對話整理；內容只用於 PitchYourOwner 測試，不代表真實人物。",
+    "confidence": {"summary":"high","interests":"high","motivations":"high","active_problems":"high","recurring_topics":"high","friend_intent":"medium"}
+  },
+  "assistive_technology_human_factors_researcher": {
+    "animal_persona": "調整介面的細心海狸",
+    "summary": "研究輔助科技與人機協作的 human factors 實作者，透過可用性測試觀察人們如何理解自動化、從錯誤恢復，以及在需要時重新取得控制。",
+    "interests": ["assistive technology", "無障礙互動與認知負荷", "自動化信任與 human control", "錯誤恢復和可用性研究"],
+    "motivations": ["讓能力不同的人都能可靠使用複雜工具", "讓系統在出錯時提供可理解的下一步", "把使用者觀察轉成工程可執行的設計"],
+    "active_problems": ["設計不依賴精細操作的 agent 控制介面", "校準使用者對自動化能力的信任", "讓中斷後的工作流程能被理解並繼續"],
+    "recurring_topics": ["accessible interaction", "human-in-the-loop", "error recovery", "usability evidence"],
+    "friend_intent": "想認識做 agent 產品、browser automation 或安全關鍵介面的人，一起檢查產品是否真的讓人保有控制。",
+    "history_scope": "依據此測試 persona 的十組虛構專業對話整理；內容只用於 PitchYourOwner 測試，不代表真實人物。",
+    "confidence": {"summary":"high","interests":"high","motivations":"high","active_problems":"high","recurring_topics":"high","friend_intent":"high"}
+  },
+  "investigative_science_data_journalist": {
+    "animal_persona": "叼著資料線索的赤狐",
+    "summary": "沿著資料來源追查科學與公共政策敘事的調查記者，擅長核對方法、利益關係與缺漏資料，再把技術爭議寫成讀者可以自行判斷的報導。",
+    "interests": ["資料新聞與公共問責", "科學證據和方法查核", "跨境財務與政策資料", "不確定性的敘事方式"],
+    "motivations": ["讓公共主張能被讀者追溯與驗證", "揭露資料缺口如何改變政策結論", "把專業爭議轉成清楚但不失真的故事"],
+    "active_problems": ["串接格式不一致的公共資料", "避免把相關性寫成因果", "在保護來源時提供足夠查核線索"],
+    "recurring_topics": ["source provenance", "政策數據與利益關係", "統計不確定性", "調查敘事和證據邊界"],
+    "friend_intent": "想認識公共財政、科學研究或資料系統專家，一起追查一項政策主張從原始證據到公開敘事的每個轉折。",
+    "history_scope": "依據此測試 persona 的十組虛構專業對話整理；內容只用於 PitchYourOwner 測試，不代表真實人物。",
+    "confidence": {"summary":"high","interests":"high","motivations":"high","active_problems":"high","recurring_topics":"high","friend_intent":"high"}
+  }
+}

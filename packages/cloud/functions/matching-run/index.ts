@@ -18,7 +18,9 @@ interface CurrentProfile extends Record<string, unknown> {
   visibility?: string;
   emailHash?: string;
   isTestProfile?: boolean;
+  isManualTestProfile?: boolean;
   testRunId?: string;
+  testCohortId?: string;
   cleanupSafe?: boolean;
   isFixtureProfile?: boolean;
   fixtureAudienceEmailHash?: string;
@@ -339,7 +341,12 @@ export async function persistPair(
     candidateProfileId: peer.current.profileId,
     candidateVersionId: peer.version.versionId,
     ...narrative,
-    ...(owner.current.isTestProfile === true ? { isTestProfile: true, cleanupSafe: true, testRunId: owner.current.testRunId } : {}),
+    ...(owner.current.isTestProfile === true ? {
+      isTestProfile: true,
+      cleanupSafe: true,
+      testRunId: owner.current.testRunId,
+      ...(owner.current.isManualTestProfile === true ? { isManualTestProfile: true, testCohortId: owner.current.testCohortId } : {}),
+    } : {}),
   });
   const writes: ConstructorParameters<typeof TransactWriteCommand>[0]["TransactItems"] = [
     { Put: { TableName: tableName, Item: make(left, right, generated.left) } },
@@ -365,9 +372,21 @@ async function forEachBounded<T>(items: T[], concurrency: number, work: (item: T
 export async function handler(event?: unknown): Promise<Record<string, unknown>> {
   const runStartedAt = Date.now();
   const tableName = requiredEnvironment("TABLE_NAME");
-  const scope = matchingScope(event);
+  let scope = matchingScope(event);
   const items = await scanAll(tableName);
   const requestedId = event && typeof event === "object" ? String((event as Record<string, unknown>).profileId ?? "") : "";
+  if (!scope.includeTestProfiles && requestedId) {
+    const requestedCurrent = items.find((item) => item.entityType === "PROFILE_CURRENT" && item.profileId === requestedId) as CurrentProfile | undefined;
+    const cohortId = process.env.MANUAL_TEST_COHORT_ID;
+    if (cohortId
+      && requestedCurrent?.isTestProfile === true
+      && requestedCurrent.isManualTestProfile === true
+      && requestedCurrent.cleanupSafe === true
+      && requestedCurrent.testCohortId === cohortId
+      && requestedCurrent.testRunId === cohortId) {
+      scope = { includeTestProfiles: true, testRunId: cohortId };
+    }
+  }
   const regularProfiles = loadedProfiles(items, scope);
   const requestedOwner = requestedId ? regularProfiles.find((entry) => entry.current.profileId === requestedId) : undefined;
   const profiles = requestedOwner && !scope.includeTestProfiles

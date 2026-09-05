@@ -17,6 +17,17 @@ export async function handler(event: SQSEvent): Promise<void> {
     if (!item) continue;
     if (item.status === "SENT" || item.status === "SENDING") continue;
     const tableName = requiredEnvironment("TABLE_NAME");
+    if (String(item.to ?? "").trim().toLowerCase().endsWith(".test")) {
+      await documentDynamo.send(new UpdateCommand({
+        TableName: tableName,
+        Key: key,
+        UpdateExpression: "SET #status = :captured, capturedAt = :now",
+        ConditionExpression: "#status = :pending",
+        ExpressionAttributeNames: { "#status": "status" },
+        ExpressionAttributeValues: { ":captured": "CAPTURED", ":pending": "PENDING", ":now": new Date().toISOString() },
+      })).catch(() => undefined);
+      continue;
+    }
     const claimedAt = new Date().toISOString();
     try {
       await documentDynamo.send(new UpdateCommand({

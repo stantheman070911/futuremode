@@ -31,6 +31,22 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
     const session = await loadSession(event.headers.authorization);
     const tableName = requiredEnvironment("TABLE_NAME");
     const profileId = profileIdForEmailHash(session.emailHash);
+    const internalTest = (event as APIGatewayProxyEventV2 & { _manualTest?: { cohortId?: unknown } })._manualTest;
+    const configuredTestCohort = process.env.MANUAL_TEST_COHORT_ID;
+    const testCohortId = typeof internalTest?.cohortId === "string"
+      && configuredTestCohort
+      && internalTest.cohortId === configuredTestCohort
+      && session.email.endsWith("@futuremode.test")
+      ? configuredTestCohort
+      : undefined;
+    if (internalTest && !testCohortId) throw new Error("manual_test_context_invalid");
+    const testMetadata = testCohortId ? {
+      isTestProfile: true,
+      isManualTestProfile: true,
+      cleanupSafe: true,
+      testRunId: testCohortId,
+      testCohortId,
+    } : {};
 
     if (event.requestContext.http.method === "GET") {
       const versionId = event.pathParameters?.versionId;
@@ -111,6 +127,7 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
             profile_scope: "ACTIVE",
             is_matchable: 1,
             createdAt,
+            ...testMetadata,
           },
           ConditionExpression: "attribute_not_exists(pk)",
         },
@@ -131,6 +148,7 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
             matchingState: "active",
             matchLanguages: payload.locale === "zh-Hant" ? ["zh", "en"] : ["en"],
             updatedAt: createdAt,
+            ...testMetadata,
           },
           ConditionExpression: current.Item ? "versionId = :expectedVersion" : "attribute_not_exists(pk)",
           ExpressionAttributeValues: current.Item ? { ":expectedVersion": current.Item.versionId } : undefined,
@@ -145,6 +163,7 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
             entityType: "PUBLIC_PROFILE_POINTER",
             profileId,
             createdAt,
+            ...testMetadata,
           },
           ConditionExpression: current.Item?.publicSlug ? "profileId = :profileId" : "attribute_not_exists(pk)",
           ...(current.Item?.publicSlug ? { ExpressionAttributeValues: { ":profileId": profileId } } : {}),
@@ -163,6 +182,7 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
             publicSlug,
             createdAt,
             expiresAt,
+            ...testMetadata,
           },
           ConditionExpression: "attribute_not_exists(pk)",
         },

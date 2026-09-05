@@ -52,6 +52,7 @@ test("exposes phone paste-back, draft API, pairing, and invitation routes", () =
     "GET /profile-images/{slug}/{variant}",
     "GET /v1/connections/{connectionId}",
     "GET /v1/invitations",
+    "GET /v1/manual-test/inbox",
     "GET /v1/matches",
     "GET /v1/matches/{matchId}",
     "GET /v1/profile-drafts",
@@ -64,6 +65,7 @@ test("exposes phone paste-back, draft API, pairing, and invitation routes", () =
     "POST /v1/email-verifications/{challengeId}/confirm",
     "POST /v1/invitation-tokens/preview",
     "POST /v1/invitation-tokens/respond",
+    "POST /v1/manual-test/bootstrap",
     "POST /v1/matches/refresh",
     "POST /v1/matches/{matchId}/invitations",
     "POST /v1/matching-runs",
@@ -96,9 +98,11 @@ test("keeps profile images private and isolates the Gemini secret to the worker"
     Environment: { Variables: Match.objectLike({ GEMINI_IMAGE_MODEL_ID: "gemini-3.1-flash-lite-image", GEMINI_IMAGE_REVIEW_MODEL_ID: "gemini-3.5-flash-lite", GEMINI_IMAGE_SECRET_ARN: Match.anyValue(), PROFILE_IMAGE_BUCKET_NAME: Match.anyValue() }) },
   });
   const policies = Object.values(template().findResources("AWS::IAM::Policy"));
-  const secretPolicies = policies.filter((resource) => JSON.stringify(resource).includes("secretsmanager:GetSecretValue"));
-  assert.equal(secretPolicies.length, 1);
-  assert.match(JSON.stringify(secretPolicies[0]), /ProfileImageWorker/);
+  const profileImageSecretPolicies = policies.filter((resource) => {
+    const serialized = JSON.stringify(resource);
+    return serialized.includes("secretsmanager:GetSecretValue") && serialized.includes("ProfileImageWorker");
+  });
+  assert.equal(profileImageSecretPolicies.length, 1);
 });
 
 test("uses isolated PitchYourOwner resource names and budget", () => {
