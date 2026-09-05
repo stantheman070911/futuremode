@@ -39,8 +39,6 @@ export class PitchYourOwnerCloudStack extends cdk.Stack {
     const prefix = `pitchyourowner-${environment}`;
     const embeddingModelId = String(this.node.tryGetContext("embeddingModelId") ?? "global.cohere.embed-v4:0");
     const embeddingFoundationModelId = embeddingModelId.replace(/^(global|us|eu|apac)\./, "");
-    const matchJudgeModelId = String(this.node.tryGetContext("matchJudgeModelId") ?? "apac.amazon.nova-pro-v1:0");
-    const matchJudgeFoundationModelId = matchJudgeModelId.replace(/^(global|us|eu|apac)\./, "");
     const geminiImageModelId = String(this.node.tryGetContext("geminiImageModelId") ?? "gemini-3.1-flash-lite-image");
     const geminiImageReviewModelId = String(this.node.tryGetContext("geminiImageReviewModelId") ?? "gemini-3.5-flash-lite");
     const embeddingDimensions = Number(this.node.tryGetContext("embeddingDimensions") ?? 1_024);
@@ -351,8 +349,6 @@ export class PitchYourOwnerCloudStack extends cdk.Stack {
         VECTOR_INDEX_NAME: vectorIndexName,
         PUBLIC_SITE_ORIGIN: publicSiteOrigin,
         ENVIRONMENT: environment,
-        MATCH_JUDGE_MODEL_ID: matchJudgeModelId,
-        MATCH_JUDGE_MIN_MUTUAL_SCORE: String(this.node.tryGetContext("matchJudgeMinMutualScore") ?? 70),
         MANUAL_TEST_COHORT_ID: manualTestCohortId,
       },
     });
@@ -415,13 +411,6 @@ export class PitchYourOwnerCloudStack extends cdk.Stack {
     runMatching.addToRolePolicy(new iam.PolicyStatement({
       actions: ["dynamodb:SearchVectors"],
       resources: [table.tableArn, `${table.tableArn}/index/${vectorIndexName}`],
-    }));
-    runMatching.addToRolePolicy(new iam.PolicyStatement({
-      actions: ["bedrock:InvokeModel"],
-      resources: [
-        `arn:${cdk.Aws.PARTITION}:bedrock:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:inference-profile/${matchJudgeModelId}`,
-        `arn:${cdk.Aws.PARTITION}:bedrock:*::foundation-model/${matchJudgeFoundationModelId}`,
-      ],
     }));
     runMatching.node.addDependency(vectorIndex);
     runMatching.grantInvoke(triggerMatching);

@@ -1,5 +1,9 @@
 # Terminology and claims — one page, for anyone speaking or writing about this submission
 
+> **Current matching correction — 2026-09-06.** Any judge-model or score-free claim
+> below is superseded. Matching now uses stored field embeddings only; authenticated
+> match list and detail views show the composite score, with ten results per page.
+
 Derived from `docs/handoff/marketing-brief.md`. If this page and that brief ever
 disagree, the brief wins — this is a quick-reference, not a new source of truth.
 

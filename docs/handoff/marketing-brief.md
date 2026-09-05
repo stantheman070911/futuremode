@@ -1,5 +1,10 @@
 # PitchYourOwner — Hackathon Submission & Positioning Brief
 
+> **Superseded matching claims — 2026-09-06.** References below to a deployed
+> judge-model matching role or a score-free interface are historical and must not be
+> used as current claims. Current matching is embedding-only, serves every eligible
+> result ten per page, and shows the composite score only to the signed-in owner.
+
 > Scope: hackathon execution only. This is not a product specification.
 > `docs/product-design.md` remains the canonical product contract. Nothing here overrides it.
 > If this brief and the product contract ever disagree, the product contract wins and you

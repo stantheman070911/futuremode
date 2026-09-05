@@ -1,5 +1,8 @@
 # Round 2 demo script
 
+> **Update required — 2026-09-06.** Replace the judge-model demonstration below with
+> the current embedding-only score, pagination, and field-evidence flow before use.
+
 Five minutes, on a real phone, mirrored. Structure: before → product → outcome. Timings
 below are targets from `docs/handoff/marketing-brief.md`; replace the "actual" column
 once Development hands off JTBD-4's per-step wall-clock measurements, and mark each step

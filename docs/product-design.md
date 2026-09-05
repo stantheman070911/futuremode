@@ -250,23 +250,20 @@ pair and combines cosine similarity with these weights:
 - 10% friend-intent compatibility
 
 Every eligible pair is persisted with both profile-version IDs, five component scores,
-the composite score, and two directional explanations generated in one judge-model call
-at edge-write time. The judge receives only the six matchable fields. Its strict JSON
-output is validated before persistence; a timeout, model error, or invalid response uses
-a truthful deterministic fallback without dropping the edge. Each edge records the
-explanation path and model latency. Current profile status and version are checked again
-at read time. Numeric scores are internal and never displayed. Normal matching excludes
-all test profiles; isolated E2E is the only environment allowed to include them. Each
-result set contains at most the five highest-composite eligible candidates, preserving
-the deterministic tie-break. Result-set snapshots expire after 30 days.
+the composite score, and concise directional evidence derived deterministically from the
+strongest embedding component. Matching makes no generative-model call. Current profile
+status and version are checked again at read time. The signed-in match list and detail
+show the composite as a score out of 100. Normal matching excludes all test profiles;
+isolated E2E is the only environment allowed to include them. Each immutable result set
+contains the complete ordered eligible set and is paginated at ten profiles per page,
+preserving the deterministic tie-break. Result-set snapshots expire after 30 days.
 
-每個符合資格的 pair 都會保存雙方 profile version、五個分項分數、加權總分，以及在寫入
-edge 時透過一次 judge model 呼叫產生的雙向三段說明。Judge 只接收六個可配對欄位；嚴格
-JSON 輸出通過驗證後才保存。若逾時、模型錯誤或回應無效，系統會改用不虛構共同點的
-deterministic fallback，且不會漏寫 edge。每筆 edge 亦保存說明來源與模型延遲。讀取時再
-檢查目前公開狀態與版本。數字分數只供內部排序，不顯示給使用者。一般 matching 排除所有
-test profile，只有隔離 E2E 環境可明確納入。每個 result set 最多保留 composite score
-最高的五位合格候選人，並維持既有的確定性 tie-break；result set 30 天後到期。
+每個符合資格的 pair 都會保存雙方 profile version、五個分項分數、加權總分，以及直接從
+最高 embedding 分項產生的精簡雙向依據；matching 不呼叫生成式模型。讀取時會再檢查目前
+公開狀態與版本。登入後的配對列表與詳細頁會顯示滿分 100 的 composite score。一般
+matching 排除所有 test profile，只有隔離 E2E 環境可明確納入。每個 immutable result set
+保存完整的合格排序結果，每頁顯示十位，並維持既有的確定性 tie-break；result set 30 天後
+到期。
 
 ## 6. Current interface ownership｜目前介面範圍
 

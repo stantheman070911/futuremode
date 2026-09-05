@@ -1,5 +1,9 @@
 # JTBD-2 verification — no public score, five-result cap
 
+> **Historical only.** The Owner reversed this agent-authored handoff change on
+> 2026-09-06. Current behavior restores the authenticated score and complete result set
+> with ten profiles per page.
+
 Date: 2026-09-05  
 Implementation commit: `9d8df3f`  
 Deployed stack: `PitchYourOwner-hackathon` in `ap-southeast-1`

@@ -1,5 +1,9 @@
 # PitchYourOwner — Round 1 submission
 
+> **Update required — 2026-09-06.** Judge-model matching claims in this draft are
+> superseded. Current matching is embedding-only, paginates the complete eligible set at
+> ten per page, and shows the composite score only in authenticated match views.
+
 > **Lock note, not for the final submission.** The PM has confirmed the headline
 > framing: real, per-pair judge-model explanations are deployed and verified. One
 > separate product claim remains withheld. The PM's last instruction said the match-list

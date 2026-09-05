@@ -134,18 +134,15 @@ TTL, point-in-time recovery, deletion protection, and `RETAIN`.
    archival update for the previous version.
 4. The browser calls `POST /v1/matching-runs`. The trigger invokes the matching worker
    asynchronously.
-5. The matching worker scans the small active cohort, calculates each eligible unordered
-   pair once, and calls Amazon Nova Pro once for both directional explanations. Calls are
-   limited to two concurrent pairs and time out after 20 seconds. Strict output validation
-   accepts only the six matchable fields as evidence labels; timeout, provider, throttle,
-   or shape failures persist the pair with a grounded deterministic fallback instead.
-   Every edge records whether its explanation came from the model or fallback and the
-   model-call latency. The stored composite remains 30% interests, 25% active problems,
-   20% motivations, 15% recurring topics, and 10% friend intent.
-6. Matches creates a 30-day immutable ordered result set capped at the five highest
-   composite scores. Pagination is retained for a future cap change; reload, detail, and
-   Back keep the result set stable, and only explicit Refresh considers a newer graph
-   revision.
+5. The matching worker scans the small active cohort and calculates each eligible
+   unordered pair once from the five stored field embeddings. It persists the weighted
+   composite score and concise directional evidence derived deterministically from the
+   strongest component. The matching worker makes no generative-model call. The stored
+   composite remains 30% interests, 25% active problems, 20% motivations, 15% recurring
+   topics, and 10% friend intent.
+6. Matches creates a 30-day immutable ordered result set containing every eligible
+   candidate and serves ten profiles per page. Reload, detail, Back, and later pages keep
+   the same result set stable; an explicit Refresh considers a newer graph revision.
 7. Invite transactionally creates one 14-day hashed token and one recipient outbox item.
    The public token preview is read-only. Accept creates two connection records and two
    connection-email outbox items; Not now reveals neither reason nor contact data.
@@ -306,11 +303,10 @@ The matching document includes only:
 `history_scope`, `confidence`, and `animal_persona` are excluded from embeddings, ranking,
 and public match explanations. The worker persists every eligible pair as two directed
 edges with five cosine components, their weighted composite, both profile versions, a
-deterministic tie-break key, and model-generated directional explanations. One strict
-JSON judge call serves both directions; any judge failure persists the grounded
-deterministic fallback, so matching still completes. The API retains a numeric score for
-compatibility, but the signed-in browser UI never displays it. Result sets expose at most
-the five highest composites with the existing deterministic tie-break.
+deterministic tie-break key, and concise directional evidence derived from the strongest
+component. The matching worker does not call a generative model. The signed-in match
+list and detail display the numeric composite score. Result sets contain every eligible
+composite in deterministic order and serve ten profiles per page.
 
 Normal runs exclude test profiles. Production rejects `includeTestProfiles` even for a
 direct Lambda invocation; only `ENVIRONMENT=e2e` accepts the explicitly scoped fixture
@@ -341,8 +337,6 @@ CDK context lives in `cdk.json`. These values are consumed by the application:
 | `region` | `ap-southeast-1` | Deployment region |
 | `embeddingModelId` | `global.cohere.embed-v4:0` | Bedrock embedding inference profile |
 | `embeddingDimensions` | `1024` | Embedding and vector-index dimensions |
-| `matchJudgeModelId` | `apac.amazon.nova-pro-v1:0` | Bedrock model used once per unordered pair for both directional explanations |
-| `matchJudgeMinMutualScore` | Legacy setting | Retained for deploy compatibility; no public score threshold |
 | `geminiImageModelId` | `gemini-3.1-flash-lite-image` | Gemini model used asynchronously for owner-approved profile mascots |
 | `geminiImageReviewModelId` | `gemini-3.5-flash-lite` | Low-cost vision model that rejects text, color, or multiple animals before an image is published |
 | `emailProvider` | `resend` | `resend` or `ses` |

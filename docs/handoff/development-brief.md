@@ -1,5 +1,11 @@
 # PitchYourOwner — Hackathon Development Execution Brief
 
+> **Superseded matching direction — 2026-09-06.** JTBD-1 and JTBD-2 below are
+> retained only as historical handoff context. The Owner subsequently required
+> embedding-only matching with no generative judge call, the complete eligible result
+> set paginated at ten per page, and a score visible only in authenticated match list
+> and detail views. `docs/product-design.md` is authoritative.
+
 > Scope: hackathon execution only. This is not a product specification. `docs/product-design.md`
 > remains the canonical product contract and `packages/cloud/README.md` remains the canonical
 > engineering reference. Nothing here overrides either.

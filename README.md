@@ -26,15 +26,16 @@ AI 助理早就握有這個訊號——反覆出現的問題、尚未解決的�
 
 **PitchYourOwner is agents introducing their owners to each other.** The owner's own
 assistant writes the pitch and resolves privacy decisions before transfer. A deployed
-judge model reads two approved profiles and explains why that pair might have something
-to discuss. After mutual acceptance, one owner-triggered handoff gives the chosen
-assistant both profiles and that explanation so it can draft the first message. Two
+embedding matcher compares the five approved matching fields and stores a score plus
+concise field-grounded evidence for each pair. After mutual acceptance, one
+owner-triggered handoff gives the chosen assistant both profiles and that evidence so it
+can draft the first message. Two
 independent human approval gates remain in control: exclusion inside the owner's AI,
 then explicit publication on this site.
 
 **PitchYourOwner 讓 agents 彼此介紹自己的 owners。** Owner 自己的 AI 助理先寫 pitch，並在
-傳輸前完成隱私決定；已部署的 judge model 讀取兩份經核准的介紹，說明這兩人為何可能值得
-一聊；雙方都接受後，owner 再主動觸發一次 handoff，把兩份介紹與配對理由交給所選 AI
+傳輸前完成隱私決定；embedding matcher 比較兩份經核准介紹中的五個配對欄位，為每個 pair
+保存分數與精簡欄位依據；雙方都接受後，owner 再主動觸發一次 handoff，把兩份介紹與配對依據交給所選 AI
 助理起草第一封訊息。過程保留兩個獨立的人工核准關卡：先在 owner 自己的 AI 中排除主題，
 再於本站明確核准發布。
 
@@ -51,7 +52,8 @@ The implemented journey is:
 5. Paste the JSON into PitchYourOwner, then edit and explicitly publish from the
    document-style visual confirmation page.
 6. Publish the profile, create its embedding, and start matching.
-7. Review a match through three plain-language questions and evidence labels.
+7. Browse ten matches per page in embedding-score order, then open a profile to review
+   its score and concise field-grounded evidence.
 8. Invite the other owner. Contact information appears only after both owners accept.
 9. From the connection view, hand both approved profiles and the match explanation to
    the chosen assistant so it can draft the first message.
@@ -82,14 +84,11 @@ excluding all fixture and test profiles, and will be updated as the cohort compl
 | Invitations sent | `[PENDING — P0-M1 cohort]` |
 | Mutual connections | `[PENDING — P0-M1 cohort]` |
 | Median publish-to-first-match latency | `[PENDING — Development funnel report]` |
-| Explanation source (model vs. fallback) | `[PENDING — Development funnel report]` |
+| Matching calculation path | Embedding-only |
 
-Separately, a September 5 live technical verification of the deployed judge processed
-seven pairs: seven model explanations, zero fallbacks, 4.875 seconds median model
-latency, and approximately USD 0.060 estimated judge cost for the run. These are
-explanation-path measurements, not cohort outcomes or evidence of match quality. The
-full method and a public-use anonymized example are in
-[`docs/verification/2026-09-05-jtbd-1-model-explanations.md`](docs/verification/2026-09-05-jtbd-1-model-explanations.md).
+The September 5 judge-model experiment is retained only as historical verification. It
+was removed from the active matching path on September 6; current matching does not call
+a generative model.
 
 No cohort number in this section is drawn from synthetic or fixture data. See
 [`docs/round1-submission.md`](docs/round1-submission.md) for the full narrative and
@@ -109,8 +108,7 @@ CloudFront
                               ├── Profile drafts, versions, and owner controls
                               ├── Bedrock Cohere profile embeddings
                               ├── Small-cohort field-vector ranking
-                              ├── Bedrock Nova Pro judge at pair-edge write
-                              │     └── strict validation → grounded fallback on failure
+                              ├── Stored pair scores and deterministic field evidence
                               ├── Matches and mutual-consent invitations
                               └── Support requests
                                       │
@@ -190,8 +188,8 @@ reproducible behavior.
 - Matching has been exercised with synthetic photographer, dancer, and sound-designer
   profiles. No real 10–30-person validation cohort has been completed, so the repository
   does not claim real-user match quality.
-- Matching scans the small active cohort and judges candidates per seed. Its provider
-  work approaches O(n²) across a cohort and is intentionally sized for fewer than about
+- Matching scans the small active cohort and calculates incident pairs per seed. A full
+  cohort rebuild approaches O(n²) and is intentionally sized for fewer than about
   50 Hackathon participants.
 - Browser sessions are opaque tokens stored in `localStorage`; production use would
   require a stronger browser-session and CSRF design.
@@ -203,7 +201,7 @@ reproducible behavior.
 
 ## External services and assets｜外部服務與素材
 
-- Amazon Bedrock: Cohere `embed-v4` for embeddings and Amazon Nova Pro for match judging.
+- Amazon Bedrock: Cohere `embed-v4` for profile-field embeddings.
 - Amazon DynamoDB, Lambda, API Gateway, S3, CloudFront, SQS, SNS, CloudWatch, AWS Budgets,
   and optionally SES.
 - Resend is the default OTP email provider.

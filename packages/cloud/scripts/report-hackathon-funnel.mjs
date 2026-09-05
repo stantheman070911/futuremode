@@ -140,6 +140,7 @@ const metrics = {
   declined: emptyCounts(),
   connections: emptyCounts(),
   connectedOwners: Object.fromEntries(CATEGORIES.map((category) => [category, new Set()])),
+  embeddingPairs: emptyCounts(),
   modelPairs: emptyCounts(),
   fallbackPairs: emptyCounts(),
 };
@@ -183,6 +184,7 @@ for (const edge of edges) {
 }
 for (const edge of edgeByPair.values()) {
   const category = pairCategory(edge.ownerProfileId, edge.candidateProfileId);
+  if (edge.explanationSource === "embedding") add(metrics.embeddingPairs, category);
   if (edge.explanationSource === "model") add(metrics.modelPairs, category);
   if (edge.explanationSource === "fallback") add(metrics.fallbackPairs, category);
 }
@@ -224,12 +226,13 @@ const rows = [
 for (const [label, counts] of rows) console.log(`| ${label} | ${CATEGORIES.map((category) => counts[category]).join(" | ")} |`);
 
 console.log("");
-console.log("## Matching explanations");
+console.log("## Matching calculation path");
 console.log("");
 console.log(`| Path | ${CATEGORIES.map((category) => LABELS[category]).join(" | ")} |`);
 console.log(`| --- | ${CATEGORIES.map(() => "---:").join(" | ")} |`);
+console.log(`| Embedding-only pairs | ${CATEGORIES.map((category) => metrics.embeddingPairs[category]).join(" | ")} |`);
 console.log(`| Model pairs | ${CATEGORIES.map((category) => metrics.modelPairs[category]).join(" | ")} |`);
-console.log(`| Fallback pairs | ${CATEGORIES.map((category) => metrics.fallbackPairs[category]).join(" | ")} |`);
+console.log(`| Legacy fallback pairs | ${CATEGORIES.map((category) => metrics.fallbackPairs[category]).join(" | ")} |`);
 
 console.log("");
 console.log("## Publish-to-edge timing");

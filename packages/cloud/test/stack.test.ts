@@ -15,8 +15,6 @@ function template() {
       matchingEmailDeliveryEnabled: true,
       embeddingModelId: "global.cohere.embed-v4:0",
       embeddingDimensions: 1024,
-      matchJudgeModelId: "apac.amazon.nova-pro-v1:0",
-      matchJudgeMinMutualScore: 65,
       matchingSchedule: "cron(0 1 ? * MON *)",
       monthlyBudgetUsd: 100,
     },
@@ -147,6 +145,18 @@ test("grants matching trigger access only to the matching runner", () => {
   const triggerPolicyJson = JSON.stringify(triggerPolicy);
   assert.match(triggerPolicyJson, /dynamodb:GetItem/);
   assert.doesNotMatch(triggerPolicyJson, /dynamodb:(PutItem|UpdateItem|DeleteItem|BatchWriteItem)/);
+});
+
+test("keeps generative model access out of the matching runner", () => {
+  const functions = template().findResources("AWS::Lambda::Function");
+  const runner = Object.values(functions).find((resource) => resource.Properties.FunctionName === "pitchyourowner-dev-matching-run");
+  assert.ok(runner);
+  const runnerRoleId = runner.Properties.Role["Fn::GetAtt"][0];
+  const policies = Object.values(template().findResources("AWS::IAM::Policy"))
+    .filter((resource) => (resource.Properties.Roles || []).some((role: Record<string, unknown>) => role.Ref === runnerRoleId));
+  const runnerPolicyJson = JSON.stringify(policies);
+  assert.doesNotMatch(runnerPolicyJson, /bedrock:InvokeModel/);
+  assert.doesNotMatch(JSON.stringify(runner.Properties.Environment || {}), /MATCH_JUDGE/);
 });
 
 test("waits for vector provider GetFunction policy before creating the index", () => {

@@ -17,7 +17,6 @@ interface ResultSetItem { candidateId: string; candidateVersionId: string; edgeS
 
 const DAY = 86_400;
 const PAGE_SIZE = 10;
-export const MAX_MATCH_RESULTS = 5;
 const RESULT_SET_FRESHNESS_SECONDS = 60;
 const genericAnimal = "帶著好奇心探索的水獺";
 
@@ -105,7 +104,7 @@ async function createResultSet(tableName: string, owner: CurrentProfile) {
   const now = new Date().toISOString();
   const expiresAt = Math.floor(Date.now() / 1000) + 30 * DAY;
   const fixtureMeta = owner.isTestProfile === true && owner.cleanupSafe === true && owner.testRunId ? { isTestProfile: true, cleanupSafe: true, testRunId: owner.testRunId, ...(owner.isManualTestProfile === true ? { isManualTestProfile: true, testCohortId: owner.testCohortId } : {}) } : {};
-  const items: ResultSetItem[] = edges.slice(0, MAX_MATCH_RESULTS).map((edge) => ({ candidateId: edge.candidateProfileId, candidateVersionId: edge.candidateVersionId, edgeSk: edge.sk, pairId: edge.pairId }));
+  const items: ResultSetItem[] = edges.map((edge) => ({ candidateId: edge.candidateProfileId, candidateVersionId: edge.candidateVersionId, edgeSk: edge.sk, pairId: edge.pairId }));
   await documentDynamo.send(new TransactWriteCommand({ TransactItems: [
     { Put: { TableName: tableName, Item: { pk: `RESULT_SET#${resultSetId}`, sk: "META", entityType: "MATCH_RESULT_SET", resultSetId, ownerProfileId: owner.profileId, ownerVersionId: owner.versionId, graphRevision: revision, items, createdAt: now, expiresAt, ...fixtureMeta }, ConditionExpression: "attribute_not_exists(pk)" } },
     { Put: { TableName: tableName, Item: { pk: `PROFILE#${owner.profileId}`, sk: "RESULT_SET_CURRENT", entityType: "MATCH_RESULT_POINTER", resultSetId, graphRevision: revision, createdAt: now, expiresAt, ...fixtureMeta } } },
@@ -119,7 +118,7 @@ async function loadResultSet(tableName: string, owner: CurrentProfile, requested
   const existing = id ? (await documentDynamo.send(new GetCommand({ TableName: tableName, Key: { pk: `RESULT_SET#${id}`, sk: "META" }, ConsistentRead: true }))).Item : undefined;
   const now = Math.floor(Date.now() / 1000);
   if (existing?.ownerProfileId === owner.profileId && Number(existing.expiresAt) > now) {
-    const items = Array.isArray(existing.items) ? (existing.items as ResultSetItem[]).slice(0, MAX_MATCH_RESULTS) : [];
+    const items = Array.isArray(existing.items) ? existing.items as ResultSetItem[] : [];
     const view = { resultSetId: id, graphRevision: Number(existing.graphRevision), items, expiresAt: Number(existing.expiresAt) };
     if (!resultSetNeedsRevisionCheck({ requested: Boolean(requested), refresh, empty: items.length === 0, createdAt: existing.createdAt })) return view;
     if (Number(existing.graphRevision) === await graphRevision(tableName)) return view;
@@ -177,10 +176,7 @@ async function edgeView(tableName: string, owner: CurrentProfile, item: ResultSe
 
 async function listResult(tableName: string, owner: CurrentProfile, requestedSet: string | undefined, page: number, refresh: boolean) {
   const set = await loadResultSet(tableName, owner, requestedSet, refresh);
-  const total = set.items.length;
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const safePage = Math.min(Math.max(1, page), totalPages);
-  const slice = set.items.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+  const { total, totalPages, safePage, items } = paginateResultSetItems(set.items, page);
   return {
     result_set_id: set.resultSetId,
     graph_revision: set.graphRevision,
@@ -189,7 +185,19 @@ async function listResult(tableName: string, owner: CurrentProfile, requestedSet
     page_size: PAGE_SIZE,
     total,
     total_pages: totalPages,
-    matches: await Promise.all(slice.map((item) => edgeView(tableName, owner, item))),
+    matches: await Promise.all(items.map((item) => edgeView(tableName, owner, item))),
+  };
+}
+
+export function paginateResultSetItems(items: ResultSetItem[], page: number) {
+  const total = items.length;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const safePage = Math.min(Math.max(1, page), totalPages);
+  return {
+    total,
+    totalPages,
+    safePage,
+    items: items.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE),
   };
 }
 

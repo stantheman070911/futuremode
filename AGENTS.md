@@ -61,8 +61,9 @@ Do not compromise these to simplify implementation:
    publication approval on PitchYourOwner.
 4. `history_scope` and `confidence` are owner-only and never enter matching or peer
    responses.
-5. Every shown match names concrete shared attention and answers the three explanation
-   questions without a public score.
+5. Every shown match names concrete shared attention, answers the three explanation
+   questions, and shows its embedding composite score only in the signed-in match list
+   and detail view.
 6. Contact information appears only after mutual acceptance.
 7. Do not add swipe decks, popularity signals, follower mechanics, or engagement loops.
 

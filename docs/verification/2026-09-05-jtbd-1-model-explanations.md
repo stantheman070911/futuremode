@@ -1,5 +1,8 @@
 # JTBD-1 verification — model-generated match explanations
 
+> **Historical experiment.** This path was removed from active matching on 2026-09-06.
+> Current matching uses stored field embeddings and deterministic field evidence only.
+
 Date: 2026-09-05  
 Implementation commits: `e70a99d`, `4070078`  
 Deployed stack: `PitchYourOwner-hackathon` in `ap-southeast-1`
