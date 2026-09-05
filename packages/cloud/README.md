@@ -423,6 +423,47 @@ Matching reruns overwrite each edge's `calculatedAt`. The report therefore label
 as publish to the earliest **currently persisted** edge; after a rerun it must not be
 quoted as historical first-match latency.
 
+## Live demo pre-staging
+
+The Round 2 path is a real two-phone flow against the deployed Hackathon environment;
+the seeded `?demo=1` path is not used. Assign two controlled real-inbox accounts in the
+private event run sheet rather than committing their addresses:
+
+- **Primary demo owner:** a fresh account with no current profile, used on the mirrored
+  presenter phone.
+- **Second-device peer:** an account with a public, active, complementary profile, used
+  on the second phone to receive and accept the invitation.
+
+Before the room opens:
+
+1. Confirm the deployed commit and CloudFormation stack are the intended Hackathon
+   versions; do not assume a green repository commit was deployed.
+2. On the primary phone, sign out of PitchYourOwner and leave the app at its start page.
+   Keep the primary inbox one app-switch away for the OTP. Sign in to the chosen ChatGPT
+   or Claude account separately and confirm its memory/context setting is suitable.
+3. Copy `scripts/demo/paste-fallback-profile.json` into an offline phone note without
+   modifying it. This is a disclosed recovery input if the third-party assistant returns
+   malformed JSON; it is not a seeded shortcut in the product.
+4. On the second phone, sign in as the designated peer and leave PitchYourOwner open at
+   `/invitations`. Keep that inbox available as a delivery fallback. Confirm the peer's
+   profile is public and matching is active, and that no unresolved invitation exists
+   between the two demo accounts.
+5. Confirm both phones have network access, disable notification previews that could
+   expose unrelated messages on the projector, and start a visible stopwatch before the
+   first tap.
+
+Walk and time every step independently: sign in; choose assistant; hand off; answer the
+assistant's one exclusion question; return and paste; edit one field; confirm and upload;
+wait for matches; open one match; send the invitation; refresh the second phone; verify
+contact is still absent; accept; open the connection on both sides; verify contact is now
+visible; and ask the chosen assistant to draft the first email.
+
+For a second consecutive rehearsal with the same primary address, use the product's
+explicit account-deletion flow between runs and verify the peer no longer retains the old
+connection before starting again. Never delete or overwrite live data from a script.
+Record timings and defects in `docs/verification/`; fix only defects on this primary path
+without PM confirmation.
+
 ## Isolated cloud E2E verification
 
 Fixture mutation is allowed only in the exact `PitchYourOwner-e2e` stack and

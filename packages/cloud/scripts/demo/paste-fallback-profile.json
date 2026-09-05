@@ -1,0 +1,32 @@
+{
+  "history_scope": "舞台示範用的預先核准備援資料；不包含私人對話、帳號、聯絡方式或第三方資料。",
+  "animal_persona": "把複雜協作路徑畫成清楚地圖的藍色水獺",
+  "summary": "正在把 AI agent 的能力整理成一般人也能理解、確認與持續使用的產品流程，特別關注人如何保有決定權，以及系統如何用可檢查的證據說明結果。",
+  "interests": [
+    "AI agent 與人類協作的產品設計",
+    "把複雜工作流程轉成手機上可完成的體驗",
+    "以具體證據解釋 AI 推薦"
+  ],
+  "motivations": [
+    "讓非技術使用者能安全地使用原本需要工程知識的 agent 能力",
+    "用真實流程驗證產品價值，而不只展示模型功能"
+  ],
+  "active_problems": [
+    "如何在低操作負擔下保留清楚的人類確認點",
+    "如何讓配對理由具體到雙方能立刻決定是否值得交流"
+  ],
+  "recurring_topics": [
+    "owner-controlled AI 工作流程",
+    "可解釋配對與證據標籤",
+    "手機優先的 agent handoff"
+  ],
+  "friend_intent": "想認識也在實作 AI agent 產品、可解釋推薦或人機協作流程的人，交換如何把 prototype 變成一般人能完成的真實體驗。",
+  "confidence": {
+    "summary": "high",
+    "interests": "high",
+    "motivations": "high",
+    "active_problems": "medium",
+    "recurring_topics": "high",
+    "friend_intent": "medium"
+  }
+}
