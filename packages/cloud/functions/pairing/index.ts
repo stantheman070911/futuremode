@@ -6,7 +6,7 @@ import { json, parseJsonBody } from "../shared/http.js";
 import { randomOpaqueToken, sha256 } from "../shared/security.js";
 import { documentDynamo, requiredEnvironment } from "../shared/storage.js";
 
-interface CurrentProfile extends Record<string, unknown> { profileId: string; versionId: string; email: string; displayName?: string; publicSlug?: string; visibility?: string; matchingState?: string; isTestProfile?: boolean; cleanupSafe?: boolean; testRunId?: string }
+interface CurrentProfile extends Record<string, unknown> { profileId: string; versionId: string; email: string; emailHash?: string; displayName?: string; publicSlug?: string; visibility?: string; matchingState?: string; isTestProfile?: boolean; cleanupSafe?: boolean; testRunId?: string; isFixtureProfile?: boolean; fixtureAudienceEmailHash?: string }
 interface ProfileVersion extends Record<string, unknown> { profileId: string; versionId: string; displayName?: string; profile: OwnerPitchProfile }
 interface Edge extends Record<string, unknown> {
   sk: string; pairId: string; ownerProfileId: string; ownerVersionId: string; candidateProfileId: string; candidateVersionId: string;
@@ -21,6 +21,12 @@ const genericAnimal = "帶著好奇心探索的水獺";
 function escapeHtml(value: unknown): string { return String(value ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\"/g, "&quot;"); }
 function compact(value: unknown, max = 360): string { const result = String(value ?? "").replace(/\s+/g, " ").trim(); return result.length > max ? `${result.slice(0, max - 1)}…` : result; }
 function profileIsPublic(current: Record<string, unknown> | undefined): current is CurrentProfile { return Boolean(current?.profileId && current.versionId && current.email && current.visibility !== "private" && String(current.matchingState ?? "active") === "active"); }
+
+export function ownerCanSeeCandidate(owner: Record<string, unknown>, candidate: Record<string, unknown>): boolean {
+  if (candidate.isFixtureProfile === true) return Boolean(owner.emailHash && candidate.fixtureAudienceEmailHash === owner.emailHash);
+  if (candidate.isTestProfile === true) return owner.isTestProfile === true && owner.testRunId === candidate.testRunId;
+  return true;
+}
 
 async function getCurrent(tableName: string, profileId: string): Promise<CurrentProfile | undefined> {
   return (await documentDynamo.send(new GetCommand({ TableName: tableName, Key: { pk: `PROFILE#${profileId}`, sk: "CURRENT" }, ConsistentRead: true }))).Item as CurrentProfile | undefined;
@@ -60,7 +66,7 @@ async function validEdges(tableName: string, owner: CurrentProfile): Promise<Edg
   for (const edge of edges) {
     if (edge.ownerVersionId !== owner.versionId || seen.has(edge.candidateProfileId)) continue;
     const candidate = await getCurrent(tableName, edge.candidateProfileId);
-    if (!profileIsPublic(candidate) || candidate.versionId !== edge.candidateVersionId) continue;
+    if (!profileIsPublic(candidate) || candidate.versionId !== edge.candidateVersionId || !ownerCanSeeCandidate(owner, candidate)) continue;
     seen.add(edge.candidateProfileId); result.push(edge);
   }
   return result.sort((left, right) => Number(right.compositeScore) - Number(left.compositeScore) || left.candidateProfileId.localeCompare(right.candidateProfileId));
@@ -108,7 +114,7 @@ function stateFor(invite: Record<string, unknown> | undefined, ownerId: string):
 async function edgeView(tableName: string, owner: CurrentProfile, item: ResultSetItem, detail = false) {
   const edge = (await documentDynamo.send(new GetCommand({ TableName: tableName, Key: { pk: `PROFILE#${owner.profileId}`, sk: item.edgeSk }, ConsistentRead: true }))).Item as Edge | undefined;
   const peerCurrent = await getCurrent(tableName, item.candidateId);
-  if (!edge || edge.ownerVersionId !== owner.versionId || edge.candidateVersionId !== item.candidateVersionId || !profileIsPublic(peerCurrent) || peerCurrent.versionId !== item.candidateVersionId) {
+  if (!edge || edge.ownerVersionId !== owner.versionId || edge.candidateVersionId !== item.candidateVersionId || !profileIsPublic(peerCurrent) || peerCurrent.versionId !== item.candidateVersionId || !ownerCanSeeCandidate(owner, peerCurrent)) {
     return { match_id: item.pairId, state: "unavailable", unavailable: true };
   }
   const [peerVersion, invite] = await Promise.all([getVersion(tableName, item.candidateId, item.candidateVersionId), invitation(tableName, item.pairId)]);
@@ -123,6 +129,7 @@ async function edgeView(tableName: string, owner: CurrentProfile, item: ResultSe
       display_name: profileAnimalPersona(peerVersion.profile),
       animal_persona: profileAnimalPersona(peerVersion.profile),
       summary: shareable.summary,
+      is_fixture: peerCurrent.isFixtureProfile === true,
       ...(detail ? { profile: { ...shareable, animal_persona: profileAnimalPersona(peerVersion.profile) } } : {}),
     },
     strongest_shared_signal: edge.strongestSignal,
@@ -132,7 +139,7 @@ async function edgeView(tableName: string, owner: CurrentProfile, item: ResultSe
       what_we_could_discuss: edge.whatWeCouldDiscuss,
       evidence_labels: edge.evidenceLabels ?? ["interests", "active_problems"],
     },
-    can_invite: !invite,
+    can_invite: !invite && peerCurrent.isFixtureProfile !== true,
   };
 }
 
@@ -188,6 +195,7 @@ async function sendInvite(tableName: string, owner: CurrentProfile, pairId: stri
     return { invitation_id: pairId, state: stateFor(existing, owner.profileId), idempotent_replay: true };
   }
   const { edge, peer, peerVersion } = await findAuthorizedEdge(tableName, owner, pairId);
+  if (peer.isFixtureProfile === true) throw new Error("fixture_invitation_unavailable");
   const ownVersion = await getVersion(tableName, owner.profileId, owner.versionId);
   if (!ownVersion?.profile) throw new Error("profile_required");
   const rawToken = randomOpaqueToken(32);
@@ -316,7 +324,7 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
   } catch (error) {
     const message = error instanceof Error ? error.message : "pairing_failed";
     if (/session|bearer/.test(message)) return json(401, { error: "invalid_cloud_session" });
-    if (["profile_required", "public_profile_required"].includes(message)) return json(409, { error: message });
+    if (["profile_required", "public_profile_required", "fixture_invitation_unavailable"].includes(message)) return json(409, { error: message });
     if (["match_not_found", "peer_profile_not_found", "result_set_not_found", "connection_not_found"].includes(message)) return json(404, { error: message });
     if (message.includes("invitation_token_invalid")) return json(410, { error: "invitation_token_invalid" });
     if (message.includes("ConditionalCheckFailed") || message.includes("TransactionCanceled")) return json(409, { error: "invitation_already_answered" });

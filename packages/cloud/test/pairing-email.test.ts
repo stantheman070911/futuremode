@@ -1,6 +1,14 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { renderConnectionEmail, renderInvitationEmail } from "../functions/pairing/index.js";
+import { ownerCanSeeCandidate, renderConnectionEmail, renderInvitationEmail } from "../functions/pairing/index.js";
+
+test("authorizes fixture edges only for their intended owner", () => {
+  const fixture = { isFixtureProfile: true, fixtureAudienceEmailHash: "owner-hash" };
+  assert.equal(ownerCanSeeCandidate({ emailHash: "owner-hash" }, fixture), true);
+  assert.equal(ownerCanSeeCandidate({ emailHash: "other-hash" }, fixture), false);
+  assert.equal(ownerCanSeeCandidate({}, fixture), false);
+  assert.equal(ownerCanSeeCandidate({}, { profileId: "real" }), true);
+});
 
 test("invitation email uses the site style and does not expose contact data", () => {
   const rendered = renderInvitationEmail({

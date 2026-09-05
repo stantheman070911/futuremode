@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { haveCompatibleMatchLanguage, isCurrentMatchable } from "../functions/matching-run/index.js";
+import { fixtureCandidateIsVisible, haveCompatibleMatchLanguage, isCurrentMatchable } from "../functions/matching-run/index.js";
 
 test("only active current profiles with email can enter matching", () => {
   assert.equal(isCurrentMatchable({ profileId: "one", email: "one@example.com" }), true);
@@ -23,4 +23,12 @@ test("requires at least one shared match language", () => {
     { profileId: "one" },
     { profileId: "two", matchLanguages: ["zh"] },
   ), true);
+});
+
+test("shows a private fixture only to its audience email hash", () => {
+  const fixture = { profileId: "fixture", isFixtureProfile: true, fixtureAudienceEmailHash: "viewer-hash" };
+  assert.equal(fixtureCandidateIsVisible(fixture, "viewer-hash"), true);
+  assert.equal(fixtureCandidateIsVisible(fixture, "someone-else"), false);
+  assert.equal(fixtureCandidateIsVisible(fixture), false);
+  assert.equal(fixtureCandidateIsVisible({ profileId: "real" }, "someone-else"), true);
 });

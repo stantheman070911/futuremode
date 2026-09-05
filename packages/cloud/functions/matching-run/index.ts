@@ -11,9 +11,12 @@ interface CurrentProfile extends Record<string, unknown> {
   publicSlug?: string;
   matchingState?: string;
   visibility?: string;
+  emailHash?: string;
   isTestProfile?: boolean;
   testRunId?: string;
   cleanupSafe?: boolean;
+  isFixtureProfile?: boolean;
+  fixtureAudienceEmailHash?: string;
 }
 
 interface ProfileVersion extends Record<string, unknown> {
@@ -93,9 +96,15 @@ function edgeSortKey(score: number, candidateId: string): string {
   return `EDGE#${inverted}#${candidateId}`;
 }
 
-function inScope(profile: CurrentProfile, scope: MatchingScope): boolean {
+function inScope(profile: CurrentProfile, scope: MatchingScope, fixtureAudienceEmailHash?: string): boolean {
   if (scope.includeTestProfiles) return profile.isTestProfile === true && profile.cleanupSafe === true && profile.testRunId === scope.testRunId;
-  return profile.isTestProfile !== true;
+  if (profile.isTestProfile === true) return false;
+  if (profile.isFixtureProfile === true) return Boolean(fixtureAudienceEmailHash && profile.fixtureAudienceEmailHash === fixtureAudienceEmailHash);
+  return true;
+}
+
+export function fixtureCandidateIsVisible(profile: Record<string, unknown>, audienceEmailHash?: string): boolean {
+  return inScope(profile as CurrentProfile, { includeTestProfiles: false }, audienceEmailHash);
 }
 
 async function scanAll(tableName: string): Promise<Array<Record<string, unknown>>> {
@@ -108,11 +117,11 @@ async function scanAll(tableName: string): Promise<Array<Record<string, unknown>
   return items;
 }
 
-function loadedProfiles(items: Array<Record<string, unknown>>, scope: MatchingScope): LoadedProfile[] {
+function loadedProfiles(items: Array<Record<string, unknown>>, scope: MatchingScope, fixtureAudienceEmailHash?: string): LoadedProfile[] {
   const versions = new Map<string, ProfileVersion>();
   for (const item of items) if (item.entityType === "PROFILE_VERSION" && item.profileId && item.versionId) versions.set(`${item.profileId}:${item.versionId}`, item as ProfileVersion);
   return items
-    .filter((item) => item.entityType === "PROFILE_CURRENT" && item.versionId && isCurrentMatchable(item) && inScope(item as CurrentProfile, scope))
+    .filter((item) => item.entityType === "PROFILE_CURRENT" && item.versionId && isCurrentMatchable(item) && inScope(item as CurrentProfile, scope, fixtureAudienceEmailHash))
     .map((current) => ({ current: current as CurrentProfile, version: versions.get(`${current.profileId}:${current.versionId}`) }))
     .filter((entry): entry is LoadedProfile => Boolean(entry.version?.profile));
 }
@@ -129,7 +138,7 @@ async function ensurePublicSlug(tableName: string, entry: LoadedProfile): Promis
 
 function pairId(left: string, right: string): string { return sha256([left, right].sort().join(":" )).slice(0, 32); }
 
-async function persistPair(tableName: string, left: LoadedProfile, right: LoadedProfile, now: string): Promise<void> {
+async function persistPair(tableName: string, left: LoadedProfile, right: LoadedProfile, now: string, writeReverse = true): Promise<void> {
   const similarity = weightedSimilarity(left.version, right.version);
   const leftExplanation = explanation(left.version.profile, right.version.profile, similarity.components);
   const rightExplanation = explanation(right.version.profile, left.version.profile, similarity.components);
@@ -152,18 +161,24 @@ async function persistPair(tableName: string, left: LoadedProfile, right: Loaded
     ...narrative,
     ...(owner.current.isTestProfile === true ? { isTestProfile: true, cleanupSafe: true, testRunId: owner.current.testRunId } : {}),
   });
-  await documentDynamo.send(new TransactWriteCommand({ TransactItems: [
+  const writes: ConstructorParameters<typeof TransactWriteCommand>[0]["TransactItems"] = [
     { Put: { TableName: tableName, Item: make(left, right, leftExplanation) } },
-    { Put: { TableName: tableName, Item: make(right, left, rightExplanation) } },
-  ] }));
+  ];
+  if (writeReverse) writes.push({ Put: { TableName: tableName, Item: make(right, left, rightExplanation) } });
+  await documentDynamo.send(new TransactWriteCommand({ TransactItems: writes }));
 }
 
 export async function handler(event?: unknown): Promise<Record<string, unknown>> {
   const tableName = requiredEnvironment("TABLE_NAME");
   const scope = matchingScope(event);
-  const profiles = loadedProfiles(await scanAll(tableName), scope);
-  for (const profile of profiles) await ensurePublicSlug(tableName, profile);
+  const items = await scanAll(tableName);
   const requestedId = event && typeof event === "object" ? String((event as Record<string, unknown>).profileId ?? "") : "";
+  const regularProfiles = loadedProfiles(items, scope);
+  const requestedOwner = requestedId ? regularProfiles.find((entry) => entry.current.profileId === requestedId) : undefined;
+  const profiles = requestedOwner && !scope.includeTestProfiles
+    ? loadedProfiles(items, scope, requestedOwner.current.emailHash)
+    : regularProfiles;
+  for (const profile of profiles) if (profile.current.isFixtureProfile !== true) await ensurePublicSlug(tableName, profile);
   const seeds = requestedId ? profiles.filter((entry) => entry.current.profileId === requestedId) : profiles;
   let pairs = 0;
   const completed = new Set<string>();
@@ -172,7 +187,7 @@ export async function handler(event?: unknown): Promise<Record<string, unknown>>
       if (candidate.current.profileId === seed.current.profileId) continue;
       const id = pairId(seed.current.profileId, candidate.current.profileId);
       if (completed.has(id)) continue;
-      await persistPair(tableName, seed, candidate, new Date().toISOString());
+      await persistPair(tableName, seed, candidate, new Date().toISOString(), candidate.current.isFixtureProfile !== true);
       completed.add(id); pairs += 1;
     }
   }
