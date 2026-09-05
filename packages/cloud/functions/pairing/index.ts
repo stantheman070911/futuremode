@@ -43,9 +43,13 @@ export function publicSimilarityScore(value: unknown): number {
   return Math.round(Math.max(0, Math.min(1, Number.isFinite(score) ? score : 0)) * 100);
 }
 
-export function resultSetNeedsRevisionCheck(input: { requested: boolean; refresh: boolean; createdAt?: unknown; nowMs?: number }): boolean {
+export function resultSetNeedsRevisionCheck(input: { requested: boolean; refresh: boolean; empty?: boolean; createdAt?: unknown; nowMs?: number }): boolean {
   if (input.refresh) return true;
-  if (input.requested) return false;
+  // A pinned, non-empty result set must stay stable while the owner paginates.
+  // An empty set created while the asynchronous matching run is still working
+  // is not a useful stable snapshot: keep checking the graph revision so even
+  // an older cached frontend can recover as soon as the edges are ready.
+  if (input.requested) return input.empty === true;
   const createdAt = Date.parse(String(input.createdAt ?? ""));
   if (!Number.isFinite(createdAt)) return true;
   return (input.nowMs ?? Date.now()) - createdAt >= RESULT_SET_FRESHNESS_SECONDS * 1_000;
@@ -117,7 +121,7 @@ async function loadResultSet(tableName: string, owner: CurrentProfile, requested
   if (existing?.ownerProfileId === owner.profileId && Number(existing.expiresAt) > now) {
     const items = Array.isArray(existing.items) ? (existing.items as ResultSetItem[]).slice(0, MAX_MATCH_RESULTS) : [];
     const view = { resultSetId: id, graphRevision: Number(existing.graphRevision), items, expiresAt: Number(existing.expiresAt) };
-    if (!resultSetNeedsRevisionCheck({ requested: Boolean(requested), refresh, createdAt: existing.createdAt })) return view;
+    if (!resultSetNeedsRevisionCheck({ requested: Boolean(requested), refresh, empty: items.length === 0, createdAt: existing.createdAt })) return view;
     if (Number(existing.graphRevision) === await graphRevision(tableName)) return view;
   }
   if (requested && !refresh) throw new Error("result_set_not_found");

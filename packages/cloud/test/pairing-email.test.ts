@@ -24,9 +24,10 @@ test("normalizes the persisted composite similarity into a bounded integer", () 
   assert.equal(publicSimilarityScore("not-a-number"), 0);
 });
 
-test("keeps pinned pages stable and checks unpinned results after one minute", () => {
+test("keeps non-empty pinned pages stable but lets an empty pending snapshot recover", () => {
   const nowMs = Date.parse("2026-09-05T12:01:00.000Z");
-  assert.equal(resultSetNeedsRevisionCheck({ requested: true, refresh: false, createdAt: "2026-09-01T00:00:00.000Z", nowMs }), false);
+  assert.equal(resultSetNeedsRevisionCheck({ requested: true, refresh: false, empty: false, createdAt: "2026-09-01T00:00:00.000Z", nowMs }), false);
+  assert.equal(resultSetNeedsRevisionCheck({ requested: true, refresh: false, empty: true, createdAt: "2026-09-05T12:00:59.000Z", nowMs }), true);
   assert.equal(resultSetNeedsRevisionCheck({ requested: false, refresh: false, createdAt: "2026-09-05T12:00:01.000Z", nowMs }), false);
   assert.equal(resultSetNeedsRevisionCheck({ requested: false, refresh: false, createdAt: "2026-09-05T12:00:00.000Z", nowMs }), true);
   assert.equal(resultSetNeedsRevisionCheck({ requested: false, refresh: true, createdAt: "2026-09-05T12:00:59.000Z", nowMs }), true);

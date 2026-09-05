@@ -531,6 +531,10 @@ export class PitchYourOwnerCloudStack extends cdk.Stack {
     new s3deploy.BucketDeployment(this, "CloudWebsite", {
       sources: [s3deploy.Source.asset(path.join(directory, "..", "static"))],
       destinationBucket: websiteBucket,
+      // The Hackathon client is a small SPA deployed under stable asset names.
+      // Require browser revalidation so a repaired app.js is not held past a
+      // CloudFront invalidation by a phone's local cache.
+      cacheControl: [s3deploy.CacheControl.noCache()],
       distribution,
       distributionPaths: ["/*"],
     });
