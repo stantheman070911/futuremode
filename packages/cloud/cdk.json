@@ -15,7 +15,7 @@
     "sesDailyQuota": 200,
     "sesDailyWarningThreshold": 160,
     "monthlyBudgetUsd": 100,
-    "matchingEmailDeliveryEnabled": false,
+    "matchingEmailDeliveryEnabled": true,
     "matchingSchedule": "cron(0 1 ? * MON *)"
   }
 }

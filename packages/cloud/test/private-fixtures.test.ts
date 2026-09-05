@@ -10,3 +10,10 @@ test("private owner fixtures are three valid, distinct profiles", async () => {
   const profiles = fixtures.map(({ profile }) => validateOwnerPitchProfile(profile));
   assert.equal(new Set(profiles.map(({ animal_persona }) => animal_persona)).size, 3);
 });
+
+test("controlled fixture recipients come from environment variables, never committed addresses", async () => {
+  const source = await readFile(new URL("../scripts/fixtures/seed-private-owner-fixtures.ts", import.meta.url), "utf8");
+  assert.match(source, /PYO_E2E_EMAIL_B/);
+  assert.match(source, /PYO_E2E_EMAIL_C/);
+  assert.match(source, /fixtureInvitationEnabled/);
+});

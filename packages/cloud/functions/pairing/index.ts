@@ -6,7 +6,7 @@ import { json, parseJsonBody } from "../shared/http.js";
 import { randomOpaqueToken, sha256 } from "../shared/security.js";
 import { documentDynamo, requiredEnvironment } from "../shared/storage.js";
 
-interface CurrentProfile extends Record<string, unknown> { profileId: string; versionId: string; email: string; emailHash?: string; displayName?: string; publicSlug?: string; visibility?: string; matchingState?: string; isTestProfile?: boolean; cleanupSafe?: boolean; testRunId?: string; isFixtureProfile?: boolean; fixtureAudienceEmailHash?: string }
+interface CurrentProfile extends Record<string, unknown> { profileId: string; versionId: string; email: string; emailHash?: string; displayName?: string; publicSlug?: string; visibility?: string; matchingState?: string; isTestProfile?: boolean; cleanupSafe?: boolean; testRunId?: string; isFixtureProfile?: boolean; fixtureAudienceEmailHash?: string; fixtureInvitationEnabled?: boolean }
 interface ProfileVersion extends Record<string, unknown> { profileId: string; versionId: string; displayName?: string; profile: OwnerPitchProfile }
 interface Edge extends Record<string, unknown> {
   sk: string; pairId: string; ownerProfileId: string; ownerVersionId: string; candidateProfileId: string; candidateVersionId: string;
@@ -16,6 +16,7 @@ interface ResultSetItem { candidateId: string; candidateVersionId: string; edgeS
 
 const DAY = 86_400;
 const PAGE_SIZE = 10;
+const RESULT_SET_FRESHNESS_SECONDS = 60;
 const genericAnimal = "帶著好奇心探索的水獺";
 
 function escapeHtml(value: unknown): string { return String(value ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\"/g, "&quot;"); }
@@ -26,6 +27,25 @@ export function ownerCanSeeCandidate(owner: Record<string, unknown>, candidate: 
   if (candidate.isFixtureProfile === true) return Boolean(owner.emailHash && candidate.fixtureAudienceEmailHash === owner.emailHash);
   if (candidate.isTestProfile === true) return owner.isTestProfile === true && owner.testRunId === candidate.testRunId;
   return true;
+}
+
+export function candidateCanReceiveInvitation(candidate: Record<string, unknown>): boolean {
+  if (candidate.isFixtureProfile !== true) return true;
+  const email = String(candidate.email ?? "").trim().toLowerCase();
+  return candidate.fixtureInvitationEnabled === true && email.includes("@") && !email.endsWith(".invalid");
+}
+
+export function publicSimilarityScore(value: unknown): number {
+  const score = Number(value);
+  return Math.round(Math.max(0, Math.min(1, Number.isFinite(score) ? score : 0)) * 100);
+}
+
+export function resultSetNeedsRevisionCheck(input: { requested: boolean; refresh: boolean; createdAt?: unknown; nowMs?: number }): boolean {
+  if (input.refresh) return true;
+  if (input.requested) return false;
+  const createdAt = Date.parse(String(input.createdAt ?? ""));
+  if (!Number.isFinite(createdAt)) return true;
+  return (input.nowMs ?? Date.now()) - createdAt >= RESULT_SET_FRESHNESS_SECONDS * 1_000;
 }
 
 async function getCurrent(tableName: string, profileId: string): Promise<CurrentProfile | undefined> {
@@ -92,7 +112,8 @@ async function loadResultSet(tableName: string, owner: CurrentProfile, requested
   const existing = id ? (await documentDynamo.send(new GetCommand({ TableName: tableName, Key: { pk: `RESULT_SET#${id}`, sk: "META" }, ConsistentRead: true }))).Item : undefined;
   const now = Math.floor(Date.now() / 1000);
   if (existing?.ownerProfileId === owner.profileId && Number(existing.expiresAt) > now) {
-    if (!refresh) return { resultSetId: id, graphRevision: Number(existing.graphRevision), items: existing.items as ResultSetItem[], expiresAt: Number(existing.expiresAt) };
+    const view = { resultSetId: id, graphRevision: Number(existing.graphRevision), items: existing.items as ResultSetItem[], expiresAt: Number(existing.expiresAt) };
+    if (!resultSetNeedsRevisionCheck({ requested: Boolean(requested), refresh, createdAt: existing.createdAt })) return view;
     if (Number(existing.graphRevision) === await graphRevision(tableName)) return { resultSetId: id, graphRevision: Number(existing.graphRevision), items: existing.items as ResultSetItem[], expiresAt: Number(existing.expiresAt) };
   }
   if (requested && !refresh) throw new Error("result_set_not_found");
@@ -133,13 +154,14 @@ async function edgeView(tableName: string, owner: CurrentProfile, item: ResultSe
       ...(detail ? { profile: { ...shareable, animal_persona: profileAnimalPersona(peerVersion.profile) } } : {}),
     },
     strongest_shared_signal: edge.strongestSignal,
+    similarity_score: publicSimilarityScore(edge.compositeScore),
     explanation: {
       what_we_both_care_about: edge.whatWeBothCareAbout,
       why_it_matters_now: edge.whyItMattersNow,
       what_we_could_discuss: edge.whatWeCouldDiscuss,
       evidence_labels: edge.evidenceLabels ?? ["interests", "active_problems"],
     },
-    can_invite: !invite && peerCurrent.isFixtureProfile !== true,
+    can_invite: !invite && candidateCanReceiveInvitation(peerCurrent),
   };
 }
 
@@ -195,7 +217,7 @@ async function sendInvite(tableName: string, owner: CurrentProfile, pairId: stri
     return { invitation_id: pairId, state: stateFor(existing, owner.profileId), idempotent_replay: true };
   }
   const { edge, peer, peerVersion } = await findAuthorizedEdge(tableName, owner, pairId);
-  if (peer.isFixtureProfile === true) throw new Error("fixture_invitation_unavailable");
+  if (!candidateCanReceiveInvitation(peer)) throw new Error("fixture_invitation_unavailable");
   const ownVersion = await getVersion(tableName, owner.profileId, owner.versionId);
   if (!ownVersion?.profile) throw new Error("profile_required");
   const rawToken = randomOpaqueToken(32);

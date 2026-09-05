@@ -138,6 +138,8 @@ button{cursor:pointer}
 .match-card:focus,.match-card:hover{border-color:var(--ink)}
 .match-card-head{display:flex;justify-content:space-between;gap:12px;align-items:baseline}
 .match-card-head>*{min-width:0}
+.match-card-meta{display:flex;flex-direction:column;align-items:flex-end;gap:4px;text-align:right;flex:0 0 auto}
+.similarity-score{font-size:13px;font-weight:800;color:var(--ink)}
 .match-card h2{margin:0;font-size:18px}
 .match-card p{margin:12px 0 0;line-height:1.5}
 .match-card .status-label{color:var(--blue)}

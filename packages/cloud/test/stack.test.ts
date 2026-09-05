@@ -12,7 +12,7 @@ function template() {
     context: {
       emailProvider: "resend",
       verificationEmailEnabled: true,
-      matchingEmailDeliveryEnabled: false,
+      matchingEmailDeliveryEnabled: true,
       embeddingModelId: "global.cohere.embed-v4:0",
       embeddingDimensions: 1024,
       matchJudgeModelId: "apac.amazon.nova-pro-v1:0",
@@ -73,10 +73,10 @@ test("exposes phone paste-back, draft API, pairing, and invitation routes", () =
   ]);
 });
 
-test("keeps matching email off while verification email remains enabled", () => {
+test("enables matching email only after captured journey verification", () => {
   template().hasOutput("EmailVerificationState", { Value: "ENABLED" });
-  template().hasOutput("MatchingEmailDeliveryState", { Value: "DISABLED" });
-  template().resourcePropertiesCountIs("AWS::Lambda::EventSourceMapping", { Enabled: false }, 2);
+  template().hasOutput("MatchingEmailDeliveryState", { Value: "ENABLED" });
+  template().resourcePropertiesCountIs("AWS::Lambda::EventSourceMapping", { Enabled: true }, 2);
 });
 
 test("uses isolated PitchYourOwner resource names and budget", () => {
@@ -106,12 +106,21 @@ test("serves app and API through one CloudFront distribution", () => {
 });
 
 test("grants matching trigger access only to the matching runner", () => {
+  const functions = template().findResources("AWS::Lambda::Function");
+  const trigger = Object.values(functions).find((resource) => resource.Properties.FunctionName === "pitchyourowner-dev-matching-trigger");
+  assert.ok(trigger);
   template().hasResourceProperties("AWS::Lambda::Function", {
     FunctionName: "pitchyourowner-dev-matching-trigger",
     Environment: { Variables: Match.objectLike({ MATCHING_RUN_FUNCTION_NAME: { Ref: Match.stringLikeRegexp("MatchingRun") } }) },
   });
   const policies = template().findResources("AWS::IAM::Policy");
   assert.ok(Object.values(policies).some((resource) => JSON.stringify(resource).includes("lambda:InvokeFunction")));
+  const triggerRoleId = trigger.Properties.Role["Fn::GetAtt"][0];
+  const triggerPolicy = Object.values(policies).find((resource) => (resource.Properties.Roles || []).some((role: Record<string, unknown>) => role.Ref === triggerRoleId));
+  assert.ok(triggerPolicy, "matching trigger policy must exist");
+  const triggerPolicyJson = JSON.stringify(triggerPolicy);
+  assert.match(triggerPolicyJson, /dynamodb:GetItem/);
+  assert.doesNotMatch(triggerPolicyJson, /dynamodb:(PutItem|UpdateItem|DeleteItem|BatchWriteItem)/);
 });
 
 test("waits for vector provider GetFunction policy before creating the index", () => {

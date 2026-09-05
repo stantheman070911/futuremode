@@ -30,12 +30,16 @@ test("asks one concrete topic-exclusion question before JSON-only output", async
   assert.match(zh, /none 或 全部保留/);
   assert.match(zh, /Google 任職經歷/);
   assert.match(zh, /animal_persona/);
+  assert.match(zh, /每位 owner 都應得到不同角色/);
+  assert.match(zh, /不是可直接套用的選項/);
   assert.match(zh, /專業吸引力/);
   assert.match(zh, /JSON only/i);
   assert.match(zh, /根物件必須且只能依序包含/);
   assert.match(zh, /session、event、sender、timestamp、origin、URL/);
   assert.match(en, /Do not output JSON in the first response/);
   assert.match(en, /animal_persona/);
+  assert.match(en, /Each owner should receive a different character/);
+  assert.match(en, /not options to copy/);
   assert.match(en, /exactly these nine keys/);
   assert.match(en, /Which topics should be excluded/);
   assert.match(en, /reply `none` or `keep all`/);
@@ -79,6 +83,9 @@ test("asks one concrete topic-exclusion question before JSON-only output", async
   assert.match(app, /if \(form\.dataset\.form === "publish-profile"\) return/);
   assert.match(app, /data-action="remove-profile-item"/);
   assert.match(app, /data-action="add-profile-item"/);
+  assert.match(app, /相似度 \{score\} \/ 100/);
+  assert.match(app, /查看詳細介紹/);
+  assert.match(app, /每個人都會不同/);
   assert.match(app, /publishAttemptForDraft/);
   assert.match(app, /pitchyourowner\.import-mode\.v1/);
   assert.match(app, /runtime\.importJson = JSON\.stringify\(runtime\.draft, null, 2\)/);

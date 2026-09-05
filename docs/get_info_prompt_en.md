@@ -18,7 +18,7 @@ Write directly and concretely so two people could start a conversation immediate
 4. `friend_intent` describes the human friend the user hopes to meet, what motivation they may share, and what they could discuss now.
 5. `history_scope` honestly states what was and was not accessible.
 6. `confidence` uses only `high`, `medium`, or `low` for owner review.
-7. `animal_persona` uses a vivid, respectful animal metaphor connected to the owner's professional craft, such as “a pink alpaca dancing through movement problems” or “a sharp professional eagle wearing glasses.” It must not invent credentials or accomplishments.
+7. `animal_persona` must generate a distinctive, vivid, and respectful animal metaphor from this owner's professional craft, skills, and way of working. Each owner should receive a different character. Examples describe the style only and are not options to copy unless one is uniquely appropriate for this owner. It must not invent credentials or accomplishments.
 8. Treat session, event, sender, timestamp, origin, URL, and message debug metadata as transport data, never as profile evidence.
 
 ## First response: preview and one exclusion choice

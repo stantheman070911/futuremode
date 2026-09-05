@@ -16,7 +16,7 @@
 4. `friend_intent` 寫希望認識哪類朋友、共享什麼動機、現在能談什麼。
 5. `history_scope` 只陳述實際檢查與無法檢查的範圍。
 6. `confidence` 只使用 `high`、`medium`、`low`，供 owner 審核，不代表真實性驗證。
-7. `animal_persona` 用鮮明、尊重且與專業特質有關的動物隱喻讓 owner 容易被記住，例如「跳著舞的粉色羊駝」或「精明、戴著眼鏡的專業老鷹」。不要用動物比喻虛構資格或成就。
+7. `animal_persona` 必須依這位 owner 的專業、技能與做事方式，生成專屬、鮮明且尊重的動物隱喻，讓 owner 容易被記住。每位 owner 都應得到不同角色；範例只代表描寫風格，不是可直接套用的選項，除非它確實最貼合這位 owner，否則不要複製範例。不要用動物比喻虛構資格或成就。
 8. session、event、sender、timestamp、origin、URL 或 message debug metadata 不是 profile 證據，不得帶入結果。
 
 ## 第一則回答：預覽與一次性排除

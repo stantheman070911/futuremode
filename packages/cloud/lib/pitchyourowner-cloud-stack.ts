@@ -338,6 +338,7 @@ export class PitchYourOwnerCloudStack extends cdk.Stack {
     }));
     runMatching.node.addDependency(vectorIndex);
     runMatching.grantInvoke(triggerMatching);
+    table.grant(triggerMatching, "dynamodb:GetItem");
 
     relayOutbox.addEventSource(new eventSources.DynamoEventSource(table, {
       enabled: matchingEmailDeliveryEnabled,

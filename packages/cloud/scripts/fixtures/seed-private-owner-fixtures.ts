@@ -31,6 +31,13 @@ if (tableName !== "pitchyourowner-hackathon-profile-store") throw new Error(`une
 const rawProfiles = JSON.parse(await readFile(new URL("./private-owner-profiles.json", import.meta.url), "utf8")) as Array<{ key: string; profile: unknown }>;
 const profiles = rawProfiles.map(({ key, profile }) => ({ key, profile: validateOwnerPitchProfile(profile) }));
 if (profiles.length !== 3 || new Set(profiles.map(({ key }) => key)).size !== 3) throw new Error("expected three unique fixtures");
+const invitationEmails = new Map([
+  ["public-finance-analyst", required("PYO_E2E_EMAIL_B").toLowerCase()],
+  ["documentary-filmmaker-cinematographer", required("PYO_E2E_EMAIL_C").toLowerCase()],
+]);
+for (const email of invitationEmails.values()) {
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email) || email.endsWith(".invalid")) throw new Error("controlled fixture email is invalid");
+}
 
 const dynamo = DynamoDBDocumentClient.from(new DynamoDBClient({ region }), { marshallOptions: { removeUndefinedValues: true } });
 const embed = (text: string) => embedText({ text, modelId: "global.cohere.embed-v4:0", dimensions: 1_024 });
@@ -56,8 +63,9 @@ for (const { key, profile } of profiles) {
     Promise.all(Object.entries(fieldTexts).map(async ([field, text]) => [field, await embed(text)] as const)),
   ]);
   const now = new Date().toISOString();
-  const email = `${key}@fixture.pitchyourowner.invalid`;
-  const fixtureMeta = { isFixtureProfile: true, fixtureAudienceEmailHash: viewerEmailHash, fixtureSetId, cleanupSafe: true };
+  const controlledEmail = invitationEmails.get(key);
+  const email = controlledEmail ?? `${key}@fixture.pitchyourowner.invalid`;
+  const fixtureMeta = { isFixtureProfile: true, fixtureAudienceEmailHash: viewerEmailHash, fixtureSetId, fixtureInvitationEnabled: Boolean(controlledEmail), cleanupSafe: true };
   await dynamo.send(new TransactWriteCommand({ TransactItems: [
     { Put: { TableName: tableName, Item: {
       pk: `PROFILE#${profileId}`, sk: `VERSION#${versionId}`, entityType: "PROFILE_VERSION", schema: PROFILE_SCHEMA,

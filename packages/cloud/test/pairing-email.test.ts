@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { ownerCanSeeCandidate, renderConnectionEmail, renderInvitationEmail } from "../functions/pairing/index.js";
+import { candidateCanReceiveInvitation, ownerCanSeeCandidate, publicSimilarityScore, renderConnectionEmail, renderInvitationEmail, resultSetNeedsRevisionCheck } from "../functions/pairing/index.js";
 
 test("authorizes fixture edges only for their intended owner", () => {
   const fixture = { isFixtureProfile: true, fixtureAudienceEmailHash: "owner-hash" };
@@ -8,6 +8,28 @@ test("authorizes fixture edges only for their intended owner", () => {
   assert.equal(ownerCanSeeCandidate({ emailHash: "other-hash" }, fixture), false);
   assert.equal(ownerCanSeeCandidate({}, fixture), false);
   assert.equal(ownerCanSeeCandidate({}, { profileId: "real" }), true);
+});
+
+test("allows invitations only for explicitly enabled fixtures with deliverable email", () => {
+  assert.equal(candidateCanReceiveInvitation({ profileId: "real" }), true);
+  assert.equal(candidateCanReceiveInvitation({ isFixtureProfile: true, fixtureInvitationEnabled: true, email: "fixture@example.test" }), true);
+  assert.equal(candidateCanReceiveInvitation({ isFixtureProfile: true, fixtureInvitationEnabled: false, email: "fixture@example.test" }), false);
+  assert.equal(candidateCanReceiveInvitation({ isFixtureProfile: true, fixtureInvitationEnabled: true, email: "fixture@example.invalid" }), false);
+});
+
+test("normalizes the persisted composite similarity into a bounded integer", () => {
+  assert.equal(publicSimilarityScore(0.846), 85);
+  assert.equal(publicSimilarityScore(2), 100);
+  assert.equal(publicSimilarityScore(-1), 0);
+  assert.equal(publicSimilarityScore("not-a-number"), 0);
+});
+
+test("keeps pinned pages stable and checks unpinned results after one minute", () => {
+  const nowMs = Date.parse("2026-09-05T12:01:00.000Z");
+  assert.equal(resultSetNeedsRevisionCheck({ requested: true, refresh: false, createdAt: "2026-09-01T00:00:00.000Z", nowMs }), false);
+  assert.equal(resultSetNeedsRevisionCheck({ requested: false, refresh: false, createdAt: "2026-09-05T12:00:01.000Z", nowMs }), false);
+  assert.equal(resultSetNeedsRevisionCheck({ requested: false, refresh: false, createdAt: "2026-09-05T12:00:00.000Z", nowMs }), true);
+  assert.equal(resultSetNeedsRevisionCheck({ requested: false, refresh: true, createdAt: "2026-09-05T12:00:59.000Z", nowMs }), true);
 });
 
 test("invitation email uses the site style and does not expose contact data", () => {
