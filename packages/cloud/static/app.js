@@ -115,7 +115,18 @@ Object.assign(COPY["zh-Hant"], {
   "accept.done": "已記錄你的決定",
   "connection.title": "你們都接受了",
   "connection.email": "對方的 Email",
-  "connection.open": "查看聯絡方式"
+  "connection.open": "查看聯絡方式",
+  "memory.title": "先開啟 {ai} 的記憶功能",
+  "memory.body": "開啟記憶後，{ai} 才能使用你已授權且實際可存取的對話與記憶，整理出更具體的介紹。",
+  "memory.limit": "若你的帳號沒有這個功能，也可以稍後再設定；AI 仍須在 history_scope 誠實說明實際看見的範圍。",
+  "memory.confirm": "我已開啟記憶",
+  "memory.later": "稍後再設定",
+  "memory.close": "關閉記憶功能教學",
+  "memory.reopen": "再次查看 {ai} Memory 教學",
+  "memory.videoAlt": "在 {ai} 開啟記憶功能的操作示範",
+  "handoff.openFallback": "沒有開啟？再次前往 {ai}",
+  "handoff.openedCopied": "已在新分頁開啟 {ai}，Prompt 也已複製。完成後回到這一頁。",
+  "handoff.openedManual": "已在新分頁開啟 {ai}。若 Prompt 沒有自動帶入，可在下方再次複製或展開完整 Prompt 手動複製。"
 });
 
 let activeLocale = "zh-Hant";
@@ -210,6 +221,13 @@ const runtime = {
   importJson: SAVED_DRAFT && SAVED_IMPORT_MODE === "paste" ? JSON.stringify(SAVED_DRAFT, null, 2) : "",
   prompt: typeof SAVED_HANDOFF?.prompt === "string" ? SAVED_HANDOFF.prompt : "",
   handoffLaunchedAt: Number(SAVED_HANDOFF?.launchedAt) || 0,
+  memoryNoticeSeen: SAVED_HANDOFF?.memoryNoticeSeen && typeof SAVED_HANDOFF.memoryNoticeSeen === "object" ? SAVED_HANDOFF.memoryNoticeSeen : {},
+  memoryNoticeOpen: Boolean(
+    SAVED_HANDOFF?.prompt
+      && ["ChatGPT", "Claude"].includes(SAVED_HANDOFF?.selectedAi)
+      && !SAVED_HANDOFF?.memoryNoticeSeen?.[SAVED_HANDOFF?.selectedAi]
+  ),
+  memoryNoticeReturnAction: "launch-ai-with-prompt",
   showFullPrompt: false,
   busy: false,
   error: "",
@@ -369,6 +387,9 @@ function clearAuthFlow({ keepEmail = false } = {}) {
 function clearHandoff() {
   runtime.prompt = "";
   runtime.handoffLaunchedAt = 0;
+  runtime.memoryNoticeSeen = {};
+  runtime.memoryNoticeOpen = false;
+  runtime.memoryNoticeReturnAction = "launch-ai-with-prompt";
   runtime.showFullPrompt = false;
   writeJson(HANDOFF_KEY, null);
 }
@@ -379,6 +400,7 @@ function saveHandoff() {
     locale: runtime.locale,
     prompt: runtime.prompt,
     launchedAt: runtime.handoffLaunchedAt || null,
+    memoryNoticeSeen: runtime.memoryNoticeSeen,
   });
 }
 
@@ -389,6 +411,8 @@ function rehydrateHandoff() {
   useLocale(["zh-Hant", "en"].includes(saved.locale) ? saved.locale : runtime.locale);
   runtime.prompt = typeof saved.prompt === "string" ? saved.prompt : runtime.prompt;
   runtime.handoffLaunchedAt = Number(saved.launchedAt) || 0;
+  runtime.memoryNoticeSeen = saved.memoryNoticeSeen && typeof saved.memoryNoticeSeen === "object" ? saved.memoryNoticeSeen : runtime.memoryNoticeSeen;
+  runtime.memoryNoticeOpen = providerSupportsMemoryNotice(runtime.selectedAi) && !runtime.memoryNoticeSeen[runtime.selectedAi];
 }
 
 function esc(value) {
@@ -597,6 +621,75 @@ function handoffButtonLabel() {
   return t("handoff.share");
 }
 
+function providerSupportsMemoryNotice(ai = runtime.selectedAi) {
+  return ai === "ChatGPT" || ai === "Claude";
+}
+
+function providerLaunchUrl(prompt = runtime.prompt) {
+  if (!providerSupportsMemoryNotice()) return "";
+  const target = new URL(runtime.selectedAi === "Claude" ? "https://claude.ai/new" : "https://chatgpt.com/");
+  target.searchParams.set("q", String(prompt || ""));
+  return target.toString();
+}
+
+function memoryNoticeMedia() {
+  if (!providerSupportsMemoryNotice()) return "";
+  const basename = runtime.selectedAi === "Claude" ? "claude-enable-memory" : "chatgpt-enable-memory";
+  const alt = esc(t("memory.videoAlt", { ai: runtime.selectedAi }));
+  return `<picture>
+    <source media="(prefers-reduced-motion: reduce)" srcset="/assets/memory/${basename}.png">
+    <img src="/assets/memory/${basename}.gif" alt="${alt}" width="600" loading="eager" decoding="async">
+  </picture>`;
+}
+
+function memoryNoticeModal() {
+  if (!runtime.memoryNoticeOpen || !providerSupportsMemoryNotice()) return "";
+  return `<div class="memory-modal-backdrop" data-memory-modal>
+    <section class="memory-modal" role="dialog" aria-modal="true" aria-labelledby="memory-modal-title" aria-describedby="memory-modal-description" tabindex="-1">
+      <button class="memory-modal-close" data-action="dismiss-memory-notice" aria-label="${esc(t("memory.close"))}">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+      <p class="eyebrow">${esc(runtime.selectedAi)} · MEMORY</p>
+      <h2 id="memory-modal-title">${esc(t("memory.title", { ai: runtime.selectedAi }))}</h2>
+      <p id="memory-modal-description">${esc(t("memory.body", { ai: runtime.selectedAi }))}</p>
+      <div class="memory-modal-media">${memoryNoticeMedia()}</div>
+      <p class="memory-modal-limit">${esc(t("memory.limit"))}</p>
+      <div class="button-stack">
+        <button class="button primary" data-action="confirm-memory-notice">${esc(t("memory.confirm"))}</button>
+        <button class="button quiet" data-action="dismiss-memory-notice">${esc(t("memory.later"))}</button>
+      </div>
+    </section>
+  </div>`;
+}
+
+function syncMemoryNoticeUi() {
+  const dialog = document.querySelector(".memory-modal[role=dialog]");
+  const isOpen = Boolean(dialog && runtime.memoryNoticeOpen && location.pathname.replace(/\/$/, "") === "/handoff");
+  const shell = document.querySelector(".app-shell");
+  if (shell) {
+    shell.toggleAttribute("inert", isOpen);
+    shell.setAttribute("aria-hidden", isOpen ? "true" : "false");
+  }
+  document.body.classList.toggle("modal-open", isOpen);
+  if (isOpen) queueMicrotask(() => dialog.focus({ preventScroll: true }));
+}
+
+function openMemoryNotice(returnAction = "open-memory-notice") {
+  if (!providerSupportsMemoryNotice()) return;
+  runtime.memoryNoticeReturnAction = returnAction;
+  runtime.memoryNoticeOpen = true;
+  render();
+}
+
+function closeMemoryNotice() {
+  const returnAction = runtime.memoryNoticeReturnAction || "launch-ai-with-prompt";
+  runtime.memoryNoticeSeen = { ...runtime.memoryNoticeSeen, [runtime.selectedAi]: true };
+  runtime.memoryNoticeOpen = false;
+  saveHandoff();
+  render();
+  requestAnimationFrame(() => document.querySelector(`[data-action="${returnAction}"]`)?.focus({ preventScroll: true }));
+}
+
 const JSON_GUIDE_STEPS = [
   ["guide.1.title", "guide.1.body"],
   ["guide.2.title", "guide.2.body"],
@@ -616,11 +709,16 @@ function promptFileForLocale() {
 
 async function copyPromptBestEffort(prompt) {
   if (!navigator.clipboard?.writeText) return false;
+  let timeoutId;
   try {
-    await navigator.clipboard.writeText(prompt);
-    return true;
+    return await Promise.race([
+      navigator.clipboard.writeText(prompt).then(() => true, () => false),
+      new Promise((resolve) => { timeoutId = setTimeout(() => resolve(false), 900); }),
+    ]);
   } catch {
     return false;
+  } finally {
+    clearTimeout(timeoutId);
   }
 }
 
@@ -645,10 +743,13 @@ async function launchAiWithPrompt() {
     return;
   }
 
-  await copyPromptBestEffort(prompt);
-  const target = new URL(runtime.selectedAi === "Claude" ? "https://claude.ai/new" : "https://chatgpt.com/");
-  target.searchParams.set("q", prompt);
-  window.location.assign(target.toString());
+  const target = providerLaunchUrl(prompt);
+  window.open(target, "_blank", "noopener,noreferrer");
+  const copied = await copyPromptBestEffort(prompt);
+  runtime.notice = t(copied ? "handoff.openedCopied" : "handoff.openedManual", { ai: runtime.selectedAi });
+  announce(runtime.notice);
+  render();
+  window.scrollTo(0, 0);
 }
 
 async function copyPrompt() {
@@ -669,6 +770,8 @@ async function createPrompt() {
   if (!response.ok) throw userFacingError(t("error.prompt"), "retry", t("common.try"));
   runtime.prompt = await response.text();
   runtime.handoffLaunchedAt = 0;
+  runtime.memoryNoticeOpen = providerSupportsMemoryNotice() && !runtime.memoryNoticeSeen[runtime.selectedAi];
+  runtime.memoryNoticeReturnAction = "launch-ai-with-prompt";
   runtime.showFullPrompt = false;
   saveHandoff();
   navigate("/handoff");
@@ -793,11 +896,13 @@ function assistantScreen() {
 function handoffScreen() {
   const promptReady = Boolean(String(runtime.prompt || "").trim());
   const afterHandoff = runtime.handoffLaunchedAt > 0;
+  const fallbackUrl = afterHandoff ? providerLaunchUrl() : "";
   const prompt = `<div class="prompt-box" aria-label="${esc(t("prompt.aria"))}">${esc(runtime.prompt || t("handoff.loading"))}</div>`;
   const actions = afterHandoff
     ? `<p class="page-intro">${esc(t("handoff.return", { ai: runtime.selectedAi }))}</p>
       <button class="button primary" style="width:100%" data-action="go-import">${esc(t("handoff.paste"))}</button>
       <button class="button quiet" style="margin-top:9px;width:100%" data-action="launch-ai-with-prompt" ${promptReady ? "" : "disabled"}>${esc(t("handoff.openAgain", { ai: runtime.selectedAi }))}</button>
+      ${fallbackUrl ? `<a class="handoff-provider-fallback" href="${esc(fallbackUrl)}" target="_blank" rel="noopener noreferrer">${esc(t("handoff.openFallback", { ai: runtime.selectedAi }))}</a>` : ""}
       <button class="text-action handoff-text-action" data-action="copy-prompt" ${promptReady ? "" : "disabled"}>${esc(t("handoff.copyAgain"))}</button>`
     : `${prompt}
       <p class="subtle">${esc(t("handoff.explainer"))}</p>
@@ -812,9 +917,10 @@ function handoffScreen() {
     ${progressHeader(2, "handoff.step")}
     <div class="prompt-meta"><span>${esc(runtime.selectedAi)}</span><span>${esc(t("language.current"))}</span></div>
     <h1 class="page-title">${esc(afterHandoff ? t("handoff.afterTitle") : t("handoff.beforeTitle", { ai: runtime.selectedAi }))}</h1>
+    ${providerSupportsMemoryNotice() ? `<button class="memory-reopen" data-action="open-memory-notice">${esc(t("memory.reopen", { ai: runtime.selectedAi }))}</button>` : ""}
     ${!promptReady ? `<div class="notice error">${esc(t("handoff.loadError"))}</div>` : ""}
     ${collapsedPrompt}
-    ${actions}`);
+    ${actions}`) + memoryNoticeModal();
 }
 
 function normalizeJsonInput(value) {
@@ -1282,6 +1388,7 @@ function infoScreen(kind) {
 
 function render() {
   const app = document.getElementById("app");
+  document.body.classList.remove("modal-open");
   document.documentElement.lang = runtime.locale;
   const skipLink = document.querySelector(".skip-link");
   if (skipLink) skipLink.textContent = t("skip");
@@ -1341,7 +1448,10 @@ function render() {
   else if (/^\/connections\/[^/]+$/.test(path)) app.innerHTML = connectionScreen(decodeURIComponent(path.split("/").pop()));
   else if (["/privacy", "/terms", "/support"].includes(path)) app.innerHTML = infoScreen(path.slice(1));
   else { history.replaceState({}, "", "/"); render(); return; }
-  queueMicrotask(fitDocumentEditors);
+  queueMicrotask(() => {
+    fitDocumentEditors();
+    syncMemoryNoticeUi();
+  });
 }
 
 document.addEventListener("click", async (event) => {
@@ -1353,7 +1463,7 @@ document.addEventListener("click", async (event) => {
   try {
     runtime.error = "";
     if (action === "begin") runtime.session ? await routeReturningOwner() : navigate("/signin");
-    if (action === "demo-flow") { runtime.demo = true; clearDraftState(); runtime.demoDraft = false; runtime.profile = null; runtime.profileLoaded = false; runtime.matches = null; runtime.invitations = null; runtime.match = null; runtime.lastPublishAt = 0; resetDemoMatch(); writeJson(DEMO_KEY, { enabled: true }); writeJson(DEMO_DRAFT_KEY, null); writeJson(DEMO_PROFILE_KEY, null); writeJson(LAST_PUBLISH_KEY, null); navigate("/assistant"); }
+    if (action === "demo-flow") { runtime.demo = true; clearDraftState(); clearHandoff(); runtime.demoDraft = false; runtime.profile = null; runtime.profileLoaded = false; runtime.matches = null; runtime.invitations = null; runtime.match = null; runtime.lastPublishAt = 0; resetDemoMatch(); writeJson(DEMO_KEY, { enabled: true }); writeJson(DEMO_DRAFT_KEY, null); writeJson(DEMO_PROFILE_KEY, null); writeJson(LAST_PUBLISH_KEY, null); navigate("/assistant"); }
     if (action === "change-email") { clearAuthFlow(); render(); }
     if (action === "resend-code") await resendVerificationCode();
     if (action === "select-ai") { runtime.selectedAi = button.dataset.ai; render(); }
@@ -1362,6 +1472,8 @@ document.addEventListener("click", async (event) => {
       await createPrompt();
     }
     if (action === "launch-ai-with-prompt") await launchAiWithPrompt();
+    if (action === "open-memory-notice") openMemoryNotice("open-memory-notice");
+    if (action === "confirm-memory-notice" || action === "dismiss-memory-notice") closeMemoryNotice();
     if (action === "copy-prompt") await copyPrompt();
     if (action === "toggle-full-prompt") { runtime.showFullPrompt = !runtime.showFullPrompt; render(); }
     if (action === "go-import") navigate("/import");
@@ -1395,7 +1507,7 @@ document.addEventListener("click", async (event) => {
     if (action === "resume-pitch-draft") { runtime.pendingPitchEdit = false; setDraftMode(runtime.draftMode || "new"); navigate("/import"); }
     if (action === "cancel-edit-choice") { runtime.pendingPitchEdit = false; render(); }
     if (action === "cancel-pitch-edit") { clearDraftState(); runtime.demoDraft = false; writeJson(DEMO_DRAFT_KEY, null); navigate("/pitch"); }
-    if (action === "create-new-pitch") { clearDraftState(); runtime.demoDraft = false; writeJson(DEMO_DRAFT_KEY, null); navigate("/assistant"); }
+    if (action === "create-new-pitch") { clearDraftState(); clearHandoff(); runtime.demoDraft = false; writeJson(DEMO_DRAFT_KEY, null); navigate("/assistant"); }
     if (action === "refresh-matches") await refreshMatches();
     if (action === "retry-matches") { runtime.error = ""; runtime.matchesPollError = false; runtime.matches = null; render(); }
     if (action === "error-retry") await retryCurrentScreen();
@@ -1423,6 +1535,36 @@ document.addEventListener("click", async (event) => {
     setRuntimeError(error);
     render();
     focusErrorNotice();
+  }
+});
+
+document.addEventListener("keydown", (event) => {
+  if (!runtime.memoryNoticeOpen) return;
+  const dialog = document.querySelector(".memory-modal[role=dialog]");
+  if (!dialog) return;
+  if (event.key === "Escape") {
+    event.preventDefault();
+    closeMemoryNotice();
+    return;
+  }
+  if (event.key !== "Tab") return;
+  const focusable = [...dialog.querySelectorAll('button:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])')];
+  if (!focusable.length) {
+    event.preventDefault();
+    dialog.focus();
+    return;
+  }
+  const first = focusable[0];
+  const last = focusable[focusable.length - 1];
+  if (!dialog.contains(document.activeElement)) {
+    event.preventDefault();
+    (event.shiftKey ? last : first).focus();
+  } else if (event.shiftKey && (document.activeElement === first || document.activeElement === dialog)) {
+    event.preventDefault();
+    last.focus();
+  } else if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault();
+    first.focus();
   }
 });
 
