@@ -2,6 +2,7 @@ import { ScanCommand, TransactWriteCommand, UpdateCommand } from "@aws-sdk/lib-d
 import { randomPublicSlug, sha256 } from "../shared/security.js";
 import { documentDynamo, requiredEnvironment } from "../shared/storage.js";
 import type { OwnerPitchProfile } from "../shared/contracts.js";
+import { MATCHING_ALGORITHM_VERSION } from "../shared/matching.js";
 
 interface CurrentProfile extends Record<string, unknown> {
   profileId: string;
@@ -212,7 +213,7 @@ export async function persistPair(
     pairId: pairId(left.current.profileId, right.current.profileId),
     compositeScore: similarity.score,
     components: similarity.components,
-    calculationVersion: "field-embedding-v2",
+    calculationVersion: MATCHING_ALGORITHM_VERSION,
     calculatedAt: now,
     explanationSource: "embedding",
   };
@@ -306,7 +307,7 @@ export async function handler(event?: unknown): Promise<Record<string, unknown>>
     profiles: profiles.length,
     seed_profiles: seeds.length,
     pairs_written: pairTasks.length,
-    matching_algorithm: "field-embedding-v2",
+    matching_algorithm: MATCHING_ALGORITHM_VERSION,
     duration_ms: Date.now() - runStartedAt,
     test_run_id: scope.testRunId,
   };

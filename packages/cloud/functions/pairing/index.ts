@@ -6,6 +6,7 @@ import { json, parseJsonBody } from "../shared/http.js";
 import { profileImageUrl } from "../shared/profile-image.js";
 import { randomOpaqueToken, sha256 } from "../shared/security.js";
 import { documentDynamo, requiredEnvironment } from "../shared/storage.js";
+import { MATCHING_ALGORITHM_VERSION, MATCH_PAGE_SIZE } from "../shared/matching.js";
 
 interface CurrentProfile extends Record<string, unknown> { profileId: string; versionId: string; email: string; emailHash?: string; displayName?: string; publicSlug?: string; visibility?: string; matchingState?: string; isTestProfile?: boolean; isManualTestProfile?: boolean; cleanupSafe?: boolean; testRunId?: string; testCohortId?: string; isFixtureProfile?: boolean; fixtureAudienceEmailHash?: string; fixtureInvitationEnabled?: boolean }
 interface ProfileVersion extends Record<string, unknown> { profileId: string; versionId: string; displayName?: string; profile: OwnerPitchProfile }
@@ -16,7 +17,6 @@ interface Edge extends Record<string, unknown> {
 interface ResultSetItem { candidateId: string; candidateVersionId: string; edgeSk: string; pairId: string }
 
 const DAY = 86_400;
-const PAGE_SIZE = 10;
 const RESULT_SET_FRESHNESS_SECONDS = 60;
 const genericAnimal = "帶著好奇心探索的水獺";
 
@@ -106,7 +106,7 @@ async function createResultSet(tableName: string, owner: CurrentProfile) {
   const fixtureMeta = owner.isTestProfile === true && owner.cleanupSafe === true && owner.testRunId ? { isTestProfile: true, cleanupSafe: true, testRunId: owner.testRunId, ...(owner.isManualTestProfile === true ? { isManualTestProfile: true, testCohortId: owner.testCohortId } : {}) } : {};
   const items: ResultSetItem[] = edges.map((edge) => ({ candidateId: edge.candidateProfileId, candidateVersionId: edge.candidateVersionId, edgeSk: edge.sk, pairId: edge.pairId }));
   await documentDynamo.send(new TransactWriteCommand({ TransactItems: [
-    { Put: { TableName: tableName, Item: { pk: `RESULT_SET#${resultSetId}`, sk: "META", entityType: "MATCH_RESULT_SET", resultSetId, ownerProfileId: owner.profileId, ownerVersionId: owner.versionId, graphRevision: revision, items, createdAt: now, expiresAt, ...fixtureMeta }, ConditionExpression: "attribute_not_exists(pk)" } },
+    { Put: { TableName: tableName, Item: { pk: `RESULT_SET#${resultSetId}`, sk: "META", entityType: "MATCH_RESULT_SET", resultSetId, ownerProfileId: owner.profileId, ownerVersionId: owner.versionId, graphRevision: revision, matchingAlgorithm: MATCHING_ALGORITHM_VERSION, items, createdAt: now, expiresAt, ...fixtureMeta }, ConditionExpression: "attribute_not_exists(pk)" } },
     { Put: { TableName: tableName, Item: { pk: `PROFILE#${owner.profileId}`, sk: "RESULT_SET_CURRENT", entityType: "MATCH_RESULT_POINTER", resultSetId, graphRevision: revision, createdAt: now, expiresAt, ...fixtureMeta } } },
   ] }));
   return { resultSetId, graphRevision: revision, items, expiresAt };
@@ -117,6 +117,7 @@ async function loadResultSet(tableName: string, owner: CurrentProfile, requested
   const id = requested || String(pointer?.resultSetId ?? "");
   const existing = id ? (await documentDynamo.send(new GetCommand({ TableName: tableName, Key: { pk: `RESULT_SET#${id}`, sk: "META" }, ConsistentRead: true }))).Item : undefined;
   const now = Math.floor(Date.now() / 1000);
+  if (existing?.ownerProfileId === owner.profileId && existing.matchingAlgorithm !== MATCHING_ALGORITHM_VERSION) return createResultSet(tableName, owner);
   if (existing?.ownerProfileId === owner.profileId && Number(existing.expiresAt) > now) {
     const items = Array.isArray(existing.items) ? existing.items as ResultSetItem[] : [];
     const view = { resultSetId: id, graphRevision: Number(existing.graphRevision), items, expiresAt: Number(existing.expiresAt) };
@@ -182,7 +183,7 @@ async function listResult(tableName: string, owner: CurrentProfile, requestedSet
     graph_revision: set.graphRevision,
     expires_at: new Date(set.expiresAt * 1000).toISOString(),
     page: safePage,
-    page_size: PAGE_SIZE,
+    page_size: MATCH_PAGE_SIZE,
     total,
     total_pages: totalPages,
     matches: await Promise.all(items.map((item) => edgeView(tableName, owner, item))),
@@ -191,13 +192,13 @@ async function listResult(tableName: string, owner: CurrentProfile, requestedSet
 
 export function paginateResultSetItems(items: ResultSetItem[], page: number) {
   const total = items.length;
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const totalPages = Math.max(1, Math.ceil(total / MATCH_PAGE_SIZE));
   const safePage = Math.min(Math.max(1, page), totalPages);
   return {
     total,
     totalPages,
     safePage,
-    items: items.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE),
+    items: items.slice((safePage - 1) * MATCH_PAGE_SIZE, safePage * MATCH_PAGE_SIZE),
   };
 }
 

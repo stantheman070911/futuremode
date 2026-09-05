@@ -1546,7 +1546,7 @@ async function loadMatches({ polling = false } = {}) {
     const endpoint = `/v1/matches?${query.toString()}`;
     runtime.matchResult = await api(endpoint);
     runtime.matches = runtime.matchResult.matches || [];
-    if (!query.get("set") && runtime.matchResult.result_set_id) {
+    if (runtime.matchResult.result_set_id && runtime.matchResult.result_set_id !== query.get("set")) {
       history.replaceState({}, "", `/matches?set=${encodeURIComponent(runtime.matchResult.result_set_id)}&page=${runtime.matchResult.page || 1}`);
     }
     runtime.matchesPollError = false;

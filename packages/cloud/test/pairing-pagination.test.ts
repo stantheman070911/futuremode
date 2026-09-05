@@ -1,8 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { paginateResultSetItems } from "../functions/pairing/index.js";
+import { MATCHING_ALGORITHM_VERSION, MATCH_PAGE_SIZE } from "../functions/shared/matching.js";
 
 test("serves the complete ordered result set ten profiles per page", () => {
+  assert.equal(MATCH_PAGE_SIZE, 10);
+  assert.equal(MATCHING_ALGORITHM_VERSION, "field-embedding-v2");
   const ordered = Array.from({ length: 11 }, (_, index) => ({
     candidateId: `candidate-${index + 1}`,
     candidateVersionId: `version-${index + 1}`,
