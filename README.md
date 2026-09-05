@@ -1,21 +1,40 @@
 # PitchYourOwner
 
+<!-- CI badge: pending Development JTBD-6 -->
+
 > **Your agent knows you. Let it pitch you.**｜**你的 Agent 了解你，讓它來介紹你。**
 
-PitchYourOwner is a phone-first friend-discovery application. An owner asks the AI
-assistant they already use to derive a structured pitch from context that assistant can
-actually access. The owner resolves any concrete security or privacy concerns in the AI,
-edits the returned profile on PitchYourOwner, and explicitly approves publication.
-Matching uses only the approved profile and explains why two owners may have something
-specific to discuss.
+## The problem｜問題所在
 
-PitchYourOwner 是手機優先的朋友探索應用程式。Owner 請自己已在使用的 AI 助理，從該助理
-實際可存取的脈絡整理結構化介紹；先在 AI 端處理具體的安全或隱私問題，再回到
-PitchYourOwner 編輯並明確核准發布。配對只使用經核准的介紹，並具體說明雙方為何值得
-交談。
+Two people can both write "photography" on every profile they have ever filled in, and
+it tells you nothing. One has spent three months on low-light street work; the other
+studies how a shoulder line carries emotion in a portrait. No profile field separates
+them, and neither would ever find the choreographer working on the identical question
+from inside a body instead of behind a lens.
 
-PitchYourOwner is not a recruiting product, dating product, public profile directory, or
-engagement feed.
+Meanwhile, the AI assistant each of them talks to every day already holds that signal —
+recurring questions, unsolved problems, sustained attention, evolving goals — richer
+than any profile, and trapped in a chat window with no owner-controlled way out.
+
+兩個人的個人檔案都寫著「攝影」，這個詞什麼也說明不了。一位鑽研三個月的低光街拍，
+另一位在意的是肩線如何在人像中傳達情緒。任何個人檔案欄位都分不出這兩人，也永遠不會
+讓他們遇到正在思考同一個問題、只是從身體而非鏡頭出發的編舞者。同時，兩人每天在聊的
+AI 助理早就握有這個訊號——反覆出現的問題、尚未解決的難題、持續投入的注意力——卻被
+困在聊天視窗裡，owner 沒有辦法把它帶出來。
+
+## What we built｜我們做的事
+
+PitchYourOwner asks the AI assistant an owner already uses to write their introduction,
+resolve privacy decisions before anything leaves that assistant, and — after mutual
+acceptance — draft the first message. Three agent roles, two independent human approval
+gates: exclusion inside the owner's own AI, and explicit publication on this site. It is
+phone-first, and it is a friend-discovery application, not a recruiting product, dating
+product, public profile directory, or engagement feed.
+
+PitchYourOwner 請 owner 已在使用的 AI 助理撰寫介紹、在任何內容離開該助理之前先處理隱私
+決定，並在雙方互相同意後起草第一封訊息。三個 agent 角色，兩個獨立的人工核准關卡：
+在 owner 自己的 AI 中排除敏感內容，以及在本站明確發布。這是手機優先的朋友探索應用程式，
+不是招募、約會、公開個人檔案名錄或互動 feed。
 
 ## Current product｜目前產品
 
@@ -41,6 +60,29 @@ or backend and never represents its synthetic profiles as live users.
 契約以
 [`config/pitchyourowner-profile-schema.json`](config/pitchyourowner-profile-schema.json)
 為準。
+
+The interface is Traditional Chinese only, by deliberate scope decision. If you cannot
+read Chinese, [`docs/walkthrough-en.md`](docs/walkthrough-en.md) is an annotated
+English walkthrough of the full journey using real screenshots of the deployed app.
+
+介面僅提供繁體中文，這是刻意的範圍決定。
+
+## Results｜成果
+
+_Real-cohort recruiting is in progress. This section reports what actually happened,
+excluding all fixture and test profiles, and will be updated as the cohort completes._
+
+| Metric | Value |
+| --- | --- |
+| Real published profiles | `[PENDING — P0-M1 cohort]` |
+| Invitations sent | `[PENDING — P0-M1 cohort]` |
+| Mutual connections | `[PENDING — P0-M1 cohort]` |
+| Median publish-to-first-match latency | `[PENDING — Development funnel report]` |
+| Explanation source (model vs. fallback) | `[PENDING — Development funnel report]` |
+
+No number in this section is drawn from synthetic or fixture data. See
+[`docs/round1-submission.md`](docs/round1-submission.md) for the full narrative and one
+real pairing quoted with permission, and [`ROADMAP.md`](ROADMAP.md) for what is next.
 
 ## Architecture｜系統架構
 
