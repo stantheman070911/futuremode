@@ -152,6 +152,9 @@ Object.assign(COPY.en, {
   "share.privateTitle": "Sharing is paused",
   "share.privateBody": "This Profile is Private. Make it Public in Settings before sharing it again.",
   "share.previewAlt": "Social preview generated from your approved public Profile",
+  "share.pendingTitle": "Preparing your share image",
+  "share.pendingBody": "Your profile is published. The share image will appear here as soon as your animal portrait is ready.",
+  "share.pendingAlt": "Share image is being prepared",
   "share.postText": "My agent prepared this introduction for me: {title}",
   "share.linkCopied": "Public Profile link copied.",
   "share.postCopied": "Post text and public link copied.",
@@ -175,6 +178,9 @@ Object.assign(COPY["zh-Hant"], {
   "share.privateTitle": "分享已暫停",
   "share.privateBody": "這份介紹目前是私人狀態。請先到設定重新公開，再進行分享。",
   "share.previewAlt": "依 owner 已核准公開介紹產生的社群預覽卡",
+  "share.pendingTitle": "正在製作分享圖片",
+  "share.pendingBody": "介紹已發布。動物角色完成後，含有角色與 QR code 的分享圖片會自動出現在這裡。",
+  "share.pendingAlt": "分享圖片製作中",
   "share.postText": "我的 Agent 替我整理了這份介紹：{title}",
   "share.linkCopied": "公開介紹連結已複製。",
   "share.postCopied": "貼文文字與公開連結已複製。",
@@ -445,11 +451,15 @@ function profilePortrait(presentation, variant = "detail", extraClass = "") {
 function currentPublicShareData() {
   const slug = String(runtime.profile?.public_slug || "").trim();
   if (!slug) return null;
+  const imageState = runtime.profile?.profile_image;
+  const imageRevision = String(imageState?.revision || "").trim();
+  if (imageState?.status !== "ready" || !imageRevision || !profileImageFor(runtime.profile, "detail")) return null;
   const encodedSlug = encodeURIComponent(slug);
   const publicUrl = new URL(`/p/${encodedSlug}`, location.origin).toString();
   const imageUrl = new URL(`/og/profile/${encodedSlug}.png`, location.origin);
   const versionId = String(runtime.profile?.version_id || "").trim();
   if (versionId) imageUrl.searchParams.set("version", versionId);
+  imageUrl.searchParams.set("image", imageRevision);
   const title = String(runtime.profile?.profile?.animal_persona || "PitchYourOwner").trim();
   const caption = t("share.postText", { title });
   return { slug, publicUrl, imageUrl: imageUrl.toString(), title, caption, postText: `${caption}\n${publicUrl}` };
@@ -467,13 +477,23 @@ function socialShareTargets(share) {
 }
 
 function publicProfileSharePanel() {
-  const share = currentPublicShareData();
-  if (!share) return "";
+  const slug = String(runtime.profile?.public_slug || "").trim();
+  if (!slug) return "";
   if (runtime.profile?.visibility === "private") {
     return `<section class="profile-share" id="profile-share" tabindex="-1" aria-labelledby="profile-share-title">
       <p class="eyebrow">${esc(t("share.eyebrow"))}</p>
       <h2 id="profile-share-title">${esc(t("share.privateTitle"))}</h2>
       <div class="notice">${esc(t("share.privateBody"))}</div>
+      <div class="share-primary-actions"><button class="button primary" disabled>${esc(t("share.copyLink"))}</button><button class="button" disabled>${esc(t("share.more"))}</button></div>
+    </section>`;
+  }
+  const share = currentPublicShareData();
+  if (!share) {
+    return `<section class="profile-share" id="profile-share" tabindex="-1" aria-labelledby="profile-share-title">
+      <p class="eyebrow">${esc(t("share.eyebrow"))}</p>
+      <h2 id="profile-share-title">${esc(t("share.pendingTitle"))}</h2>
+      <p class="profile-share-body" role="status">${esc(t("share.pendingBody"))}</p>
+      <figure class="profile-share-preview share-card-placeholder" aria-label="${esc(t("share.pendingAlt"))}"><span>${esc(t("share.pendingAlt"))}</span></figure>
       <div class="share-primary-actions"><button class="button primary" disabled>${esc(t("share.copyLink"))}</button><button class="button" disabled>${esc(t("share.more"))}</button></div>
     </section>`;
   }
@@ -1457,7 +1477,8 @@ async function loadProfile() {
 function ensureProfileImagePolling() {
   clearTimeout(profileImagePollTimer);
   profileImagePollTimer = null;
-  if (!runtime.session || !runtime.profile || profileImageFor(runtime.profile, "detail")) {
+  const imageStatus = runtime.profile?.profile_image?.status;
+  if (!runtime.session || !runtime.profile || imageStatus === "ready" || imageStatus === "failed" || profileImageFor(runtime.profile, "detail")) {
     profileImagePollStartedAt = 0;
     return;
   }
@@ -1910,9 +1931,20 @@ document.addEventListener("submit", async (event) => {
       clearAuthFlow();
       runtime.profileLoaded = false;
       if (result.manualTestAccount) {
-        await api("/v1/manual-test/bootstrap", { method: "POST", body: "{}" });
-        runtime.lastPublishAt = Date.now();
-        writeJson(LAST_PUBLISH_KEY, runtime.lastPublishAt);
+        const bootstrap = await api("/v1/manual-test/bootstrap", { method: "POST", body: "{}" });
+        if (bootstrap.status === "prefilled_draft" && bootstrap.profile) {
+          runtime.draft = validateProfileClient(bootstrap.profile);
+          invalidatePublishAttempt();
+          setDraftMode("new");
+          setImportMode("edit");
+          runtime.demoDraft = false;
+          writeJson(DRAFT_KEY, runtime.draft);
+          writeJson(DEMO_DRAFT_KEY, null);
+          runtime.profile = null;
+          runtime.profileLoaded = true;
+          navigate("/import");
+          return;
+        }
       }
       await routeReturningOwner();
     } else if (form.dataset.form === "parse-json") {
@@ -1977,7 +2009,7 @@ async function publishProfile() {
     runtime.busy = false;
     throw error;
   }
-  runtime.profile = { profile: approvedProfile, profile_id: result.profile_id, version_id: result.version_id, public_slug: result.public_slug, visibility: "public", matching_state: "active" };
+  runtime.profile = { profile: approvedProfile, profile_id: result.profile_id, version_id: result.version_id, public_slug: result.public_slug, visibility: "public", matching_state: "active", profile_image: { status: "pending" } };
   runtime.profileLoaded = true;
   clearDraftState();
   runtime.demoDraft = false;
@@ -1986,6 +2018,7 @@ async function publishProfile() {
   writeJson(LAST_PUBLISH_KEY, runtime.lastPublishAt);
   writeJson(DEMO_DRAFT_KEY, null);
   clearHandoff();
+  ensureProfileImagePolling();
   let matchingStarted = true;
   try { await api("/v1/matching-runs", { method: "POST", body: "{}" }); }
   catch (error) { matchingStarted = false; console.warn("Profile published; matching trigger will be retried from Matches", error); }

@@ -279,6 +279,8 @@ export class PitchYourOwnerCloudStack extends cdk.Stack {
         EMBEDDING_MODEL_ID: embeddingModelId,
         EMBEDDING_DIMENSIONS: String(embeddingDimensions),
         MANUAL_TEST_COHORT_ID: manualTestCohortId,
+        MANUAL_TEST_ACCOUNTS_ENABLED: String(manualTestAccountsEnabled),
+        MANUAL_TEST_ACCOUNTS_SECRET_ARN: manualTestAccountsSecret.secretArn,
       },
     });
     const accessProfile = functionFor("ProfileAccess", "profile-access", {
@@ -294,7 +296,12 @@ export class PitchYourOwnerCloudStack extends cdk.Stack {
         minify: true,
         sourceMap: true,
         bundleAwsSDK: true,
-        nodeModules: ["@resvg/resvg-wasm"],
+        nodeModules: ["@resvg/resvg-wasm", "sharp"],
+        environment: {
+          npm_config_os: "linux",
+          npm_config_cpu: "arm64",
+          npm_config_libc: "glibc",
+        },
         commandHooks: {
           beforeBundling: () => [],
           beforeInstall: () => [],
@@ -355,9 +362,6 @@ export class PitchYourOwnerCloudStack extends cdk.Stack {
       environment: {
         MANUAL_TEST_ACCOUNTS_ENABLED: String(manualTestAccountsEnabled),
         MANUAL_TEST_ACCOUNTS_SECRET_ARN: manualTestAccountsSecret.secretArn,
-        MANUAL_TEST_COHORT_ID: manualTestCohortId,
-        PROFILE_PUBLISH_FUNCTION_NAME: publishProfile.functionName,
-        MATCHING_RUN_FUNCTION_NAME: runMatching.functionName,
       },
     });
     const triggerMatching = functionFor("MatchingTrigger", "matching-trigger", {
@@ -392,9 +396,8 @@ export class PitchYourOwnerCloudStack extends cdk.Stack {
     geminiImageSecret.grantRead(profileImageWorker);
     manualTestAccountsSecret.grantRead(requestVerification);
     manualTestAccountsSecret.grantRead(confirmVerification);
+    manualTestAccountsSecret.grantRead(publishProfile);
     manualTestAccountsSecret.grantRead(manualTestBootstrap);
-    publishProfile.grantInvoke(manualTestBootstrap);
-    runMatching.grantInvoke(manualTestBootstrap);
     table.grant(supportRequest, "dynamodb:PutItem", "dynamodb:UpdateItem");
     table.grantStreamRead(relayOutbox);
     outboxQueue.grantSendMessages(relayOutbox);

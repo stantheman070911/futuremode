@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 import sharp from "sharp";
 import type { OwnerPitchProfile } from "../functions/shared/contracts.js";
-import { buildProfileImagePrompt, profileImageUrl, readyProfileImage } from "../functions/shared/profile-image.js";
+import { buildProfileImagePrompt, profileImagePresentation, profileImageUrl, profileSocialImageUrl, readyProfileImage } from "../functions/shared/profile-image.js";
 import { createProfileImageDerivatives, imageReviewPass, parseGeminiImage, parseImageReview } from "../functions/profile-image-worker/index.js";
 
 const profile: OwnerPitchProfile = {
@@ -64,7 +64,21 @@ test("profile image URL exists only for READY metadata matching CURRENT", () => 
   };
   assert.ok(readyProfileImage(current));
   assert.equal(profileImageUrl(current, "https://example.test/", "thumbnail"), "https://example.test/profile-images/abcdefghij/thumbnail.webp?v=1234567890abcdef");
+  assert.deepEqual(profileImagePresentation(current, "https://example.test"), {
+    status: "ready",
+    revision: "1234567890abcdef",
+    thumbnail_url: "https://example.test/profile-images/abcdefghij/thumbnail.webp?v=1234567890abcdef",
+    detail_url: "https://example.test/profile-images/abcdefghij/detail.webp?v=1234567890abcdef",
+  });
+  assert.equal(profileSocialImageUrl(current, "https://example.test"), "https://example.test/og/profile/abcdefghij.png?version=v2&image=1234567890abcdef");
   assert.equal(profileImageUrl({ ...current, versionId: "v3" }, "https://example.test", "detail"), undefined);
+  assert.equal(profileSocialImageUrl({ ...current, versionId: "v3" }, "https://example.test"), undefined);
+});
+
+test("profile image presentation distinguishes pending and current-version failure", () => {
+  assert.deepEqual(profileImagePresentation({ versionId: "v1", publicSlug: "abcdefghij" }, "https://example.test"), { status: "pending" });
+  assert.deepEqual(profileImagePresentation({ versionId: "v1", publicSlug: "abcdefghij", profileImage: { status: "FAILED", versionId: "v1" } }, "https://example.test"), { status: "failed" });
+  assert.deepEqual(profileImagePresentation({ versionId: "v2", publicSlug: "abcdefghij", profileImage: { status: "FAILED", versionId: "v1" } }, "https://example.test"), { status: "pending" });
 });
 
 test("frontend has a stable placeholder and no image regeneration control", async () => {

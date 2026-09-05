@@ -5,6 +5,8 @@ import { resolve } from "node:path";
 import { CloudFormationClient, DescribeStacksCommand } from "@aws-sdk/client-cloudformation";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, GetCommand, TransactWriteCommand } from "@aws-sdk/lib-dynamodb";
+import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import sharp from "sharp";
 
 const required = (name) => { const value = String(process.env[name] || "").trim(); if (!value) throw new Error(`${name} is required`); return value; };
 const region = process.env.AWS_REGION || "ap-southeast-1";
@@ -47,6 +49,9 @@ const profiles = [
 ];
 
 const dynamo = DynamoDBDocumentClient.from(new DynamoDBClient({ region }), { marshallOptions: { removeUndefinedValues: true } });
+const s3 = new S3Client({ region });
+const profileImageBucketName = String(outputs.ProfileImageBucketName || "");
+if (!/^pitchyourowner-e2e-profile-images-/.test(profileImageBucketName)) throw new Error(`unexpected E2E profile image bucket: ${profileImageBucketName || "missing"}`);
 const now = new Date().toISOString();
 const expiresAt = Math.floor(Date.now() / 1000) + 86_400;
 const testMeta = { isTestProfile: true, cleanupSafe: true, testRunId: runId, expiresAt };
@@ -57,9 +62,25 @@ for (const [id, email, displayName, animal, summary, interests, coefficients] of
   if (existing && (!existing.isTestProfile || existing.testRunId !== runId || !existing.cleanupSafe)) throw new Error(`refusing to overwrite profile ${id}`);
   const embedding = vector(...coefficients);
   const profile = { animal_persona: animal, summary, interests, motivations: ["把領域裡的隱性方法變成可以交換的具體做法"], active_problems: [`如何在真實限制下推進：${interests[0]}`], recurring_topics: interests.slice(0, 3), friend_intent: "想認識會帶著具體案例、失敗與下一個實驗來聊天的人。", history_scope: "隔離 E2E fixture；未使用任何私人聊天內容。", confidence };
+  let profileImage;
+  if (id === "C") {
+    const sourceHash = sha256(`${runId}:${id}:profile-image`);
+    const prefix = `e2e/${runId}/${idValue}/${versionId}/${sourceHash}`;
+    const [thumbnailKey, detailKey] = [`${prefix}/thumbnail.webp`, `${prefix}/detail.webp`];
+    const source = Buffer.from(`<svg width="1024" height="1024" xmlns="http://www.w3.org/2000/svg"><rect width="1024" height="1024" fill="#fffaf0"/><path d="M250 690Q210 490 335 325L430 210L485 350Q520 335 555 350L610 210L720 330Q820 500 765 690Q620 820 500 825Q370 815 250 690Z" fill="white" stroke="black" stroke-width="25" stroke-linejoin="round"/><circle cx="445" cy="505" r="13"/><circle cx="575" cy="505" r="13"/><path d="M480 570Q510 595 540 570" fill="none" stroke="black" stroke-width="18" stroke-linecap="round"/></svg>`);
+    const [thumbnail, detail] = await Promise.all([
+      sharp(source).resize(192, 192, { fit: "cover" }).webp({ quality: 82 }).toBuffer(),
+      sharp(source).resize(768, 768, { fit: "cover" }).webp({ quality: 86 }).toBuffer(),
+    ]);
+    await Promise.all([
+      s3.send(new PutObjectCommand({ Bucket: profileImageBucketName, Key: thumbnailKey, Body: thumbnail, ContentType: "image/webp" })),
+      s3.send(new PutObjectCommand({ Bucket: profileImageBucketName, Key: detailKey, Body: detail, ContentType: "image/webp" })),
+    ]);
+    profileImage = { status: "READY", versionId, sourceHash, thumbnailKey, detailKey, updatedAt: now };
+  }
   await dynamo.send(new TransactWriteCommand({ TransactItems: [
     { Put: { TableName: tableName, Item: { pk: `PROFILE#${idValue}`, sk: `VERSION#${versionId}`, entityType: "PROFILE_VERSION", schema: "pitchyourowner.profile-publish.v1", profileId: idValue, versionId, emailHash: sha256(email), profile, displayName, locale: "zh-Hant", embedding, fieldEmbeddings: Object.fromEntries(["interests", "active_problems", "motivations", "recurring_topics", "friend_intent"].map((field) => [field, embedding])), embedding_status: "READY", profile_scope: "ACTIVE", is_matchable: 1, createdAt: now, ...testMeta } } },
-    { Put: { TableName: tableName, Item: { pk: `PROFILE#${idValue}`, sk: "CURRENT", entityType: "PROFILE_CURRENT", profileId: idValue, versionId, email, emailHash: sha256(email), displayName, publicSlug: slug, visibility: "public", matchingState: "active", matchLanguages: ["zh"], updatedAt: now, ...testMeta } } },
+    { Put: { TableName: tableName, Item: { pk: `PROFILE#${idValue}`, sk: "CURRENT", entityType: "PROFILE_CURRENT", profileId: idValue, versionId, email, emailHash: sha256(email), displayName, publicSlug: slug, visibility: "public", matchingState: "active", matchLanguages: ["zh"], updatedAt: now, ...(profileImage ? { profileImage } : {}), ...testMeta } } },
     { Put: { TableName: tableName, Item: { pk: `PUBLIC_SLUG#${slug}`, sk: "PROFILE", entityType: "PUBLIC_PROFILE_POINTER", profileId: idValue, createdAt: now, ...testMeta } } },
   ] }));
   if (["A", "B", "C"].includes(id)) {
@@ -80,6 +101,6 @@ await dynamo.send(new TransactWriteCommand({ TransactItems: [
   { Put: { TableName: tableName, Item: { pk: `EMAIL#${publishEmailHash}`, sk: `SESSION#${sha256(publishToken)}`, entityType: "EMAIL_SESSION_POINTER", sessionPk: `SESSION#${sha256(publishToken)}`, emailHash: publishEmailHash, createdAt: now, expiresAt, ...testMeta } } },
 ] }));
 await dynamo.send(new TransactWriteCommand({ TransactItems: [{ Put: { TableName: tableName, Item: { pk: "MATCHING_GRAPH", sk: "REVISION", entityType: "MATCHING_GRAPH_REVISION", revision: 1, updatedAt: now } } }] }));
-const artifact = { stackName, stackKey, tableName, siteUrl: outputs.CloudWebsiteUrl, matchingFunctionName: outputs.MatchingRunFunctionName, runId, sessionTokens, publishActor: { email: publishEmail, emailHash: publishEmailHash, profileId: publishProfileId } };
+const artifact = { stackName, stackKey, tableName, profileImageBucketName, siteUrl: outputs.CloudWebsiteUrl, matchingFunctionName: outputs.MatchingRunFunctionName, runId, sessionTokens, publishActor: { email: publishEmail, emailHash: publishEmailHash, profileId: publishProfileId } };
 await writeFile(outputsFile, JSON.stringify(artifact, null, 2), { mode: 0o600 });
 console.log(JSON.stringify({ seeded: true, environment: "e2e", runId, profiles: profiles.length, outputsFile }, null, 2));

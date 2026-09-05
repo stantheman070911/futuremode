@@ -164,7 +164,7 @@ All responses are JSON. Owner routes require
 | `POST /v1/email-verifications/{challengeId}/confirm` | Public | Exchange OTP for a session token |
 | `POST /v1/profile-versions` | Owner session + `Idempotency-Key` | Validate, embed, and publish a profile version |
 | `GET /v1/profile-versions/{versionId}` | Owning session | Read one version belonging to the owner |
-| `GET /v1/profiles/me` | Owner session | Read the current profile and matching state |
+| `GET /v1/profiles/me` | Owner session | Read the current profile, matching state, and pending/ready/failed portrait presentation |
 | `PATCH /v1/profiles/me` | Owner session | Set `visibility` to `public` or `private`; matching state follows automatically |
 | `DELETE /v1/profiles/me` | Owner session | Delete owner data; body must contain `{"confirm":"DELETE"}` |
 | `POST /v1/upload-sessions` | Owner session | Create a 24-hour, single-use draft capability |
@@ -175,7 +175,8 @@ All responses are JSON. Owner routes require
 | `GET /v1/public-profiles/{slug}` | Public | Read the allowlisted public profile, or only `{visibility:"private"}` |
 | `GET /p/{slug}` | Public | Render crawler-friendly public profile HTML or a generic private notice |
 | `GET /og/{slug}` | Public | Render the generic social-card PNG (`site.png`) |
-| `GET /og/profile/{slug}` | Public profile only | Render a version-checked profile social-card PNG with QR |
+| `GET /og/profile/{slug}?version=…&image=…` | Public profile with READY portrait only | Render a profile-and-portrait-revision-checked social-card PNG with QR; reject missing or stale revisions |
+| `POST /v1/manual-test/bootstrap` | Allowlisted synthetic owner session | Return that first-time owner's complete prefilled profile draft without publishing it |
 | `GET /v1/matches` | Public owner session | Read one stable result set capped at five candidates |
 | `POST /v1/matches/refresh` | Public owner session | Reuse or replace the set according to graph revision |
 | `GET /v1/matches/{matchId}` | Public owner session in the result set | Read one match detail |

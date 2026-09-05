@@ -7,7 +7,7 @@ const stylesUrl = new URL("../static/styles.css", import.meta.url);
 const productContractUrl = new URL("../../../docs/product-design.md", import.meta.url);
 const developmentPlanUrl = new URL("../../../docs/handoff/development-brief.md", import.meta.url);
 
-test("connects the real versioned social image to My Pitch", async () => {
+test("loads the social card only after the current portrait revision is ready", async () => {
   const [app, styles] = await Promise.all([
     readFile(appUrl, "utf8"),
     readFile(stylesUrl, "utf8"),
@@ -15,11 +15,28 @@ test("connects the real versioned social image to My Pitch", async () => {
 
   assert.match(app, /function publicProfileSharePanel\(\)/);
   assert.match(app, /imageUrl\.searchParams\.set\("version", versionId\)/);
+  assert.match(app, /imageUrl\.searchParams\.set\("image", imageRevision\)/);
+  assert.match(app, /imageState\?\.status !== "ready"/);
+  assert.match(app, /share-card-placeholder/);
+  assert.match(app, /profile_image: \{ status: "pending" \}/);
   assert.match(app, /class="public-share-card"/);
   assert.match(app, /width="1200" height="630"/);
   assert.match(app, /\$\{publicProfileSharePanel\(\)\}/);
   assert.match(styles, /\.public-share-card\{/);
   assert.match(styles, /aspect-ratio:1200\/630/);
+  assert.match(styles, /\.share-card-placeholder\{/);
+});
+
+test("requires a matching READY portrait revision before rendering a final profile card", async () => {
+  const [handler, publicProfile] = await Promise.all([
+    readFile(new URL("../functions/profile-og-image/index.ts", import.meta.url), "utf8"),
+    readFile(new URL("../functions/public-profile/index.ts", import.meta.url), "utf8"),
+  ]);
+  assert.match(handler, /requestedImageRevision/);
+  assert.match(handler, /requestedImageRevision !== currentImageRevision/);
+  assert.doesNotMatch(handler, /social card remains valid while an asynchronous portrait is absent/i);
+  assert.match(handler, /public, max-age=0, must-revalidate/);
+  assert.match(publicProfile, /profileSocialImageUrl\(current, origin\) \?\? genericImage/);
 });
 
 test("uses VibeMate-style platform intents with portable fallbacks", async () => {

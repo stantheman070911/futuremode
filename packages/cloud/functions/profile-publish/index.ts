@@ -4,6 +4,7 @@ import { embedText } from "../../lib/reusable/bedrock.js";
 import { loadSession, profileIdForEmailHash } from "../shared/auth.js";
 import { canonicalMatchingDocument, payloadHash, PROFILE_SCHEMA, validatePublishPayload } from "../shared/contracts.js";
 import { json, parseJsonBody } from "../shared/http.js";
+import { manualTestAccount } from "../shared/manual-test.js";
 import { randomPublicSlug } from "../shared/security.js";
 import { documentDynamo, requiredEnvironment } from "../shared/storage.js";
 
@@ -31,15 +32,10 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
     const session = await loadSession(event.headers.authorization);
     const tableName = requiredEnvironment("TABLE_NAME");
     const profileId = profileIdForEmailHash(session.emailHash);
-    const internalTest = (event as APIGatewayProxyEventV2 & { _manualTest?: { cohortId?: unknown } })._manualTest;
     const configuredTestCohort = process.env.MANUAL_TEST_COHORT_ID;
-    const testCohortId = typeof internalTest?.cohortId === "string"
-      && configuredTestCohort
-      && internalTest.cohortId === configuredTestCohort
-      && session.email.endsWith("@futuremode.test")
-      ? configuredTestCohort
-      : undefined;
-    if (internalTest && !testCohortId) throw new Error("manual_test_context_invalid");
+    const testAccount = session.email.endsWith("@futuremode.test") ? await manualTestAccount(session.email) : undefined;
+    if (testAccount && (!configuredTestCohort || testAccount.cohortId !== configuredTestCohort)) throw new Error("manual_test_context_invalid");
+    const testCohortId = testAccount?.cohortId;
     const testMetadata = testCohortId ? {
       isTestProfile: true,
       isManualTestProfile: true,

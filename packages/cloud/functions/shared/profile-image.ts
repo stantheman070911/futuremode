@@ -3,7 +3,9 @@ import { publicProfile, type OwnerPitchProfile } from "./contracts.js";
 
 export const PROFILE_IMAGE_MODEL_ID = "gemini-3.1-flash-lite-image";
 export const PROFILE_IMAGE_VARIANTS = ["thumbnail", "detail"] as const;
+export const PROFILE_IMAGE_REVISION_LENGTH = 16;
 export type ProfileImageVariant = typeof PROFILE_IMAGE_VARIANTS[number];
+export type ProfileImageStatus = "pending" | "ready" | "failed";
 
 export interface ProfileImageMetadata {
   status: "READY" | "FAILED";
@@ -71,5 +73,40 @@ export function profileImageUrl(current: Record<string, unknown> | undefined, or
   const image = readyProfileImage(current);
   const slug = typeof current?.publicSlug === "string" ? current.publicSlug : "";
   if (!image || !slug) return undefined;
-  return `${origin.replace(/\/$/, "")}/profile-images/${encodeURIComponent(slug)}/${variant}.webp?v=${encodeURIComponent(image.sourceHash.slice(0, 16))}`;
+  return `${origin.replace(/\/$/, "")}/profile-images/${encodeURIComponent(slug)}/${variant}.webp?v=${encodeURIComponent(image.sourceHash.slice(0, PROFILE_IMAGE_REVISION_LENGTH))}`;
+}
+
+export function profileImageRevision(current: Record<string, unknown> | undefined): string | undefined {
+  return readyProfileImage(current)?.sourceHash.slice(0, PROFILE_IMAGE_REVISION_LENGTH);
+}
+
+export function profileImagePresentation(current: Record<string, unknown> | undefined, origin: string): {
+  status: ProfileImageStatus;
+  revision?: string;
+  thumbnail_url?: string;
+  detail_url?: string;
+} {
+  const ready = readyProfileImage(current);
+  if (ready) {
+    return {
+      status: "ready",
+      revision: ready.sourceHash.slice(0, PROFILE_IMAGE_REVISION_LENGTH),
+      thumbnail_url: profileImageUrl(current, origin, "thumbnail"),
+      detail_url: profileImageUrl(current, origin, "detail"),
+    };
+  }
+  const image = current?.profileImage as Partial<ProfileImageMetadata> | undefined;
+  if (image?.status === "FAILED" && image.versionId === current?.versionId) return { status: "failed" };
+  return { status: "pending" };
+}
+
+export function profileSocialImageUrl(current: Record<string, unknown> | undefined, origin: string): string | undefined {
+  const slug = typeof current?.publicSlug === "string" ? current.publicSlug : "";
+  const versionId = typeof current?.versionId === "string" ? current.versionId : "";
+  const revision = profileImageRevision(current);
+  if (!slug || !versionId || !revision) return undefined;
+  const url = new URL(`/og/profile/${encodeURIComponent(slug)}.png`, origin.replace(/\/$/, ""));
+  url.searchParams.set("version", versionId);
+  url.searchParams.set("image", revision);
+  return url.toString();
 }

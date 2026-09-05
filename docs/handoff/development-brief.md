@@ -464,8 +464,11 @@ actual versioned 1200×630 OG image, Copy link, More sharing options, View publi
 X, Facebook, Threads, Download PNG, and Copy post text. Publishing still continues into
 matching; its success notice offers a secondary **查看／分享公開介紹** action.
 
-**Mechanism.** Every share destination and copied post uses the same `/p/{slug}` URL;
-the downloaded `/og/profile/{slug}.png` encodes that URL in its QR. More sharing options
+**Mechanism.** Every share destination and copied post uses the same `/p/{slug}` URL.
+My Pitch does not request the final card until the current portrait is READY; it then uses
+`/og/profile/{slug}.png?version={version_id}&image={image_revision}` so a portrait completion
+or later profile change cannot reuse a cached portraitless card. The downloaded PNG encodes
+the stable public Profile URL in its QR. More sharing options
 uses `navigator.share({ title, text, url })` when available and falls back to copying
 the link. X receives text plus URL through its intent; Facebook receives the URL and
 relies primarily on the page's Open Graph preview; Threads receives best-effort
@@ -484,8 +487,10 @@ identifiers, or internal scores. Private Profiles show an explanatory disabled s
 make no request for the private OG image. Copy and share outcomes use the existing live
 region and do not claim that a post was published.
 
-**Acceptance criteria.** The My Pitch preview URL includes the current `version_id`;
-Copy link and Copy post text work; absent or failed Web Share falls back to Copy link;
+**Acceptance criteria.** The My Pitch preview is gated on a READY portrait and its URL
+includes the current `version_id` plus `image_revision`; missing and stale image revisions
+return a non-cacheable response; Copy link and Copy post text work; absent or failed Web
+Share falls back to Copy link;
 aborting the share sheet does not show an error; platform links are correctly encoded;
 the public page opens separately; the PNG is downloadable; Private disables the actions;
 and the layout is verified at 375px and 320px with keyboard access. Existing social-image,

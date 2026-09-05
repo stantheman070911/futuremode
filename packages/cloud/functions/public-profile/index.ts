@@ -2,7 +2,7 @@ import { GetCommand } from "@aws-sdk/lib-dynamodb";
 import type { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from "aws-lambda";
 import { profileAnimalPersona, publicProfile, type OwnerPitchProfile } from "../shared/contracts.js";
 import { html, json } from "../shared/http.js";
-import { profileImageUrl } from "../shared/profile-image.js";
+import { profileImageUrl, profileSocialImageUrl } from "../shared/profile-image.js";
 import { documentDynamo, requiredEnvironment } from "../shared/storage.js";
 
 function escapeHtml(value: unknown): string {
@@ -64,7 +64,7 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
   if (!loaded.profile || !loaded.version || !loaded.displayName) return event.rawPath.startsWith("/v1/") ? json(404, { error: "public_profile_not_found" }) : html(404, "找不到這份介紹");
   const { profile, displayName, current, version } = loaded;
   const isManualTest = current.isManualTestProfile === true;
-  const image = `${origin}/og/profile/${encodeURIComponent(slug)}.png?version=${encodeURIComponent(String(version.versionId ?? current.versionId))}`;
+  const image = profileSocialImageUrl(current, origin) ?? genericImage;
   const profileImage = profileImageUrl(current, origin, "detail");
   if (event.rawPath.startsWith("/v1/")) return json(200, { visibility: "public", public_slug: slug, version_id: version.versionId, display_name: displayName, profile, profile_image_url: profileImage, test_data: isManualTest });
   const portrait = profileImage

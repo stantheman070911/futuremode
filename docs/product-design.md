@@ -283,8 +283,11 @@ The signed-in application has four persistent areas:
 
 The owner shares one stable public Profile URL, `/p/{slug}`. PitchYourOwner generates
 the social image from the owner-approved public Profile; there is no separate social-card
-editor and no second publication decision. My Pitch shows the actual versioned
-`/og/profile/{slug}.png?version={version_id}` image, not a locally reconstructed mock.
+editor and no second publication decision. My Pitch waits for the asynchronous portrait
+to reach READY, then shows the actual revisioned
+`/og/profile/{slug}.png?version={version_id}&image={image_revision}` image, not a locally
+reconstructed mock. Before READY it shows a stable preparation state and does not request
+or expose a portraitless final card under the same URL.
 When the Profile is Private, the preview and every share action are disabled and the UI
 explains that the Profile must be made Public again before sharing.
 

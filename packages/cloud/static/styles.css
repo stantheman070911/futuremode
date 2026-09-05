@@ -87,6 +87,9 @@ button{cursor:pointer}
 .profile-share-body{margin:9px 0 16px;color:var(--muted);font-size:13px;line-height:1.65}
 .profile-share-preview{margin:0 0 12px;border:1px solid var(--line);background:var(--white);overflow:hidden}
 .public-share-card{display:block;width:100%;height:auto;aspect-ratio:1200/630;object-fit:cover;background:var(--soft)}
+.share-card-placeholder{display:grid;place-items:center;aspect-ratio:1200/630;background:linear-gradient(110deg,var(--soft) 8%,var(--white) 18%,var(--soft) 33%);background-size:200% 100%;animation:share-card-loading 1.6s linear infinite;color:var(--muted);font:700 11px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.08em;text-transform:uppercase}
+@keyframes share-card-loading{to{background-position-x:-200%}}
+@media(prefers-reduced-motion:reduce){.share-card-placeholder{animation:none}}
 .share-primary-actions{display:grid;gap:8px}
 .share-platform-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-top:8px}
 .share-platform-actions .button{min-height:44px;padding:9px 6px;font-size:12px}
