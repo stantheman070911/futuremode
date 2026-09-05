@@ -1,0 +1,103 @@
+# UI Dump
+
+## Visible Text
+
+```text
+Visible text content:
+跳到主要內容
+PITCHYOUROWNER
+返回配對
+Demo · 模擬資料
+用
+用腳尖讀懂情緒的粉色羊駝
+姿勢與張力
+用腳尖讀懂情緒的粉色羊駝
+當代舞者，研究細微姿勢與張力變化如何改變情緒表達。
+興趣
+姿勢與張力
+編舞引導
+低光下的動作
+動機
+協助表演者傳達情緒，同時避免過度指導
+目前問題
+給出有用的肢體提示，同時不打斷表演者的動勢
+反覆主題
+肩線提示
+動作前的呼吸
+手勢強度
+交友意圖
+正在測試細微提示如何改變觀眾感受的人。
+01 · 我們都關心什麼
+你們都關注姿勢與張力如何承載情緒——你透過鏡頭，Ren 透過身體。
+依據 · 興趣
+依據 · 目前問題
+依據 · 反覆主題
+02 · 此刻出於相同理由
+你們此刻都在嘗試清楚引導一個人，同時避免過度指導。
+依據 · 興趣
+依據 · 目前問題
+依據 · 反覆主題
+03 · 今天可以聊什麼
+Ren 正在低光下測試肩線提示，而你正在重寫 90 秒拍攝前說明。
+依據 · 興趣
+依據 · 目前問題
+依據 · 反覆主題
+源自對話
+Owner 已核准
+未經驗證
+寄送邀請
+配對
+邀請
+我的介紹
+設定
+找到 1 個配對
+```
+
+## Visible HTML
+
+```html
+HTML content:
+<html lang="zh-Hant"><head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#f4f2ed">
+  <meta name="description" content="Your agent knows you. Let it pitch you.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="PitchYourOwner">
+  <meta property="og:title" content="PitchYourOwner｜讓你的 Agent 介紹你">
+  <meta property="og:description" content="把反覆出現的興趣、動機與難題，變成一份你確認過的介紹，找到真正值得聊的人。">
+  <meta property="og:url" content="https://d1vuzznd4gxltu.cloudfront.net/">
+  <meta property="og:image" content="https://d1vuzznd4gxltu.cloudfront.net/og/site.png">
+  <meta property="og:image:secure_url" content="https://d1vuzznd4gxltu.cloudfront.net/og/site.png">
+  <meta property="og:image:type" content="image/png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="PitchYourOwner｜讓你的 Agent 介紹你">
+  <meta name="twitter:description" content="把反覆出現的興趣、動機與難題，變成一份你確認過的介紹。">
+  <meta name="twitter:image" content="https://d1vuzznd4gxltu.cloudfront.net/og/site.png">
+  <title>PitchYourOwner</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body class="">
+  <a class="skip-link" href="#app">跳到主要內容</a>
+  <main id="app" tabindex="-1"><div class="app-shell" aria-hidden="false"><section class="screen ">
+    <header class="wordmark"><a href="/matches" data-link="">PITCHYOUROWNER</a></header>
+    
+    
+    <a href="/matches" data-link="" class="eyebrow" style="text-decoration:none">返回配對</a>
+    <div class="evidence"><span class="evidence-label">Demo · 模擬資料</span></div>
+    <div class="person"><div class="initial">用</div><div><h1 class="animal-persona compact">用腳尖讀懂情緒的粉色羊駝</h1><p>姿勢與張力</p></div></div>
+    
+    <div class="document"><p class="animal-persona">用腳尖讀懂情緒的粉色羊駝</p><p class="doc-summary">當代舞者，研究細微姿勢與張力變化如何改變情緒表達。</p><section class="doc-field"><span class="field-label">興趣</span><div class="tag-list"><span class="tag">姿勢與張力</span><span class="tag">編舞引導</span><span class="tag">低光下的動作</span></div></section><section class="doc-field"><span class="field-label">動機</span><div class="tag-list"><span class="tag">協助表演者傳達情緒，同時避免過度指導</span></div></section><section class="doc-field"><span class="field-label">目前問題</span><div class="tag-list"><span class="tag">給出有用的肢體提示，同時不打斷表演者的動勢</span></div></section><section class="doc-field"><span class="field-label">反覆主題</span><div class="tag-list"><span class="tag">肩線提示</span><span class="tag">動作前的呼吸</span><span class="tag">手勢強度</span></div></section><section class="doc-field"><span class="field-label">交友意圖</span><p>正在測試細微提示如何改變觀眾感受的人。</p></section></div>
+    <div class="question-card"><section class="question"><div class="step-label">01 · 我們都關心什麼</div><h2>你們都關注姿勢與張力如何承載情緒——你透過鏡頭，Ren 透過身體。</h2><div class="evidence"><span class="evidence-label">依據 · 興趣</span><span class="evidence-label">依據 · 目前問題</span><span class="evidence-label">依據 · 反覆主題</span></div></section><section class="question"><div class="step-label">02 · 此刻出於相同理由</div><h2>你們此刻都在嘗試清楚引導一個人，同時避免過度指導。</h2><div class="evidence"><span class="evidence-label">依據 · 興趣</span><span class="evidence-label">依據 · 目前問題</span><span class="evidence-label">依據 · 反覆主題</span></div></section><section class="question"><div class="step-label">03 · 今天可以聊什麼</div><h2>Ren 正在低光下測試肩線提示，而你正在重寫 90 秒拍攝前說明。</h2><div class="evidence"><span class="evidence-label">依據 · 興趣</span><span class="evidence-label">依據 · 目前問題</span><span class="evidence-label">依據 · 反覆主題</span></div></section></div>
+    <div class="provenance"><span>源自對話</span><span>Owner 已核准</span><span>未經驗證</span></div>
+    <button class="button primary" style="width:100%" data-action="match-decision" data-decision="invite" data-match-id="demo-ren-h">寄送邀請</button>
+  </section><nav class="bottom-nav" aria-label="主要導覽"><a href="/matches" data-link="" class="active" aria-current="page">配對</a><a href="/invitations" data-link="" class="">邀請</a><a href="/pitch" data-link="" class="">我的介紹</a><a href="/settings" data-link="" class="">設定</a></nav></div></main>
+  <div id="live-region" class="sr-only" aria-live="polite">找到 1 個配對</div>
+  
+  
+
+
+</body></html>
+```

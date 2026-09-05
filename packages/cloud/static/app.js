@@ -32,9 +32,9 @@ const COPY = {
     "field.history_scope": "History scope", "field.summary": "Summary", "field.interests": "Interests", "field.motivations": "Motivations", "field.active_problems": "Active problems", "field.recurring_topics": "Recurring topics", "field.friend_intent": "Friend intent", "hint.history_scope": "What the AI could and could not access", "hint.summary": "One concrete owner pitch", "hint.interests": "One specific, sustained interest per line", "hint.motivations": "One current motivation per line", "hint.active_problems": "One problem still in progress per line", "hint.recurring_topics": "One recurring discussion topic per line", "hint.friend_intent": "Who you hope to meet and what you want to discuss", "field.confidence": "confidence",
     "profile.scope": "History scope", "profile.conversation": "Conversation-derived", "profile.approved": "Owner-approved", "profile.exploring": "Currently exploring", "profile.notVerified": "Not verified",
     "pitch.loading": "Loading your pitch", "pitch.title": "My Pitch", "pitch.approved": "Owner-approved introduction", "pitch.emptyEyebrow": "MY PITCH", "pitch.emptyTitle": "No pitch yet", "pitch.emptyBody": "Ask your AI to create an owner pitch, then bring it back and publish it.", "pitch.create": "Create my pitch", "pitch.new": "Create a new pitch", "pitch.newHint": "Your agent writes a fresh pitch. Your current pitch stays live until you publish the new one.", "pitch.edit": "Edit", "pitch.draftChoiceTitle": "You already have a draft", "pitch.draftChoiceBody": "Resume it, or replace it with your currently published pitch.", "pitch.resumeDraft": "Resume your draft", "pitch.editPublished": "Edit published pitch",
-    "matches.loading": "Looking for specific overlap", "matches.eyebrow": "MATCHES", "matches.searchingEyebrow": "MATCHES · SEARCHING", "matches.searchingTitle": "Your agent is looking", "matches.searchingBody": "It is comparing your pitch with other owners. This usually takes under a minute.", "matches.checking": "Checking again in {seconds}s", "matches.paused": "Matching paused", "matches.pausedBody": "We cannot check for new matches right now. Your pitch is safely saved.", "matches.emptyTitle": "No filler.", "matches.emptyBody": "There is no match with a concrete reason yet. Matching runs again whenever a new owner publishes.", "matches.check": "Check again", "matches.title": "Matches", "matches.intro": "A small number of specific, explainable friend matches.", "matches.found": "{count} match{suffix} found", "matches.demoPassed": "Demo match passed", "matches.demoPassedBody": "This decision is recorded and cannot be undone. Ren H. is not notified and will not be suggested again.",
-    "match.back": "Back to matches", "match.loading": "Opening match reason", "match.ownerPitch": "Owner pitch", "match.viewDetail": "See details", "match.score": "Similarity {score} / 100", "match.q1": "01 · What we both care about", "match.q2": "02 · Same reason, right now", "match.q3": "03 · What we could discuss today", "match.evidence": "Evidence · {label}", "match.connected": "You are connected", "match.start": "Start with this", "match.waiting": "Waiting for Ren H.", "match.simulate": "Demo · Simulate Ren accepting", "match.sent": "Invitation sent. Contact appears only after mutual acceptance.", "match.passed": "Passed. This decision is recorded and cannot be undone; they are not told.", "match.passConfirmTitle": "Pass on {name}?", "match.passConfirmBody": "This cannot be undone. They are not told.", "match.confirmPass": "Confirm pass", "match.notNow": "Not now", "match.accept": "Accept", "match.invite": "Invite {name}", "match.unavailable": "Unavailable", "match.unavailableBody": "Match unavailable", "match.demoData": "Demo · simulated data", "match.fixtureOnly": "This test profile is visible only to you and cannot receive an invitation.", "match.demoAcceptance": "Demo · simulated acceptance", "match.demoSent": "Demo invitation sent", "match.demoAccepted": "Demo · Ren H. simulated acceptance", "match.passNotice": "Passed. They are not told.",
-    "invites.loading": "Loading invitations", "invites.title": "Invitations", "invites.intro": "Introductions require mutual consent. A Not now reason is never sent to the other person.", "invites.incoming": "Incoming", "invites.outgoing": "Outgoing", "invites.connected": "Connected", "invites.empty": "No items yet", "demo.marker": "Demo", "demo.simulated": "Demo · simulated",
+    "matches.loading": "Looking for specific overlap", "matches.eyebrow": "MATCHES", "matches.searchingEyebrow": "MATCHES · SEARCHING", "matches.searchingTitle": "Your agent is looking", "matches.searchingBody": "It is comparing your pitch with other owners. This usually takes under a minute.", "matches.checking": "Checking again in {seconds}s", "matches.paused": "Matching paused", "matches.pausedBody": "We cannot check for new matches right now. Your pitch is safely saved.", "matches.emptyTitle": "No suitable match yet", "matches.emptyBody": "There is no match with a concrete reason yet. Matching runs again whenever a new owner publishes.", "matches.check": "Check again", "matches.title": "Matches", "matches.intro": "A small number of specific, explainable friend matches.", "matches.found": "{count} match{suffix} found", "matches.demoPassed": "Demo match passed", "matches.demoPassedBody": "This decision is recorded and cannot be undone. Ren H. is not notified and will not be suggested again.",
+    "match.back": "Back to matches", "match.loading": "Opening match reason", "match.ownerPitch": "Owner pitch", "match.viewDetail": "See details", "match.score": "Similarity {score} / 100", "match.q1": "01 · What we both care about", "match.q2": "02 · Same reason, right now", "match.q3": "03 · What we could discuss today", "match.evidence": "Evidence · {label}", "match.connected": "You are connected", "match.start": "Start with this", "match.waiting": "Waiting for Ren H.", "match.simulate": "Demo · Simulate Ren accepting", "match.sent": "Invitation sent. Contact appears only after mutual acceptance.", "match.passed": "Passed. This decision is recorded and cannot be undone; they are not told.", "match.passConfirmTitle": "Pass on {name}?", "match.passConfirmBody": "This cannot be undone. They are not told.", "match.confirmPass": "Confirm pass", "match.notNow": "Not now", "match.accept": "Accept", "match.invite": "Send invitation", "match.unavailable": "Unavailable", "match.unavailableBody": "Match unavailable", "match.demoData": "Demo · simulated data", "match.fixtureOnly": "This test profile is visible only to you and cannot receive an invitation.", "match.demoAcceptance": "Demo · simulated acceptance", "match.demoSent": "Demo invitation sent", "match.demoAccepted": "Demo · Ren H. simulated acceptance", "match.passNotice": "Passed. They are not told.",
+    "invites.loading": "Loading invitations", "invites.title": "Invitations", "invites.incoming": "Incoming", "invites.outgoing": "Outgoing", "invites.connected": "Connected", "invites.empty": "No items yet", "demo.marker": "Demo", "demo.simulated": "Demo · simulated",
     "settings.title": "Settings", "settings.intro": "Account, matching, and Computer API.", "settings.computer": "Computer API", "settings.upload": "24-hour draft upload", "settings.uploadHint": "Single-use and write-only; it can only create a draft", "settings.create": "Create", "settings.submitUrl": "Submit URL", "settings.token": "Bearer token · {expires}", "settings.tokenHint": "This token is shown only on this screen. POST body:", "settings.data": "Data", "settings.delete": "Delete pitch and account data", "settings.deleteAction": "Delete", "settings.signout": "Sign out on this device", "settings.signoutAction": "Sign out", "settings.info": "Information", "settings.privacy": "Privacy", "settings.terms": "Terms", "settings.support": "Support", "settings.language": "Language",
     "info.back": "Back to settings", "privacy.body": "PitchYourOwner stores only the owner pitch you explicitly publish, account and session records, matches, and invitation decisions. Your selected AI prepares the content before transfer.", "terms.body": "Owner pitches are conversation-derived interpretations, not verified identity or expertise. Use the product respectfully and do not upload information you are not authorized to share.", "support.body": "Send the exact error message and what you were trying to do. Do not include your profile JSON, upload token, verification code, or other secrets.", "support.sent": "Support request {id} was sent.", "support.another": "Send another request", "support.message": "Message", "support.messagePlaceholder": "What happened, what you expected, and the approximate time", "support.contact": "Contact (optional)", "support.contactPlaceholder": "Email or another way to reply", "support.send": "Send support request", "support.sending": "Sending…",
     "error.session": "Your session ended. Sign in again; your draft is safely saved on this device.", "error.rateVerification": "Too many code requests. Try again in {wait}, or use another email.", "error.rateGeneric": "That happened too often. Please wait and try again.", "error.supportLimit": "You have reached today’s support-request limit. Please try later.", "error.matchMissing": "This match cannot be found and may have expired.", "error.peerMissing": "This match cannot be opened and may have expired.", "error.matchExpired": "This match expired and can no longer be answered.", "error.decisionRecorded": "You already made a decision for this match. It cannot be changed.", "error.invitation": "This invitation action could not be completed. Return to Matches and try again.", "error.publishFirst": "Publish an owner pitch before starting matching.", "error.profileMissing": "You have not published an owner pitch yet.", "error.versionMissing": "This pitch version cannot be found.", "error.publish": "Your pitch could not be published. The draft is safe; please try again.", "error.publishPayload": "This pitch is not ready to publish. Go back, check the fields, and try again.", "error.pairing": "Matches cannot be loaded right now. Please try again.", "error.matching": "Matching could not start. Your pitch is saved; please try again.", "error.codeSend": "The verification code could not be sent. Please try again.", "error.codeConfirm": "This code could not be verified. Please try again.", "error.codeCombined": "The code is incorrect or expired. Check it or send a new one.", "error.emailDisabled": "Verification email is unavailable right now. Please try later.", "error.profileLoad": "Your pitch cannot be loaded right now. Please try again.", "error.draftLoad": "Your computer draft cannot be loaded right now. Please try again.", "error.matchingUnavailable": "New matches cannot be checked right now. Please try again.", "error.generic": "Something went wrong. Please try again.", "error.offline": "PitchYourOwner cannot be reached; this device may be offline.", "error.prompt": "The prompt could not be loaded. Go back and try again.", "action.signin": "Sign in again", "action.matches": "Back to matches", "action.createPitch": "Create my pitch", "action.changeEmail": "Change email", "action.backForm": "Back to form", "action.resend": "Resend code",
@@ -58,9 +58,9 @@ const COPY = {
     "field.history_scope": "歷史範圍", "field.summary": "摘要", "field.interests": "興趣", "field.motivations": "動機", "field.active_problems": "目前問題", "field.recurring_topics": "反覆主題", "field.friend_intent": "交友意圖", "hint.history_scope": "AI 實際使用與無法存取的資料範圍", "hint.summary": "一句具體的 owner pitch", "hint.interests": "每行一個具體、持續關注的興趣", "hint.motivations": "每行一個目前重要的動機", "hint.active_problems": "每行一個仍在處理的問題", "hint.recurring_topics": "每行一個反覆討論的主題", "hint.friend_intent": "希望認識怎樣的人，以及想聊什麼", "field.confidence": "信心",
     "profile.scope": "歷史範圍", "profile.conversation": "源自對話", "profile.approved": "Owner 已核准", "profile.exploring": "目前正在探索", "profile.notVerified": "未經驗證",
     "pitch.loading": "正在載入你的介紹", "pitch.title": "我的介紹", "pitch.approved": "我的介紹 · owner 已核准", "pitch.emptyEyebrow": "我的介紹", "pitch.emptyTitle": "尚未建立介紹", "pitch.emptyBody": "先讓你的 AI 產生 owner pitch，再貼回並發布。", "pitch.create": "建立我的介紹", "pitch.new": "建立新的介紹", "pitch.newHint": "你的 Agent 會重新撰寫一份介紹。在你發布新版之前，目前的介紹仍會繼續運作。", "pitch.edit": "編輯", "pitch.draftChoiceTitle": "你已有一份草稿", "pitch.draftChoiceBody": "你可以接續草稿，或改用目前已發布的介紹開始編輯。", "pitch.resumeDraft": "接續草稿", "pitch.editPublished": "編輯已發布的介紹",
-    "matches.loading": "正在尋找具體重疊", "matches.eyebrow": "配對", "matches.searchingEyebrow": "配對 · 搜尋中", "matches.searchingTitle": "你的 Agent 正在尋找", "matches.searchingBody": "正在把你的介紹與其他 owners 比較。通常一分鐘內就能完成。", "matches.checking": "{seconds} 秒後再次檢查", "matches.paused": "配對已暫停", "matches.pausedBody": "目前無法檢查新配對。你的介紹已安全保存。", "matches.emptyTitle": "不湊數。", "matches.emptyBody": "目前還沒有能具體說明理由的配對。每當有新的 owner 發布介紹，系統會再次進行配對。", "matches.check": "再次檢查", "matches.title": "配對", "matches.intro": "少量、具體、可以解釋的朋友配對。", "matches.found": "找到 {count} 個配對", "matches.demoPassed": "已略過示範配對", "matches.demoPassedBody": "這個決定已記錄且無法復原；Ren H. 不會收到通知，也不會再次被推薦。",
-    "match.back": "返回配對", "match.loading": "正在開啟配對理由", "match.ownerPitch": "Owner 介紹", "match.viewDetail": "查看詳細介紹", "match.score": "相似度 {score} / 100", "match.q1": "01 · 我們都關心什麼", "match.q2": "02 · 此刻出於相同理由", "match.q3": "03 · 今天可以聊什麼", "match.evidence": "依據 · {label}", "match.connected": "你們已連結", "match.start": "可以這樣開場", "match.waiting": "等待 Ren H. 回覆", "match.simulate": "Demo · 模擬 Ren 接受", "match.sent": "邀請已送出。只有雙方接受後才會顯示聯絡方式。", "match.passed": "已略過。此決定已記錄且無法復原；對方不會收到通知。", "match.passConfirmTitle": "略過 {name}？", "match.passConfirmBody": "此決定無法復原，對方不會收到通知。", "match.confirmPass": "確認略過", "match.notNow": "現在不要", "match.accept": "接受", "match.invite": "邀請 {name}", "match.unavailable": "無法使用", "match.unavailableBody": "配對目前無法使用", "match.demoData": "Demo · 模擬資料", "match.fixtureOnly": "這是只提供給你的測試 profile，不會寄出邀請。", "match.demoAcceptance": "Demo · 模擬接受", "match.demoSent": "Demo 邀請已送出", "match.demoAccepted": "Demo · Ren H. 已模擬接受", "match.passNotice": "已略過，對方不會收到通知。",
-    "invites.loading": "正在載入邀請", "invites.title": "邀請", "invites.intro": "引介需要雙方同意；現在不要的理由不會傳給對方。", "invites.incoming": "收到的邀請", "invites.outgoing": "送出的邀請", "invites.connected": "已連結", "invites.empty": "目前沒有項目", "demo.marker": "Demo", "demo.simulated": "Demo · 模擬",
+    "matches.loading": "正在尋找具體重疊", "matches.eyebrow": "配對", "matches.searchingEyebrow": "配對 · 搜尋中", "matches.searchingTitle": "你的 Agent 正在尋找", "matches.searchingBody": "正在把你的介紹與其他 owners 比較。通常一分鐘內就能完成。", "matches.checking": "{seconds} 秒後再次檢查", "matches.paused": "配對已暫停", "matches.pausedBody": "目前無法檢查新配對。你的介紹已安全保存。", "matches.emptyTitle": "找不到合適的配對", "matches.emptyBody": "目前還沒有能具體說明理由的配對。每當有新的 owner 發布介紹，系統會再次進行配對。", "matches.check": "再次檢查", "matches.title": "配對", "matches.intro": "少量、具體、可以解釋的朋友配對。", "matches.found": "找到 {count} 個配對", "matches.demoPassed": "已略過示範配對", "matches.demoPassedBody": "這個決定已記錄且無法復原；Ren H. 不會收到通知，也不會再次被推薦。",
+    "match.back": "返回配對", "match.loading": "正在開啟配對理由", "match.ownerPitch": "Owner 介紹", "match.viewDetail": "查看詳細介紹", "match.score": "相似度 {score} / 100", "match.q1": "01 · 我們都關心什麼", "match.q2": "02 · 此刻出於相同理由", "match.q3": "03 · 今天可以聊什麼", "match.evidence": "依據 · {label}", "match.connected": "你們已連結", "match.start": "可以這樣開場", "match.waiting": "等待 Ren H. 回覆", "match.simulate": "Demo · 模擬 Ren 接受", "match.sent": "邀請已送出。只有雙方接受後才會顯示聯絡方式。", "match.passed": "已略過。此決定已記錄且無法復原；對方不會收到通知。", "match.passConfirmTitle": "略過 {name}？", "match.passConfirmBody": "此決定無法復原，對方不會收到通知。", "match.confirmPass": "確認略過", "match.notNow": "現在不要", "match.accept": "接受", "match.invite": "寄送邀請", "match.unavailable": "無法使用", "match.unavailableBody": "配對目前無法使用", "match.demoData": "Demo · 模擬資料", "match.fixtureOnly": "這是只提供給你的測試 profile，不會寄出邀請。", "match.demoAcceptance": "Demo · 模擬接受", "match.demoSent": "Demo 邀請已送出", "match.demoAccepted": "Demo · Ren H. 已模擬接受", "match.passNotice": "已略過，對方不會收到通知。",
+    "invites.loading": "正在載入邀請", "invites.title": "邀請", "invites.incoming": "收到的邀請", "invites.outgoing": "送出的邀請", "invites.connected": "已連結", "invites.empty": "目前沒有項目", "demo.marker": "Demo", "demo.simulated": "Demo · 模擬",
     "settings.title": "設定", "settings.intro": "帳號、配對與 Computer API。", "settings.computer": "Computer API", "settings.upload": "24 小時草稿上傳", "settings.uploadHint": "單次、只能寫入，而且只能建立草稿", "settings.create": "建立", "settings.submitUrl": "提交網址", "settings.token": "Bearer token · {expires}", "settings.tokenHint": "Token 只顯示於目前畫面。POST body：", "settings.data": "資料", "settings.delete": "刪除介紹與帳號資料", "settings.deleteAction": "刪除", "settings.signout": "在這台裝置登出", "settings.signoutAction": "登出", "settings.info": "資訊", "settings.privacy": "隱私", "settings.terms": "使用條款", "settings.support": "支援", "settings.language": "語言",
     "info.back": "返回設定", "privacy.body": "PitchYourOwner 只儲存你明確發布的 owner pitch、帳號與 session 紀錄、配對和邀請決定。內容傳輸前由你選擇的 AI 處理。", "terms.body": "Owner pitch 是根據對話產生的解讀，不是經驗證的身分或專業能力。請尊重他人，也不要上傳你無權分享的資訊。", "support.body": "請提供完整錯誤訊息與當時嘗試的操作。不要附上 profile JSON、upload token、驗證碼或其他秘密。", "support.sent": "支援請求 {id} 已送出。", "support.another": "再送一個請求", "support.message": "訊息", "support.messagePlaceholder": "發生什麼、你原本預期什麼，以及大約時間", "support.contact": "聯絡方式（選填）", "support.contactPlaceholder": "Email 或其他回覆方式", "support.send": "送出支援請求", "support.sending": "送出中…",
     "error.session": "登入階段已結束。請重新登入；你的草稿仍安全保存在這台裝置上。", "error.rateVerification": "驗證碼請求太頻繁。請在 {wait}後再試，或改用另一個 Email。", "error.rateGeneric": "操作太頻繁。請稍候再試。", "error.supportLimit": "今天送出的支援請求已達上限。請稍後再試。", "error.matchMissing": "找不到這個配對，可能已經失效。", "error.peerMissing": "這個配對目前無法開啟，可能已經失效。", "error.matchExpired": "這個配對已經到期，無法再回覆。", "error.decisionRecorded": "你已經對這個配對做過決定，無法再次更改。", "error.invitation": "這個邀請操作無法完成。請返回配對後再試。", "error.publishFirst": "請先發布 owner pitch，才能開始配對。", "error.profileMissing": "你還沒有發布 owner pitch。", "error.versionMissing": "找不到這個 pitch 版本。", "error.publish": "目前無法發布你的介紹。草稿仍在，請再試一次。", "error.publishPayload": "這份介紹還不能發布。請返回檢查欄位後再試。", "error.pairing": "目前無法載入配對，請再試一次。", "error.matching": "目前無法開始配對。你的介紹已保存，請再試一次。", "error.codeSend": "目前無法寄出驗證碼，請再試一次。", "error.codeConfirm": "目前無法驗證這組代碼，請再試一次。", "error.codeCombined": "驗證碼不正確或已到期。請檢查代碼，或重新寄送。", "error.emailDisabled": "目前無法寄送驗證信。請稍後再試。", "error.profileLoad": "目前無法載入你的介紹，請再試一次。", "error.draftLoad": "目前無法載入電腦草稿，請再試一次。", "error.matchingUnavailable": "目前無法檢查新配對，請再試一次。", "error.generic": "發生問題，請再試一次。", "error.offline": "無法連上 PitchYourOwner；這台裝置可能已離線。", "error.prompt": "無法載入 Prompt。請返回上一步再試。", "action.signin": "重新登入", "action.matches": "返回配對", "action.createPitch": "建立我的介紹", "action.changeEmail": "更改 Email", "action.backForm": "返回表單", "action.resend": "重新寄送驗證碼",
@@ -116,9 +116,18 @@ Object.assign(COPY["zh-Hant"], {
   "connection.title": "你們都接受了",
   "connection.email": "對方的 Email",
   "connection.open": "查看聯絡方式",
+  "connection.aiEyebrow": "第一封信",
+  "connection.aiTitle": "請 AI 幫你寫第一封信",
+  "connection.aiBody": "把雙方已核准的介紹交給 AI，產生可以直接寄出的開場信。",
+  "connection.chatgpt": "用 ChatGPT 寫信",
+  "connection.claude": "用 Claude 寫信",
+  "connection.promptOpened": "已在新分頁開啟 {ai}，完整 Prompt 也已複製。這一頁會保留。",
+  "connection.promptManual": "已在新分頁開啟 {ai}，但瀏覽器沒有允許自動複製。完整 Prompt 已顯示在本頁下方。",
+  "connection.promptFallbackTitle": "手動複製完整 Prompt",
+  "connection.promptFallbackBody": "長按或全選下方內容，複製後貼到剛開啟的 AI 分頁。",
   "memory.title": "先開啟 {ai} 的記憶功能",
   "memory.body": "開啟記憶後，{ai} 才能使用你已授權且實際可存取的對話與記憶，整理出更具體的介紹。",
-  "memory.limit": "若你的帳號沒有這個功能，也可以稍後再設定；AI 仍須在 history_scope 誠實說明實際看見的範圍。",
+  "memory.limit": "若你的帳號沒有這個功能，也可以稍後再設定；AI 仍可根據目前可用的對話內容整理介紹。",
   "memory.confirm": "我已開啟記憶",
   "memory.later": "稍後再設定",
   "memory.close": "關閉記憶功能教學",
@@ -147,6 +156,7 @@ const FIELD_META = {
 };
 let FIELD_ORDER = ["history_scope", "animal_persona", "summary", "interests", "motivations", "active_problems", "recurring_topics", "friend_intent"];
 const DEMO_MATCH_ID = "demo-ren-h";
+const DEMO_CONNECTION_ID = "demo-ren-h";
 const genericAnimal = "帶著好奇心探索的水獺";
 
 function sampleProfile() {
@@ -166,6 +176,7 @@ function sampleProfile() {
 function demoMatch(saved = {}) {
   return {
   match_id: DEMO_MATCH_ID,
+  connection_id: saved.connection_id || DEMO_CONNECTION_ID,
   state: saved.state || "suggested",
   peer: {
     display_name: "Ren H.",
@@ -189,6 +200,35 @@ function demoMatch(saved = {}) {
   can_invite: saved.can_invite ?? true,
   similarity_score: saved.similarity_score ?? 86,
   };
+}
+
+function demoFirstEmailPrompt() {
+  const owner = sampleProfile();
+  const peer = demoMatch().peer.profile;
+  const publicOwner = Object.fromEntries(Object.entries(owner).filter(([key]) => !["history_scope", "confidence"].includes(key)));
+  return `<PITCHYOUROWNER_FIRST_EMAIL>
+<TASK>
+請協助 A 寫第一封 Email 給剛在 PitchYourOwner 上互相接受介紹的 B。
+</TASK>
+<A_PROFILE>
+${JSON.stringify(publicOwner, null, 2)}
+</A_PROFILE>
+<B_PROFILE>
+${JSON.stringify(peer, null, 2)}
+</B_PROFILE>
+<MATCH_REASON>
+${JSON.stringify(demoMatch().explanation, null, 2)}
+</MATCH_REASON>
+<INSTRUCTIONS>
+使用繁體中文，以 A 的第一人稱撰寫。自然說明雙方是在 PitchYourOwner 上互相接受介紹後取得聯繫，具體說明為什麼想認識 B、現在值得交流的主題、一個容易回覆的問題與低壓力下一步。語氣自然、專業、有魅力；不要詢問其他問題。
+</INSTRUCTIONS>
+<OUTPUT_FORMAT>
+主旨：《PitchYourOwner》{雙方最具體的交流主題}
+
+內文：
+{可以直接複製寄出的完整信件}
+</OUTPUT_FORMAT>
+</PITCHYOUROWNER_FIRST_EMAIL>`;
 }
 const SAVED_DEMO_MATCH = readJson(DEMO_MATCH_KEY);
 const DEMO_QUERY_ENABLED = new URLSearchParams(location.search).has("demo");
@@ -243,6 +283,7 @@ const runtime = {
   invitationPreview: null,
   invitationDecision: null,
   connection: null,
+  connectionPromptFallback: false,
   supportRequestId: null,
   demo: DEMO_QUERY_ENABLED || PERSISTED_DEMO_ENABLED,
   demoDraft: readJson(DEMO_DRAFT_KEY) === true,
@@ -626,10 +667,12 @@ function providerSupportsMemoryNotice(ai = runtime.selectedAi) {
   return ai === "ChatGPT" || ai === "Claude";
 }
 
-function providerLaunchUrl(prompt = runtime.prompt) {
-  if (!providerSupportsMemoryNotice()) return "";
-  const target = new URL(runtime.selectedAi === "Claude" ? "https://claude.ai/new" : "https://chatgpt.com/");
-  target.searchParams.set("q", String(prompt || ""));
+const PROVIDER_URL_PROMPT_LIMIT = 4000;
+
+function providerLaunchUrl(prompt = runtime.prompt, ai = runtime.selectedAi) {
+  if (!providerSupportsMemoryNotice(ai)) return "";
+  const target = new URL(ai === "Claude" ? "https://claude.ai/new" : "https://chatgpt.com/");
+  if (String(prompt || "").length <= PROVIDER_URL_PROMPT_LIMIT) target.searchParams.set("q", String(prompt || ""));
   return target.toString();
 }
 
@@ -748,6 +791,20 @@ async function launchAiWithPrompt() {
   window.open(target, "_blank", "noopener,noreferrer");
   const copied = await copyPromptBestEffort(prompt);
   runtime.notice = t(copied ? "handoff.openedCopied" : "handoff.openedManual", { ai: runtime.selectedAi });
+  announce(runtime.notice);
+  render();
+  window.scrollTo(0, 0);
+}
+
+async function launchConnectionEmailPrompt(ai) {
+  if (!providerSupportsMemoryNotice(ai)) return;
+  const prompt = String(runtime.connection?.first_email_prompt || "").trim();
+  if (!prompt) throw new Error(t("notice.promptMissing"));
+  const target = providerLaunchUrl(prompt, ai);
+  window.open(target, "_blank", "noopener,noreferrer");
+  const copied = await copyPromptBestEffort(prompt);
+  runtime.connectionPromptFallback = !copied;
+  runtime.notice = t(copied ? "connection.promptOpened" : "connection.promptManual", { ai });
   announce(runtime.notice);
   render();
   window.scrollTo(0, 0);
@@ -1066,7 +1123,7 @@ function editableArrayField(profile, field) {
 function editableProfileDocument(profile) {
   const textarea = (field, className, rows) => `<textarea class="document-editor ${className}" name="${field}" rows="${rows}" data-draft-field="${field}" aria-label="${esc(fieldLabel(field))}"${textLimit(field)}>${esc(profile[field])}</textarea>`;
   return `<div class="document editable-document">
-    <section class="scope-block"><div class="field-label">${esc(t("profile.scope"))}</div>${textarea("history_scope", "scope-editor", 3)}</section>
+    <input type="hidden" name="history_scope" value="${esc(profile.history_scope)}">
     ${textarea("animal_persona", "animal-persona-editor", 1)}
     <div class="summary-editor-head"><span class="field-label">${esc(fieldLabel("summary"))}</span>${confidenceControl(profile, "summary")}</div>
     ${textarea("summary", "summary-editor", 4)}
@@ -1103,7 +1160,6 @@ function profileDocument(profile, showConfidence) {
     ? `<div class="tag-list">${profile[field].map((item) => `<span class="tag">${esc(item)}</span>`).join("")}</div>`
     : `<p>${esc(profile[field])}</p>`;
   return `<div class="document">
-    <section class="scope-block"><div class="field-label">${esc(t("profile.scope"))}</div><p>${esc(profile.history_scope)}</p></section>
     <p class="animal-persona">${esc(profile.animal_persona || "帶著好奇心探索的水獺")}</p>
     <p class="doc-summary">${esc(profile.summary)}</p>
     ${["interests", "motivations", "active_problems", "recurring_topics", "friend_intent"].map((field) => `<section class="doc-field"><div class="doc-field-head"><span class="field-label">${esc(fieldLabel(field))}</span>${showConfidence ? `<span class="confidence">${esc(confidenceLabel(profile.confidence[field]))}</span>` : ""}</div>${listOrText(field)}</section>`).join("")}
@@ -1151,10 +1207,24 @@ function connectionScreen(connectionId) {
     return shell(`<div class="loading">正在載入聯絡方式</div>`, { nav: true, active: "invitations" });
   }
   const peer = runtime.connection.peer || {};
-  return shell(`<a href="/invitations" data-link class="eyebrow" style="text-decoration:none">← 返回邀請</a><h1 class="page-title">${esc(t("connection.title"))}</h1><p class="page-intro">你和 ${esc(peerPresentationName(peer))} 都明確接受了這次介紹。</p>${publicProfileDocument(peer.profile)}<div class="notice success"><span class="field-label">${esc(t("connection.email"))}</span><p><a href="mailto:${esc(peer.contact_email)}">${esc(peer.contact_email)}</a></p></div>`, { nav: true, active: "invitations" });
+  const manualPrompt = runtime.connectionPromptFallback ? `<section class="connection-prompt-fallback"><label class="field"><span class="field-label">${esc(t("connection.promptFallbackTitle"))}</span><span class="field-hint">${esc(t("connection.promptFallbackBody"))}</span><textarea class="prompt-box" readonly rows="12">${esc(runtime.connection.first_email_prompt)}</textarea></label></section>` : "";
+  return shell(`<a href="/invitations" data-link class="eyebrow" style="text-decoration:none">← 返回邀請</a><h1 class="page-title">${esc(t("connection.title"))}</h1><p class="page-intro">你和 ${esc(peerPresentationName(peer))} 都明確接受了這次介紹。</p>${publicProfileDocument(peer.profile)}<div class="notice success"><span class="field-label">${esc(t("connection.email"))}</span><p><a href="mailto:${esc(peer.contact_email)}">${esc(peer.contact_email)}</a></p></div><section class="connection-ai"><p class="eyebrow">${esc(t("connection.aiEyebrow"))}</p><h2>${esc(t("connection.aiTitle"))}</h2><p>${esc(t("connection.aiBody"))}</p><div class="button-stack"><button class="button primary" data-action="write-connection-email" data-ai="ChatGPT">${esc(t("connection.chatgpt"))}</button><button class="button" data-action="write-connection-email" data-ai="Claude">${esc(t("connection.claude"))}</button></div></section>${manualPrompt}`, { nav: true, active: "invitations" });
 }
 
 async function loadConnection(connectionId) {
+  runtime.connectionPromptFallback = false;
+  if (runtime.demo && connectionId === DEMO_CONNECTION_ID) {
+    const match = structuredClone(runtime.demoMatch);
+    runtime.connection = {
+      connection_id: DEMO_CONNECTION_ID,
+      self: { profile: sampleProfile() },
+      peer: match.peer,
+      explanation: match.explanation,
+      first_email_prompt: demoFirstEmailPrompt(),
+    };
+    queueMicrotask(render);
+    return;
+  }
   try { runtime.connection = await api(`/v1/connections/${encodeURIComponent(connectionId)}`); }
   catch (error) { setRuntimeError(error); }
   render();
@@ -1315,7 +1385,7 @@ function matchDetailScreen(matchId) {
   const connectedBlock = match.state === "connected" ? `<div class="notice success" style="margin-bottom:18px">
       ${runtime.demo ? `<div class="evidence"><span class="evidence-label">${esc(t("match.demoAcceptance"))}</span></div>` : ""}
       <h2 style="margin:10px 0 6px">${esc(t("match.connected"))}</h2>
-      ${runtime.demo ? `<a href="mailto:${esc(match.peer.contact_email)}" style="overflow-wrap:anywhere">${esc(match.peer.contact_email)}</a>` : `<a class="button primary" href="/connections/${encodeURIComponent(match.match_id)}" data-link>${esc(t("connection.open"))}</a>`}
+      <a class="button primary" href="/connections/${encodeURIComponent(match.connection_id || match.match_id)}" data-link>${esc(t("connection.open"))}</a>
       <div class="doc-field" style="margin-top:14px"><span class="field-label">${esc(t("match.start"))}</span><p>${esc(explanation.what_we_could_discuss)}</p></div>
     </div>` : "";
   let decisionArea;
@@ -1351,7 +1421,7 @@ function invitationsScreen() {
     return shell(`<div class="loading">${esc(t("invites.loading"))}</div>`, { nav: true, active: "invitations" });
   }
   const sections = [["invites.incoming", runtime.invitations.incoming], ["invites.outgoing", runtime.invitations.outgoing], ["invites.connected", runtime.invitations.connected]];
-  return shell(`<h1 class="page-title">${esc(t("invites.title"))}</h1><p class="page-intro">${esc(t("invites.intro"))}</p>${sections.map(([label, items]) => `<div class="divider-label">${esc(t(label))} · ${items.length}</div><div class="match-list">${items.length ? items.map((match) => `<a class="match-card" href="${match.state === "connected" ? `/connections/${encodeURIComponent(match.connection_id)}` : `/matches/${encodeURIComponent(match.match_id)}`}" data-link><div class="match-card-head"><h2 class="animal-persona compact">${esc(peerPresentationName(match.peer))}</h2><span class="status-label">${esc(matchStateLabel(match.state))}</span></div><p>${esc(match.explanation?.what_we_both_care_about || match.peer?.summary || "")}</p></a>`).join("") : `<div class="notice">${esc(t("invites.empty"))}</div>`}</div>`).join("")}`, { nav: true, active: "invitations" });
+  return shell(`<h1 class="page-title invitations-title">${esc(t("invites.title"))}</h1>${sections.map(([label, items]) => `<div class="divider-label">${esc(t(label))} · ${items.length}</div><div class="match-list">${items.length ? items.map((match) => `<a class="match-card" href="${match.state === "connected" ? `/connections/${encodeURIComponent(match.connection_id)}` : `/matches/${encodeURIComponent(match.match_id)}`}" data-link><div class="match-card-head"><h2 class="animal-persona compact">${esc(peerPresentationName(match.peer))}</h2><span class="status-label">${esc(matchStateLabel(match.state))}</span></div><p>${esc(match.explanation?.what_we_both_care_about || match.peer?.summary || "")}</p></a>`).join("") : `<div class="notice">${esc(t("invites.empty"))}</div>`}</div>`).join("")}`, { nav: true, active: "invitations" });
 }
 
 async function loadInvitations() {
@@ -1527,6 +1597,7 @@ document.addEventListener("click", async (event) => {
     if (action === "cancel-match-decision") { runtime.pendingMatchDecision = null; render(); }
     if (action === "confirm-match-decision") { runtime.pendingMatchDecision = null; await decideMatch(button.dataset.matchId, "not_now"); }
     if (action === "simulate-demo-accept") connectDemoMatch();
+    if (action === "write-connection-email") await launchConnectionEmailPrompt(button.dataset.ai);
     if (action === "create-upload-session") { runtime.uploadSession = await api("/v1/upload-sessions", { method: "POST", body: "{}" }); render(); }
     if (action === "respond-token") await respondInvitation(button.dataset.decision);
     if (action === "set-visibility") await setProfileVisibility(button.dataset.visibility);

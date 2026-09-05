@@ -16,9 +16,9 @@ Write directly and concretely so two people could start a conversation immediate
 2. Prioritize signals that recur across conversations, are explicitly important to the user, or remain active now.
 3. Research the owner's domain background and terminology to find questions that are genuinely distinctive and useful for a deep conversation. Any examples are only references; make your own judgment from the accessible X data and other research results available to you.
 4. `friend_intent` describes the human friend the user hopes to meet, what motivation they may share, and what they could discuss now.
-5. `history_scope` honestly states what was and was not accessible.
+5. `history_scope` is one neutral source statement of at most 80 characters naming only the sources actually used, for example: “Based on this conversation and available memory.”
 6. `confidence` uses only `high`, `medium`, or `low` for owner review.
-7. `animal_persona` must generate a distinctive, vivid, and respectful animal metaphor from this owner's professional craft, skills, and way of working. Each owner should receive a different character. Examples describe the style only and are not options to copy unless one is uniquely appropriate for this owner. It must not invent credentials or accomplishments.
+7. `animal_persona` must generate a distinctive, vivid, and respectful animal metaphor from this owner's professional craft, skills, and way of working. Write it as a concise professional title, normally 4–10 words, combining one distinctive professional trait with one animal rather than a sentence with stacked clauses. Each owner should receive a different character. Examples describe the style only and are not options to copy unless one is uniquely appropriate for this owner. It must not invent credentials or accomplishments.
 8. Treat session, event, sender, timestamp, origin, URL, and message debug metadata as transport data, never as profile evidence.
 
 ## First response: preview and one exclusion choice
@@ -28,7 +28,7 @@ Do not output JSON in the first response. Show four concise sections:
 1. **Proposed pitch:** one complete, concrete, professionally attractive owner pitch.
 2. **Main matching signals:** the most distinctive interests, motivations, active problems, and recurring topics.
 3. **Who they hope to meet:** one concrete friend-intent paragraph.
-4. **Data scope:** at most two sentences honestly describing `history_scope`.
+4. **Data scope:** one short, neutral sentence naming the sources used for this analysis.
 
 Then list the concrete topics actually present in the proposed public content that the owner may want to exclude. Each item must include a number, the clear name that would be public, and one sentence explaining how it strengthens the profile. Do not replace it with a vague category, list anything absent from the proposed public content, or ask for new personal information. For example, if the content actually includes employment at Google, write “1. Employment at Google,” not “past employers and clients.”
 
@@ -64,8 +64,8 @@ Keep every value within the website validator limits: `history_scope` up to 320 
 
 ```json
 {
-  "history_scope": "What information was and was not accessible for this analysis",
-  "animal_persona": "A vivid animal persona connected to the owner's professional craft",
+  "history_scope": "Based on this conversation and available memory",
+  "animal_persona": "Systems-debugging engineering otter",
   "summary": "A short, specific owner pitch",
   "interests": ["Up to 8 specific interests"],
   "motivations": ["Up to 8 motivations that matter now"],

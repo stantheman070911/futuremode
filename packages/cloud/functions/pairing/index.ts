@@ -194,20 +194,91 @@ async function findAuthorizedEdge(tableName: string, owner: CurrentProfile, pair
 }
 
 type EmailProfile = Pick<OwnerPitchProfile, "interests" | "motivations" | "active_problems" | "recurring_topics" | "friend_intent">;
+type PublicProfile = Omit<OwnerPitchProfile, "history_scope" | "confidence">;
+interface ProfilePresentation { display_name?: string; profile?: Partial<PublicProfile> }
+
+const EMAIL_COLORS = { paper: "#f4f2ed", white: "#ffffff", ink: "#131313", muted: "#74746d", line: "#d3d0c7", blue: "#0f5ae0" } as const;
+
+function emailShell(content: string): string {
+  return `<!doctype html><html lang="zh-Hant"><body style="margin:0;background:${EMAIL_COLORS.paper};color:${EMAIL_COLORS.ink}"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;background:${EMAIL_COLORS.paper}"><tr><td align="center" style="padding:20px 12px"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;max-width:640px;background:${EMAIL_COLORS.white};border:1px solid ${EMAIL_COLORS.line};border-radius:2px;font-family:Arial,'Noto Sans TC',sans-serif;text-align:left"><tr><td style="padding:24px 20px">${content}</td></tr></table></td></tr></table></body></html>`;
+}
+
+function emailEyebrow(value: string): string {
+  return `<div style="margin:0 0 18px;color:${EMAIL_COLORS.muted};font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase">${escapeHtml(value)}</div>`;
+}
+
 function emailList(title: string, values: string[]): string {
-  return values.length ? `<h3 style="margin:20px 0 6px">${escapeHtml(title)}</h3><ul style="margin:0;padding-left:22px;line-height:1.65">${values.map((value) => `<li>${escapeHtml(compact(value, 240))}</li>`).join("")}</ul>` : "";
+  return values.length ? `<div style="margin-top:18px;padding-top:16px;border-top:1px solid ${EMAIL_COLORS.line}"><div style="margin:0 0 8px;color:${EMAIL_COLORS.muted};font-size:11px;font-weight:700;letter-spacing:.08em">${escapeHtml(title)}</div><ul style="margin:0;padding-left:20px;line-height:1.6">${values.map((value) => `<li style="margin:0 0 5px">${escapeHtml(compact(value, 240))}</li>`).join("")}</ul></div>` : "";
+}
+
+function promptJson(value: unknown): string {
+  return JSON.stringify(value, null, 2).replace(/</g, "\\u003c").replace(/>/g, "\\u003e").replace(/&/g, "\\u0026");
+}
+
+function promptProfile(presentation: ProfilePresentation): PublicProfile {
+  const profile = presentation.profile ?? {};
+  return {
+    animal_persona: compact(profile.animal_persona ?? presentation.display_name ?? genericAnimal, 80),
+    summary: compact(profile.summary, 480),
+    interests: Array.isArray(profile.interests) ? profile.interests.map((item) => compact(item, 120)) : [],
+    motivations: Array.isArray(profile.motivations) ? profile.motivations.map((item) => compact(item, 160)) : [],
+    active_problems: Array.isArray(profile.active_problems) ? profile.active_problems.map((item) => compact(item, 180)) : [],
+    recurring_topics: Array.isArray(profile.recurring_topics) ? profile.recurring_topics.map((item) => compact(item, 140)) : [],
+    friend_intent: compact(profile.friend_intent, 320),
+  };
+}
+
+export function buildFirstEmailPrompt(input: { sender: ProfilePresentation; recipient: ProfilePresentation; explanation?: Record<string, unknown> }): string {
+  const sender = promptProfile(input.sender);
+  const recipient = promptProfile(input.recipient);
+  const explanation = input.explanation ?? {};
+  const matchReason = {
+    what_we_both_care_about: compact(explanation.whatWeBothCareAbout ?? explanation.what_we_both_care_about, 480),
+    why_it_matters_now: compact(explanation.whyItMattersNow ?? explanation.why_it_matters_now, 480),
+    what_we_could_discuss: compact(explanation.whatWeCouldDiscuss ?? explanation.what_we_could_discuss, 480),
+  };
+  return `<PITCHYOUROWNER_FIRST_EMAIL>
+<TASK>
+你正在協助 A 寫第一封 Email 給剛認識的 B。雙方已經同意這次介紹。請根據兩人的介紹與配對理由，寫出一封自然、專業、讓人想回覆的繁體中文 Email。
+</TASK>
+<A_PROFILE>
+${promptJson(sender)}
+</A_PROFILE>
+<B_PROFILE>
+${promptJson(recipient)}
+</B_PROFILE>
+<MATCH_REASON>
+${promptJson(matchReason)}
+</MATCH_REASON>
+<INSTRUCTIONS>
+請把信寫成 A 親自寄給 B 的第一人稱內容。
+信件開頭需要自然說明：雙方是在 PitchYourOwner 上互相接受介紹後取得聯繫，讓收件者清楚知道這封信的來源。
+清楚呈現 A 現在最值得被認識的專業方向、為什麼特別想認識 B、雙方最具體的交流主題、一個容易回覆的具體問題，以及一個低壓力的下一步。
+語氣自然、具體、專業、有魅力，像真正理解雙方工作的共同朋友促成交流；內容約 180–260 個中文字。直接完成信件，不需要詢問其他問題。
+</INSTRUCTIONS>
+<OUTPUT_FORMAT>
+主旨：《PitchYourOwner》{雙方最具體的交流主題}
+
+內文：
+{可以直接複製寄出的完整信件}
+</OUTPUT_FORMAT>
+</PITCHYOUROWNER_FIRST_EMAIL>`;
 }
 
 export function renderInvitationEmail(input: { inviterName: string; animal: string; summary: string; profile?: EmailProfile; reason: string; acceptUrl: string; profileUrl?: string }) {
   const title = `${input.animal} 想認識你`;
-  const detail = input.profile ? `${emailList("興趣", input.profile.interests)}${emailList("動機", input.profile.motivations)}${emailList("正在解的問題", input.profile.active_problems)}${emailList("反覆討論", input.profile.recurring_topics)}<h3 style="margin:20px 0 6px">想認識的人</h3><p style="line-height:1.6">${escapeHtml(compact(input.profile.friend_intent, 320))}</p>` : "";
+  const byline = compact(input.inviterName, 80) && compact(input.inviterName, 80) !== compact(input.animal, 80)
+    ? `<p style="margin:10px 0 0;color:${EMAIL_COLORS.muted};font-size:14px">${escapeHtml(input.inviterName)}</p>`
+    : "";
+  const detail = input.profile ? `${emailList("興趣", input.profile.interests)}${emailList("動機", input.profile.motivations)}${emailList("正在解的問題", input.profile.active_problems)}${emailList("反覆討論", input.profile.recurring_topics)}<div style="margin-top:18px;padding-top:16px;border-top:1px solid ${EMAIL_COLORS.line}"><div style="margin-bottom:8px;color:${EMAIL_COLORS.muted};font-size:11px;font-weight:700;letter-spacing:.08em">想認識的人</div><p style="margin:0;line-height:1.6">${escapeHtml(compact(input.profile.friend_intent, 320))}</p></div>` : "";
   const textDetail = input.profile ? `\n\n興趣：${input.profile.interests.join("、")}\n動機：${input.profile.motivations.join("、")}\n正在解的問題：${input.profile.active_problems.join("、")}\n反覆討論：${input.profile.recurring_topics.join("、")}\n想認識的人：${input.profile.friend_intent}` : "";
-  const body = `<div style="max-width:680px;margin:auto;padding:20px;font-family:Arial,'Noto Sans TC',sans-serif;color:#17213d;background:#fff6ec"><div style="border:3px solid #17213d;border-radius:24px;box-shadow:8px 8px 0 #17213d;background:#fffdf8;overflow:hidden"><div style="padding:22px;background:#ffcf55;border-bottom:3px solid #17213d"><div style="font-weight:900">PitchYourOwner 邀請</div><h1 style="margin:8px 0 0">${escapeHtml(title)}</h1></div><div style="padding:22px"><h2>${escapeHtml(input.inviterName)}</h2><p style="line-height:1.6">${escapeHtml(compact(input.summary, 480))}</p>${detail}<h3>為什麼值得聊</h3><p style="line-height:1.6">${escapeHtml(compact(input.reason, 480))}</p><a href="${escapeHtml(input.acceptUrl)}" style="display:block;margin:24px 0 14px;padding:17px;background:#7258e8;color:#fff;border:3px solid #17213d;border-radius:18px;text-align:center;text-decoration:none;font-weight:900">查看介紹並決定</a>${input.profileUrl ? `<a href="${escapeHtml(input.profileUrl)}" style="display:block;text-align:center;color:#17213d">公開介紹頁</a>` : ""}<p style="margin-top:24px;color:#686b7d;font-size:13px">開啟連結不會自動接受。你必須在頁面上再次選擇「接受」或「現在不要」。連結 14 天內有效，持有連結的人可以代你做出這一次決定，請勿轉寄。</p></div></div></div>`;
-  return { subject: `PitchYourOwner｜${input.inviterName} 想認識你`, text: `${title}\n\n${input.summary}${textDetail}\n\n為什麼值得聊：${input.reason}\n\n查看介紹並決定：${input.acceptUrl}\n\n開啟連結不會自動接受。這是單次使用的決定連結，請勿轉寄。`, html: `<!doctype html><html lang="zh-Hant"><body style="margin:0;background:#fff6ec">${body}</body></html>` };
+  const content = `${emailEyebrow("PITCHYOUROWNER · 邀請")}<h1 style="margin:0;color:${EMAIL_COLORS.blue};font-size:28px;line-height:1.22;letter-spacing:-.02em;overflow-wrap:anywhere">${escapeHtml(title)}</h1>${byline}<p style="margin:20px 0 0;font-size:16px;line-height:1.65">${escapeHtml(compact(input.summary, 480))}</p>${detail}<div style="margin-top:22px;padding:18px 0;border-top:1px solid ${EMAIL_COLORS.line};border-bottom:1px solid ${EMAIL_COLORS.line}"><div style="margin-bottom:8px;color:${EMAIL_COLORS.muted};font-size:11px;font-weight:700;letter-spacing:.08em">為什麼值得聊</div><p style="margin:0;font-size:17px;font-weight:700;line-height:1.55">${escapeHtml(compact(input.reason, 480))}</p></div><a href="${escapeHtml(input.acceptUrl)}" style="display:block;margin:22px 0 12px;padding:15px 16px;background:${EMAIL_COLORS.blue};color:#ffffff;border:1px solid ${EMAIL_COLORS.blue};border-radius:2px;text-align:center;text-decoration:none;font-weight:700">查看介紹並決定</a>${input.profileUrl ? `<a href="${escapeHtml(input.profileUrl)}" style="display:block;padding:10px;text-align:center;color:${EMAIL_COLORS.blue};text-decoration:underline">公開介紹頁</a>` : ""}<p style="margin:20px 0 0;color:${EMAIL_COLORS.muted};font-size:12px;line-height:1.6">開啟連結不會自動接受。你必須在頁面上再次選擇「接受」或「現在不要」。連結 14 天內有效，請勿轉寄。</p>`;
+  return { subject: `PitchYourOwner｜${input.inviterName} 想認識你`, text: `${title}\n\n${input.summary}${textDetail}\n\n為什麼值得聊：${input.reason}\n\n查看介紹並決定：${input.acceptUrl}\n\n開啟連結不會自動接受。這是單次使用的決定連結，請勿轉寄。`, html: emailShell(content) };
 }
 
-export function renderConnectionEmail(peerName: string, peerEmail: string) {
-  return { subject: `PitchYourOwner｜你和 ${peerName} 都接受了`, text: `你們都接受了這次介紹。\n\n${peerName} 的 Email：${peerEmail}\n\n請尊重對方的聯絡與回覆節奏。`, html: `<!doctype html><html lang="zh-Hant"><body style="margin:0;background:#fff6ec"><div style="max-width:640px;margin:auto;padding:24px;font-family:Arial,'Noto Sans TC',sans-serif;color:#17213d"><div style="border:3px solid #17213d;border-radius:24px;box-shadow:8px 8px 0 #17213d;background:#fffdf8;padding:24px"><div style="font-weight:900;color:#7258e8">PitchYourOwner 連結成功</div><h1>你們都接受了</h1><p>${escapeHtml(peerName)} 的 Email：</p><p style="font-size:20px;font-weight:900">${escapeHtml(peerEmail)}</p><p>請尊重對方的聯絡與回覆節奏。</p></div></div></body></html>` };
+export function renderConnectionEmail(peerName: string, peerEmail: string, connectionUrl?: string) {
+  const content = `${emailEyebrow("PITCHYOUROWNER · 連結成功")}<h1 style="margin:0;font-size:28px;line-height:1.22;letter-spacing:-.02em">你們都接受了</h1><p style="margin:18px 0 8px;line-height:1.6">${escapeHtml(peerName)} 的 Email：</p><div style="padding:14px;background:${EMAIL_COLORS.white};border:1px solid ${EMAIL_COLORS.line};border-radius:2px;font-size:18px;font-weight:700;overflow-wrap:anywhere"><a href="mailto:${escapeHtml(peerEmail)}" style="color:${EMAIL_COLORS.blue}">${escapeHtml(peerEmail)}</a></div>${connectionUrl ? `<a href="${escapeHtml(connectionUrl)}" style="display:block;margin:20px 0 0;padding:15px 16px;background:${EMAIL_COLORS.blue};color:#ffffff;border:1px solid ${EMAIL_COLORS.blue};border-radius:2px;text-align:center;text-decoration:none;font-weight:700">查看連結與撰寫第一封信</a>` : ""}<p style="margin:20px 0 0;color:${EMAIL_COLORS.muted};font-size:13px;line-height:1.6">請尊重對方的聯絡與回覆節奏。</p>`;
+  return { subject: `PitchYourOwner｜你和 ${peerName} 都接受了`, text: `你們都接受了這次介紹。\n\n${peerName} 的 Email：${peerEmail}${connectionUrl ? `\n\n查看連結與撰寫第一封信：${connectionUrl}` : ""}\n\n請尊重對方的聯絡與回覆節奏。`, html: emailShell(content) };
 }
 
 async function sendInvite(tableName: string, owner: CurrentProfile, pairId: string) {
@@ -263,13 +334,15 @@ async function respondToken(tableName: string, rawToken: string, decision: "acce
   if (decision === "accept") {
     const fixtureMeta = invite.isTestProfile === true && invite.cleanupSafe === true && invite.testRunId ? { isTestProfile: true, cleanupSafe: true, testRunId: invite.testRunId } : {};
     const eventA = randomOpaqueToken(18); const eventB = randomOpaqueToken(18);
+    const origin = requiredEnvironment("PUBLIC_SITE_ORIGIN").replace(/\/$/, "");
     const senderName = String((invite.senderSnapshot as Record<string, unknown>)?.display_name ?? "另一位 owner");
     const recipient = await getCurrent(tableName, String(invite.recipientProfileId));
     const recipientVersion = recipient ? await getVersion(tableName, recipient.profileId, recipient.versionId) : undefined;
     const recipientName = recipientVersion?.profile ? profileAnimalPersona(recipientVersion.profile) : "另一位 owner";
     const recipientSnapshot = recipientVersion?.profile ? { display_name: recipientName, profile: { ...publicProfile(recipientVersion.profile), animal_persona: profileAnimalPersona(recipientVersion.profile) } } : { display_name: recipientName, profile: { animal_persona: genericAnimal } };
-    const emailA = renderConnectionEmail(recipientName, String(invite.recipientEmail));
-    const emailB = renderConnectionEmail(senderName, String(invite.senderEmail));
+    const connectionUrl = `${origin}/connections/${encodeURIComponent(String(token.pairId))}`;
+    const emailA = renderConnectionEmail(recipientName, String(invite.recipientEmail), connectionUrl);
+    const emailB = renderConnectionEmail(senderName, String(invite.senderEmail), connectionUrl);
     transaction.push(
       { Put: { TableName: tableName, Item: { pk: `PROFILE#${invite.senderProfileId}`, sk: `CONNECTION#${token.pairId}`, entityType: "CONNECTION", pairId: token.pairId, peerProfileId: invite.recipientProfileId, peerEmail: invite.recipientEmail, peerDisplayName: recipientName, peerSnapshot: recipientSnapshot, explanation: invite.explanation, connectedAt: now, ...fixtureMeta }, ConditionExpression: "attribute_not_exists(pk)" } },
       { Put: { TableName: tableName, Item: { pk: `PROFILE#${invite.recipientProfileId}`, sk: `CONNECTION#${token.pairId}`, entityType: "CONNECTION", pairId: token.pairId, peerProfileId: invite.senderProfileId, peerEmail: invite.senderEmail, peerDisplayName: senderName, peerSnapshot: invite.senderSnapshot, explanation: invite.explanation, connectedAt: now, ...fixtureMeta }, ConditionExpression: "attribute_not_exists(pk)" } },
@@ -284,10 +357,28 @@ async function respondToken(tableName: string, rawToken: string, decision: "acce
 async function connectionView(tableName: string, ownerId: string, pairId: string) {
   const connection = (await documentDynamo.send(new GetCommand({ TableName: tableName, Key: { pk: `PROFILE#${ownerId}`, sk: `CONNECTION#${pairId}` }, ConsistentRead: true }))).Item;
   if (!connection) throw new Error("connection_not_found");
-  const peer = await getCurrent(tableName, String(connection.peerProfileId));
-  const version = profileIsPublic(peer) ? await getVersion(tableName, peer.profileId, peer.versionId) : undefined;
-  const snapshot = version?.profile ? { display_name: profileAnimalPersona(version.profile), profile: { ...publicProfile(version.profile), animal_persona: profileAnimalPersona(version.profile) } } : connection.peerSnapshot;
-  return { connection_id: pairId, connected_at: connection.connectedAt, peer: { ...(snapshot as Record<string, unknown>), contact_email: connection.peerEmail }, explanation: connection.explanation };
+  const peerId = String(connection.peerProfileId);
+  const [peer, reciprocal, owner] = await Promise.all([
+    getCurrent(tableName, peerId),
+    documentDynamo.send(new GetCommand({ TableName: tableName, Key: { pk: `PROFILE#${peerId}`, sk: `CONNECTION#${pairId}` }, ConsistentRead: true })).then((result) => result.Item),
+    getCurrent(tableName, ownerId),
+  ]);
+  const [peerVersion, ownerVersion] = await Promise.all([
+    profileIsPublic(peer) ? getVersion(tableName, peer.profileId, peer.versionId) : undefined,
+    owner ? getVersion(tableName, owner.profileId, owner.versionId) : undefined,
+  ]);
+  const peerFallback = peerVersion?.profile ? { display_name: profileAnimalPersona(peerVersion.profile), profile: { ...publicProfile(peerVersion.profile), animal_persona: profileAnimalPersona(peerVersion.profile) } } : undefined;
+  const ownerFallback = ownerVersion?.profile ? { display_name: profileAnimalPersona(ownerVersion.profile), profile: { ...publicProfile(ownerVersion.profile), animal_persona: profileAnimalPersona(ownerVersion.profile) } } : undefined;
+  const peerSnapshot = (connection.peerSnapshot ?? peerFallback ?? { display_name: genericAnimal, profile: { animal_persona: genericAnimal } }) as ProfilePresentation;
+  const selfSnapshot = (reciprocal?.peerSnapshot ?? ownerFallback ?? { display_name: genericAnimal, profile: { animal_persona: genericAnimal } }) as ProfilePresentation;
+  return {
+    connection_id: pairId,
+    connected_at: connection.connectedAt,
+    self: selfSnapshot,
+    peer: { ...peerSnapshot, contact_email: connection.peerEmail },
+    explanation: connection.explanation,
+    first_email_prompt: buildFirstEmailPrompt({ sender: selfSnapshot, recipient: peerSnapshot, explanation: connection.explanation as Record<string, unknown> | undefined }),
+  };
 }
 
 async function invitationLists(tableName: string, ownerId: string) {
