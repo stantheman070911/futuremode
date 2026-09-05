@@ -741,7 +741,14 @@ function ensureMatchesPolling() {
   matchesCountdownTimer = setInterval(updateMatchCountdown, 1000);
   matchesPollTimer = setTimeout(async () => {
     stopMatchesPolling();
-    await loadMatches({ polling: true });
+    try {
+      await refreshMatches({ polling: true });
+    } catch (error) {
+      runtime.matches = [];
+      runtime.matchesPollError = true;
+      setRuntimeError(error);
+      render();
+    }
   }, MATCH_POLL_INTERVAL_MS);
 }
 
@@ -1554,7 +1561,8 @@ async function loadMatches({ polling = false } = {}) {
   render();
 }
 
-async function refreshMatches() {
+async function refreshMatches({ polling = false } = {}) {
+  const wasSearching = polling || (Array.isArray(runtime.matches) && runtime.matches.length === 0 && isRecentPublish());
   runtime.matchesPollError = false;
   if (runtime.demo) { runtime.matches = null; render(); return; }
   const currentSet = runtime.matchResult?.result_set_id;
@@ -1562,6 +1570,7 @@ async function refreshMatches() {
   runtime.matchResult = await api(endpoint, { method: "POST", body: "{}" });
   runtime.matches = runtime.matchResult.matches || [];
   history.replaceState({}, "", `/matches?set=${encodeURIComponent(runtime.matchResult.result_set_id)}&page=1`);
+  if (wasSearching && runtime.matches.length) announce(t("matches.found", { count: runtime.matches.length, suffix: runtime.locale === "en" && runtime.matches.length !== 1 ? "es" : "" }));
   render();
 }
 

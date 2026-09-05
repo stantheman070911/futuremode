@@ -33,6 +33,7 @@ test("routes the prefilled draft into visual edit and assigns cohort metadata on
   assert.match(app, /bootstrap\.status === "prefilled_draft"/);
   assert.match(app, /runtime\.draft = validateProfileClient\(bootstrap\.profile\)/);
   assert.match(app, /navigate\("\/import"\)/);
+  assert.match(app, /await refreshMatches\(\{ polling: true \}\)/);
 });
 
 test("manual test owners and real owners are mutually isolated", () => {
