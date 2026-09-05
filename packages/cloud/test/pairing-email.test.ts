@@ -10,6 +10,16 @@ test("authorizes fixture edges only for their intended owner", () => {
   assert.equal(ownerCanSeeCandidate({}, { profileId: "real" }), true);
 });
 
+test("exposes a unified synthetic marker for fixture and manual-test match cards", async () => {
+  const [pairing, app] = await Promise.all([
+    import("node:fs/promises").then(({ readFile }) => readFile(new URL("../functions/pairing/index.ts", import.meta.url), "utf8")),
+    import("node:fs/promises").then(({ readFile }) => readFile(new URL("../static/app.js", import.meta.url), "utf8")),
+  ]);
+  assert.match(pairing, /is_synthetic: peerCurrent\.isFixtureProfile === true \|\| peerCurrent\.isManualTestProfile === true/);
+  assert.match(app, /match\.peer\?\.is_synthetic/);
+  assert.match(app, /測試資料 · 非真實人物/);
+});
+
 test("allows invitations only for explicitly enabled fixtures with deliverable email", () => {
   assert.equal(candidateCanReceiveInvitation({ profileId: "real" }), true);
   assert.equal(candidateCanReceiveInvitation({ isFixtureProfile: true, fixtureInvitationEnabled: true, email: "fixture@example.test" }), true);

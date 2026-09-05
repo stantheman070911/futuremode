@@ -41,7 +41,7 @@ for (const email of invitationEmails.values()) {
 
 const dynamo = DynamoDBDocumentClient.from(new DynamoDBClient({ region }), { marshallOptions: { removeUndefinedValues: true } });
 const embed = (text: string) => embedText({ text, modelId: "global.cohere.embed-v4:0", dimensions: 1_024 });
-const installed: Array<{ key: string; profileId: string; animalPersona: string }> = [];
+const installed: Array<{ key: string; profileId: string; animalPersona: string; operation: "metadata-only" | "embedded" }> = [];
 
 for (const { key, profile } of profiles) {
   const profileId = sha256(`pitchyourowner-private-fixture:${viewerEmailHash}:${key}`).slice(0, 32);
@@ -50,6 +50,18 @@ for (const { key, profile } of profiles) {
   const existing = (await dynamo.send(new GetCommand({ TableName: tableName, Key: currentKey, ConsistentRead: true }))).Item;
   if (existing && (existing.isFixtureProfile !== true || existing.fixtureAudienceEmailHash !== viewerEmailHash || existing.fixtureSetId !== fixtureSetId)) {
     throw new Error(`refusing to overwrite non-owned profile ${profileId}`);
+  }
+  const now = new Date().toISOString();
+  const controlledEmail = invitationEmails.get(key);
+  const email = controlledEmail ?? `${key}@fixture.pitchyourowner.invalid`;
+  const fixtureMeta = { isFixtureProfile: true, fixtureAudienceEmailHash: viewerEmailHash, fixtureSetId, fixtureInvitationEnabled: Boolean(controlledEmail), manualTestVisible: true, cleanupSafe: true };
+  if (existing?.versionId === versionId) {
+    await dynamo.send(new TransactWriteCommand({ TransactItems: [
+      { Update: { TableName: tableName, Key: currentKey, UpdateExpression: "SET manualTestVisible = :yes", ConditionExpression: "isFixtureProfile = :yes AND fixtureSetId = :set", ExpressionAttributeValues: { ":yes": true, ":set": fixtureSetId } } },
+      { Update: { TableName: tableName, Key: { pk: `PROFILE#${profileId}`, sk: `VERSION#${versionId}` }, UpdateExpression: "SET manualTestVisible = :yes", ConditionExpression: "isFixtureProfile = :yes AND fixtureSetId = :set", ExpressionAttributeValues: { ":yes": true, ":set": fixtureSetId } } },
+    ] }));
+    installed.push({ key, profileId, animalPersona: profile.animal_persona, operation: "metadata-only" });
+    continue;
   }
   const fieldTexts: Record<string, string> = {
     interests: profile.interests.join("\n"),
@@ -62,10 +74,6 @@ for (const { key, profile } of profiles) {
     embed(canonicalMatchingDocument(profile)),
     Promise.all(Object.entries(fieldTexts).map(async ([field, text]) => [field, await embed(text)] as const)),
   ]);
-  const now = new Date().toISOString();
-  const controlledEmail = invitationEmails.get(key);
-  const email = controlledEmail ?? `${key}@fixture.pitchyourowner.invalid`;
-  const fixtureMeta = { isFixtureProfile: true, fixtureAudienceEmailHash: viewerEmailHash, fixtureSetId, fixtureInvitationEnabled: Boolean(controlledEmail), cleanupSafe: true };
   await dynamo.send(new TransactWriteCommand({ TransactItems: [
     { Put: { TableName: tableName, Item: {
       pk: `PROFILE#${profileId}`, sk: `VERSION#${versionId}`, entityType: "PROFILE_VERSION", schema: PROFILE_SCHEMA,
@@ -78,7 +86,15 @@ for (const { key, profile } of profiles) {
       visibility: "matched-only", matchingState: "active", matchLanguages: ["zh"], updatedAt: now, ...fixtureMeta,
     } } },
   ] }));
-  installed.push({ key, profileId, animalPersona: profile.animal_persona });
+  installed.push({ key, profileId, animalPersona: profile.animal_persona, operation: "embedded" });
 }
 
-console.log(JSON.stringify({ installed: true, tableName, fixtureSetId, audienceHashPrefix: viewerEmailHash.slice(0, 12), profiles: installed }, null, 2));
+console.log(JSON.stringify({
+  installed: true,
+  tableName,
+  fixtureSetId,
+  audienceHashPrefix: viewerEmailHash.slice(0, 12),
+  metadataOnly: installed.filter(({ operation }) => operation === "metadata-only").length,
+  embeddingsGenerated: installed.filter(({ operation }) => operation === "embedded").length * 6,
+  profiles: installed,
+}, null, 2));

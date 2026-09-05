@@ -36,14 +36,16 @@ test("routes the prefilled draft into visual edit and assigns cohort metadata on
   assert.match(app, /await refreshMatches\(\{ polling: true \}\)/);
 });
 
-test("manual test owners and real owners are mutually isolated", () => {
-  const cohort = { isTestProfile: true, cleanupSafe: true, testRunId: "cohort-a" };
+test("manual test owners can see only their cohort and explicitly safe fixtures", () => {
+  const cohort = { isTestProfile: true, isManualTestProfile: true, cleanupSafe: true, testRunId: "cohort-a" };
   const other = { isTestProfile: true, cleanupSafe: true, testRunId: "cohort-b" };
   const real = { profileId: "real" };
   assert.equal(ownerCanSeeCandidate(cohort, { ...cohort, profileId: "peer" }), true);
   assert.equal(ownerCanSeeCandidate(cohort, other), false);
   assert.equal(ownerCanSeeCandidate(cohort, real), false);
-  assert.equal(ownerCanSeeCandidate({ ...cohort, emailHash: "audience" }, { isFixtureProfile: true, fixtureAudienceEmailHash: "audience" }), false);
+  assert.equal(ownerCanSeeCandidate(cohort, { isFixtureProfile: true, cleanupSafe: true, manualTestVisible: true }), true);
+  assert.equal(ownerCanSeeCandidate(cohort, { isFixtureProfile: true, cleanupSafe: true, manualTestVisible: false }), false);
+  assert.equal(ownerCanSeeCandidate(cohort, { isFixtureProfile: true, cleanupSafe: false, manualTestVisible: true }), false);
   assert.equal(ownerCanSeeCandidate(real, cohort), false);
   assert.equal(ownerCanSeeCandidate(real, { profileId: "other-real" }), true);
 });

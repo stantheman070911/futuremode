@@ -8,7 +8,7 @@ import { randomOpaqueToken, sha256 } from "../shared/security.js";
 import { documentDynamo, requiredEnvironment } from "../shared/storage.js";
 import { MATCHING_ALGORITHM_VERSION, MATCH_PAGE_SIZE } from "../shared/matching.js";
 
-interface CurrentProfile extends Record<string, unknown> { profileId: string; versionId: string; email: string; emailHash?: string; displayName?: string; publicSlug?: string; visibility?: string; matchingState?: string; isTestProfile?: boolean; isManualTestProfile?: boolean; cleanupSafe?: boolean; testRunId?: string; testCohortId?: string; isFixtureProfile?: boolean; fixtureAudienceEmailHash?: string; fixtureInvitationEnabled?: boolean }
+interface CurrentProfile extends Record<string, unknown> { profileId: string; versionId: string; email: string; emailHash?: string; displayName?: string; publicSlug?: string; visibility?: string; matchingState?: string; isTestProfile?: boolean; isManualTestProfile?: boolean; cleanupSafe?: boolean; testRunId?: string; testCohortId?: string; isFixtureProfile?: boolean; fixtureAudienceEmailHash?: string; fixtureInvitationEnabled?: boolean; manualTestVisible?: boolean }
 interface ProfileVersion extends Record<string, unknown> { profileId: string; versionId: string; displayName?: string; profile: OwnerPitchProfile }
 interface Edge extends Record<string, unknown> {
   sk: string; pairId: string; ownerProfileId: string; ownerVersionId: string; candidateProfileId: string; candidateVersionId: string;
@@ -25,7 +25,13 @@ function compact(value: unknown, max = 360): string { const result = String(valu
 function profileIsPublic(current: Record<string, unknown> | undefined): current is CurrentProfile { return Boolean(current?.profileId && current.versionId && current.email && current.visibility !== "private" && String(current.matchingState ?? "active") === "active"); }
 
 export function ownerCanSeeCandidate(owner: Record<string, unknown>, candidate: Record<string, unknown>): boolean {
-  if (owner.isTestProfile === true) return candidate.isTestProfile === true && owner.testRunId === candidate.testRunId;
+  if (owner.isTestProfile === true) {
+    if (candidate.isTestProfile === true) return owner.testRunId === candidate.testRunId;
+    return owner.isManualTestProfile === true
+      && candidate.isFixtureProfile === true
+      && candidate.cleanupSafe === true
+      && candidate.manualTestVisible === true;
+  }
   if (candidate.isTestProfile === true) return false;
   if (candidate.isFixtureProfile === true) return Boolean(owner.emailHash && candidate.fixtureAudienceEmailHash === owner.emailHash);
   return true;
@@ -161,6 +167,7 @@ async function edgeView(tableName: string, owner: CurrentProfile, item: ResultSe
       summary: shareable.summary,
       profile_image_url: profileImageUrl(peerCurrent, origin, detail ? "detail" : "thumbnail"),
       is_fixture: peerCurrent.isFixtureProfile === true,
+      is_synthetic: peerCurrent.isFixtureProfile === true || peerCurrent.isManualTestProfile === true,
       ...(detail ? { profile: { ...shareable, animal_persona: profileAnimalPersona(peerVersion.profile) } } : {}),
     },
     strongest_shared_signal: edge.strongestSignal,

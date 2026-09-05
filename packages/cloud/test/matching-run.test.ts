@@ -6,6 +6,7 @@ import {
   fixtureCandidateIsVisible,
   haveCompatibleMatchLanguage,
   isCurrentMatchable,
+  isVisibleManualTestCandidate,
   persistPair,
   type LoadedProfile,
   type SimilarityField,
@@ -85,6 +86,22 @@ test("shows a private fixture only to its audience email hash", () => {
   assert.equal(fixtureCandidateIsVisible(fixture, "someone-else"), false);
   assert.equal(fixtureCandidateIsVisible(fixture), false);
   assert.equal(fixtureCandidateIsVisible({ profileId: "real" }, "someone-else"), true);
+});
+
+test("manual matching includes only the cohort and explicitly safe fixtures", () => {
+  assert.equal(isVisibleManualTestCandidate({ isTestProfile: true, cleanupSafe: true, testRunId: "cohort-a" }, "cohort-a"), true);
+  assert.equal(isVisibleManualTestCandidate({ isTestProfile: true, cleanupSafe: true, testRunId: "cohort-b" }, "cohort-a"), false);
+  assert.equal(isVisibleManualTestCandidate({ profileId: "real" }, "cohort-a"), false);
+  assert.equal(isVisibleManualTestCandidate({ isFixtureProfile: true, cleanupSafe: true, manualTestVisible: true }, "cohort-a"), true);
+  assert.equal(isVisibleManualTestCandidate({ isFixtureProfile: true, cleanupSafe: false, manualTestVisible: true }, "cohort-a"), false);
+});
+
+test("unchanged fixture versions update metadata without regenerating embeddings", async () => {
+  const source = await import("node:fs/promises").then(({ readFile }) => readFile(new URL("../scripts/fixtures/seed-private-owner-fixtures.ts", import.meta.url), "utf8"));
+  assert.match(source, /existing\?\.versionId === versionId/);
+  assert.match(source, /SET manualTestVisible = :yes/);
+  assert.match(source, /continue;/);
+  assert.ok(source.indexOf("existing?.versionId === versionId") < source.indexOf("const [embedding, fieldPairs]"));
 });
 
 test("embedding explanation distinguishes exact overlap from a two-sided connection", () => {

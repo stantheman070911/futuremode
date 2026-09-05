@@ -20,6 +20,7 @@ interface CurrentProfile extends Record<string, unknown> {
   cleanupSafe?: boolean;
   isFixtureProfile?: boolean;
   fixtureAudienceEmailHash?: string;
+  manualTestVisible?: boolean;
 }
 
 interface ProfileVersion extends Record<string, unknown> {
@@ -153,8 +154,15 @@ function edgeSortKey(score: number, candidateId: string): string {
   return `EDGE#${inverted}#${candidateId}`;
 }
 
+export function isVisibleManualTestCandidate(profile: Record<string, unknown>, testRunId: string | undefined): boolean {
+  if (profile.isTestProfile === true) return profile.cleanupSafe === true && profile.testRunId === testRunId;
+  return profile.isFixtureProfile === true && profile.cleanupSafe === true && profile.manualTestVisible === true;
+}
+
 function inScope(profile: CurrentProfile, scope: MatchingScope, fixtureAudienceEmailHash?: string): boolean {
-  if (scope.includeTestProfiles) return profile.isTestProfile === true && profile.cleanupSafe === true && profile.testRunId === scope.testRunId;
+  if (scope.includeTestProfiles) {
+    return isVisibleManualTestCandidate(profile, scope.testRunId);
+  }
   if (profile.isTestProfile === true) return false;
   if (profile.isFixtureProfile === true) return Boolean(fixtureAudienceEmailHash && profile.fixtureAudienceEmailHash === fixtureAudienceEmailHash);
   return true;
