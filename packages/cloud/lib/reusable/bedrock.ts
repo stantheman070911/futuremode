@@ -70,16 +70,20 @@ export async function judgeJson(options: {
   modelId: string;
   maxTokens?: number;
   temperature?: number;
+  timeoutMs?: number;
   client?: BedrockRuntimeClient;
 }): Promise<unknown> {
   const client = options.client ?? new BedrockRuntimeClient({});
-  const response = await client.send(new ConverseCommand({
+  const command = new ConverseCommand({
     modelId: options.modelId,
     messages: [{ role: "user", content: [{ text: options.prompt }] }],
     inferenceConfig: {
       maxTokens: options.maxTokens ?? 4_096,
       temperature: options.temperature ?? 0.1,
     },
-  }));
+  });
+  const response = await client.send(command, options.timeoutMs
+    ? { abortSignal: AbortSignal.timeout(options.timeoutMs) }
+    : undefined);
   return parseJsonObject(textFromConverseResponse(response));
 }

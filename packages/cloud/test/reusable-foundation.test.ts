@@ -5,8 +5,9 @@ import test from "node:test";
 import { fileURLToPath } from "node:url";
 import * as cdk from "aws-cdk-lib";
 import { Template } from "aws-cdk-lib/assertions";
+import type { BedrockRuntimeClient } from "@aws-sdk/client-bedrock-runtime";
 import type { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
-import { decodeFloatEmbedding, parseJsonObject } from "../lib/reusable/bedrock.js";
+import { decodeFloatEmbedding, judgeJson, parseJsonObject } from "../lib/reusable/bedrock.js";
 import { contentFingerprint, normalizeEmail, randomOpaqueToken, randomPublicSlug, stableStringify } from "../lib/reusable/core.js";
 import { createProtectedSingleTable } from "../lib/reusable/infrastructure.js";
 import { DynamoSessionStore } from "../lib/reusable/session-store.js";
@@ -48,6 +49,18 @@ test("decodes supported embedding responses and extracts JSON", () => {
   assert.throws(() => decodeFloatEmbedding(body, 2), /2 finite numbers/);
   assert.deepEqual(parseJsonObject("```json\n{\"result\":true}\n```"), { result: true });
   assert.deepEqual(parseJsonObject("Result: {\"result\":true}"), { result: true });
+});
+
+test("passes an explicit abort signal to JSON model calls", async () => {
+  let abortSignal: AbortSignal | undefined;
+  const client = {
+    send: async (_command: unknown, options?: { abortSignal?: AbortSignal }) => {
+      abortSignal = options?.abortSignal;
+      return { output: { message: { content: [{ text: '{"result":true}' }] } } };
+    },
+  } as unknown as BedrockRuntimeClient;
+  assert.deepEqual(await judgeJson({ prompt: "test", modelId: "test-model", timeoutMs: 1_000, client }), { result: true });
+  assert.ok(abortSignal);
 });
 
 test("loads configurable expiring sessions without a product identity namespace", async () => {
