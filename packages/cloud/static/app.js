@@ -893,8 +893,7 @@ function importScreen() {
         <label class="field"><span class="field-label">${esc(t("import.jsonLabel"))}</span><textarea class="tall" name="json" required placeholder="${esc(t("json.placeholder"))}">${esc(runtime.importJson)}</textarea></label>
         <button class="button primary">${esc(t("import.render"))}</button>
       </form>
-      ${DEMO_AVAILABLE && runtime.demo && !runtime.session ? `<button class="button quiet" style="margin-top:9px" data-action="load-sample">${esc(t("import.demo"))}</button><p class="subtle" style="margin:7px 0 0">${esc(t("import.demoCaption"))}</p>` : ""}
-      ${runtime.session && !runtime.demo ? `<button class="button quiet" style="margin-top:9px" data-action="resume-computer-draft">${esc(t("import.resume"))}</button>` : ""}`);
+      ${DEMO_AVAILABLE && runtime.demo && !runtime.session ? `<button class="button quiet" style="margin-top:9px" data-action="load-sample">${esc(t("import.demo"))}</button><p class="subtle" style="margin:7px 0 0">${esc(t("import.demoCaption"))}</p>` : ""}`);
   }
   return shell(`${editingPublished ? `<div class="flow-navigation"><button class="flow-back" data-action="cancel-pitch-edit">← ${esc(t("flow.cancelEdit"))}</button></div><p class="eyebrow">${esc(t("import.editingEyebrow"))}</p>` : `${flowNavigation("/handoff", "flow.backToHandoff")}${progressHeader(3, "import.stepEdit")}`}
     <h1 class="page-title">${esc(t("import.editTitle"))}</h1>
