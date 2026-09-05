@@ -49,6 +49,7 @@ const profiles = [
 const dynamo = DynamoDBDocumentClient.from(new DynamoDBClient({ region }), { marshallOptions: { removeUndefinedValues: true } });
 const now = new Date().toISOString();
 const expiresAt = Math.floor(Date.now() / 1000) + 86_400;
+const testMeta = { isTestProfile: true, cleanupSafe: true, testRunId: runId, expiresAt };
 const sessionTokens = {};
 for (const [id, email, displayName, animal, summary, interests, coefficients] of profiles) {
   const idValue = profileId(email); const versionId = `e2e-${sha256(`${runId}:${id}`).slice(0, 20)}`; const slug = `e2e_${id.toLowerCase()}_${sha256(runId).slice(0, 12)}`;
@@ -56,7 +57,6 @@ for (const [id, email, displayName, animal, summary, interests, coefficients] of
   if (existing && (!existing.isTestProfile || existing.testRunId !== runId || !existing.cleanupSafe)) throw new Error(`refusing to overwrite profile ${id}`);
   const embedding = vector(...coefficients);
   const profile = { animal_persona: animal, summary, interests, motivations: ["把領域裡的隱性方法變成可以交換的具體做法"], active_problems: [`如何在真實限制下推進：${interests[0]}`], recurring_topics: interests.slice(0, 3), friend_intent: "想認識會帶著具體案例、失敗與下一個實驗來聊天的人。", history_scope: "隔離 E2E fixture；未使用任何私人聊天內容。", confidence };
-  const testMeta = { isTestProfile: true, cleanupSafe: true, testRunId: runId, expiresAt };
   await dynamo.send(new TransactWriteCommand({ TransactItems: [
     { Put: { TableName: tableName, Item: { pk: `PROFILE#${idValue}`, sk: `VERSION#${versionId}`, entityType: "PROFILE_VERSION", schema: "pitchyourowner.profile-publish.v1", profileId: idValue, versionId, emailHash: sha256(email), profile, displayName, locale: "zh-Hant", embedding, fieldEmbeddings: Object.fromEntries(["interests", "active_problems", "motivations", "recurring_topics", "friend_intent"].map((field) => [field, embedding])), embedding_status: "READY", profile_scope: "ACTIVE", is_matchable: 1, createdAt: now, ...testMeta } } },
     { Put: { TableName: tableName, Item: { pk: `PROFILE#${idValue}`, sk: "CURRENT", entityType: "PROFILE_CURRENT", profileId: idValue, versionId, email, emailHash: sha256(email), displayName, publicSlug: slug, visibility: "public", matchingState: "active", matchLanguages: ["zh"], updatedAt: now, ...testMeta } } },
@@ -70,7 +70,16 @@ for (const [id, email, displayName, animal, summary, interests, coefficients] of
     ] }));
   }
 }
+const publishEmail = `publish-${sha256(runId).slice(0, 12)}@pitchyourowner.invalid`;
+const publishEmailHash = sha256(publishEmail);
+const publishProfileId = profileId(publishEmail);
+const publishToken = randomBytes(32).toString("base64url");
+sessionTokens.P = publishToken;
+await dynamo.send(new TransactWriteCommand({ TransactItems: [
+  { Put: { TableName: tableName, Item: { pk: `SESSION#${sha256(publishToken)}`, sk: "META", entityType: "CLOUD_SESSION", email: publishEmail, emailHash: publishEmailHash, createdAt: now, expiresAt, ...testMeta } } },
+  { Put: { TableName: tableName, Item: { pk: `EMAIL#${publishEmailHash}`, sk: `SESSION#${sha256(publishToken)}`, entityType: "EMAIL_SESSION_POINTER", sessionPk: `SESSION#${sha256(publishToken)}`, emailHash: publishEmailHash, createdAt: now, expiresAt, ...testMeta } } },
+] }));
 await dynamo.send(new TransactWriteCommand({ TransactItems: [{ Put: { TableName: tableName, Item: { pk: "MATCHING_GRAPH", sk: "REVISION", entityType: "MATCHING_GRAPH_REVISION", revision: 1, updatedAt: now } } }] }));
-const artifact = { stackName, stackKey, tableName, siteUrl: outputs.CloudWebsiteUrl, matchingFunctionName: outputs.MatchingRunFunctionName, runId, sessionTokens };
+const artifact = { stackName, stackKey, tableName, siteUrl: outputs.CloudWebsiteUrl, matchingFunctionName: outputs.MatchingRunFunctionName, runId, sessionTokens, publishActor: { email: publishEmail, emailHash: publishEmailHash, profileId: publishProfileId } };
 await writeFile(outputsFile, JSON.stringify(artifact, null, 2), { mode: 0o600 });
 console.log(JSON.stringify({ seeded: true, environment: "e2e", runId, profiles: profiles.length, outputsFile }, null, 2));

@@ -34,7 +34,6 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
       const shareable = publicProfile(profile);
       svg = renderSocialSvg({
         profile: {
-          displayName: String(version.displayName ?? current.displayName ?? "PitchYourOwner owner"),
           animalPersona: profileAnimalPersona(profile),
           summary: shareable.summary,
           signals: [...shareable.interests, ...shareable.active_problems, ...shareable.recurring_topics].slice(0, 3),

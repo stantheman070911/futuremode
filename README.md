@@ -27,8 +27,8 @@ The implemented journey is:
 4. In the chosen AI, review a concise synthesis, resolve every detected
    security/privacy item in one reply, and request JSON with the exact confirmation
    phrase.
-5. Paste the JSON into PitchYourOwner, edit every configured field, then complete a
-   separate read-only publication review.
+5. Paste the JSON into PitchYourOwner, then edit and explicitly publish from the
+   document-style visual confirmation page.
 6. Publish the profile, create its embedding, and start matching.
 7. Review a match through three plain-language questions and evidence labels.
 8. Invite the other owner. Contact information appears only after both owners accept.

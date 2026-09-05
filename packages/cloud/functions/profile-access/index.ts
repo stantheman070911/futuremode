@@ -1,9 +1,10 @@
 import { BatchWriteCommand, GetCommand, PutCommand, QueryCommand, TransactWriteCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import type { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from "aws-lambda";
 import { loadSession, profileIdForEmailHash } from "../shared/auth.js";
+import { profileAnimalPersona, type OwnerPitchProfile } from "../shared/contracts.js";
 import { json, parseJsonBody } from "../shared/http.js";
 import { documentDynamo, requiredEnvironment } from "../shared/storage.js";
-import { randomOpaqueToken } from "../shared/security.js";
+import { randomPublicSlug } from "../shared/security.js";
 
 interface DeletionKey { pk: string; sk: string }
 
@@ -50,7 +51,7 @@ async function deleteKeys(tableName: string, keys: DeletionKey[]): Promise<void>
 
 async function ensurePublicSlug(tableName: string, profileId: string, current: Record<string, unknown>): Promise<string> {
   if (typeof current.publicSlug === "string" && current.publicSlug) return current.publicSlug;
-  const publicSlug = randomOpaqueToken(12);
+  const publicSlug = randomPublicSlug();
   await documentDynamo.send(new PutCommand({
     TableName: tableName,
     Item: { pk: `PUBLIC_SLUG#${publicSlug}`, sk: "PROFILE", entityType: "PUBLIC_PROFILE_POINTER", profileId, createdAt: new Date().toISOString() },
@@ -114,7 +115,7 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
       return json(200, {
         profile_id: profileId,
         version_id: current.versionId,
-        display_name: version.displayName ?? current.displayName,
+        display_name: profileAnimalPersona(version.profile as OwnerPitchProfile),
         profile: version.profile,
         locale: version.locale,
         public_slug: publicSlug,

@@ -41,7 +41,7 @@ async function loadPublicProfile(tableName: string, slug: string) {
     privateProfile: false,
     current,
     version,
-    displayName: String(version.displayName ?? current.displayName ?? "PitchYourOwner owner"),
+    displayName: profileAnimalPersona(rawProfile),
     profile: { ...publicProfile(rawProfile), animal_persona: profileAnimalPersona(rawProfile) },
   };
 }
@@ -64,7 +64,7 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
   const { profile, displayName, current, version } = loaded;
   const image = `${origin}/og/profile/${encodeURIComponent(slug)}.png?version=${encodeURIComponent(String(version.versionId ?? current.versionId))}`;
   if (event.rawPath.startsWith("/v1/")) return json(200, { visibility: "public", public_slug: slug, version_id: version.versionId, display_name: displayName, profile });
-  const body = `<article class="card"><div class="hero"><p class="animal">${escapeHtml(profile.animal_persona)}</p><h1>${escapeHtml(displayName)}</h1></div><div class="content"><p>${escapeHtml(profile.summary)}</p>${list("興趣", profile.interests)}${list("動機", profile.motivations)}${list("正在解的問題", profile.active_problems)}${list("反覆討論", profile.recurring_topics)}<section><h2>想認識的人</h2><p>${escapeHtml(profile.friend_intent)}</p></section><a class="cta" href="/">讓你的 Agent 也介紹你</a></div></article>`;
+  const body = `<article class="card"><div class="hero"><h1>${escapeHtml(displayName)}</h1></div><div class="content"><p>${escapeHtml(profile.summary)}</p>${list("興趣", profile.interests)}${list("動機", profile.motivations)}${list("正在解的問題", profile.active_problems)}${list("反覆討論", profile.recurring_topics)}<section><h2>想認識的人</h2><p>${escapeHtml(profile.friend_intent)}</p></section><a class="cta" href="/">讓你的 Agent 也介紹你</a></div></article>`;
   return html(200, shell({ title: `${displayName}｜PitchYourOwner`, description: String(profile.summary).slice(0, 180), canonical, image, body }), {
     "cache-control": "public, max-age=0, s-maxage=60",
     "content-security-policy": "default-src 'none'; style-src 'unsafe-inline'; img-src 'self' data:; base-uri 'none'; frame-ancestors 'none'; form-action 'self'",

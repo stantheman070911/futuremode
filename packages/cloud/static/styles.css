@@ -102,6 +102,20 @@ button{cursor:pointer}
 .doc-field p{margin:8px 0 0;line-height:1.55}
 .tag-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
 .tag{border:1px solid var(--ink);border-radius:2px;background:var(--white);padding:5px 8px;font-size:13px;line-height:1.25}
+.editable-document .document-editor{display:block;width:100%;overflow:hidden;resize:none;border:0;border-radius:2px;background:transparent;color:inherit;padding:0;font:inherit;line-height:inherit;field-sizing:content}
+.editable-document .document-editor:focus,.tag-editor:focus{outline:3px solid rgba(50,92,210,.2);outline-offset:2px}
+.editable-document .scope-editor{min-height:42px;margin:9px 0 0;color:#f7f5ef;font:13px/1.6 ui-monospace,SFMono-Regular,Menlo,monospace}
+.editable-document .animal-persona-editor{min-height:44px;margin:12px 0 4px;color:var(--blue);font-size:18px;font-weight:750;line-height:1.35}
+.summary-editor-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:12px}
+.editable-document .summary-editor{min-height:74px;margin:8px 0 20px;font-size:18px;line-height:1.48}
+.editable-document .friend-intent-editor{min-height:54px;margin:8px 0 0;line-height:1.55}
+.confidence-control{min-width:44px;min-height:44px;border:0;background:transparent;color:var(--blue);font:700 10px ui-monospace,SFMono-Regular,Menlo,monospace;text-align:right;text-transform:uppercase}
+.editable-tag{display:inline-flex;flex:1 1 220px;max-width:100%;min-height:44px;align-items:center;border:1px solid var(--ink);border-radius:2px;background:var(--white);padding:4px 3px 4px 8px}
+.tag-editor{display:block;min-width:0;min-height:28px;width:100%;overflow:hidden;resize:none;border:0;background:transparent;color:var(--ink);padding:4px 3px;font-family:inherit;font-size:13px;line-height:1.35;field-sizing:content}
+.remove-item{flex:0 0 44px;width:44px;height:44px;display:inline-grid;place-items:center;padding:0;border:0;border-radius:50%;background:transparent;color:#c9362b}
+.remove-item svg{display:block;width:22px;height:22px}
+.remove-item:focus-visible{outline:3px solid rgba(50,92,210,.2);outline-offset:0}
+.add-item{min-height:44px;margin-top:8px;padding:0 12px;border:1px dashed #8e8a82;background:transparent;color:#55524b;font-weight:700}
 .provenance{display:flex;flex-wrap:wrap;gap:6px;margin:18px 0}
 .provenance span{background:#e5e2da;padding:5px 8px;font:600 9px/1.2 ui-monospace,SFMono-Regular,Menlo,monospace;text-transform:uppercase;color:#5f5f59}
 .match-list{display:grid;gap:10px}

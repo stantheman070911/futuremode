@@ -55,7 +55,6 @@ function qrSvg(value: string, x: number, y: number, size: number): string {
 }
 
 export interface SocialProfile {
-  displayName: string;
   animalPersona: string;
   summary: string;
   signals: string[];
@@ -63,8 +62,8 @@ export interface SocialProfile {
 
 export function renderSocialSvg(input: { profile?: SocialProfile; profileUrl?: string; fontBase64?: string }): string {
   const profile = input.profile;
-  const title = profile?.displayName || "PitchYourOwner";
-  const animal = profile?.animalPersona || "你的 Agent 已經知道，誰值得認識你";
+  const title = profile?.animalPersona || "PitchYourOwner";
+  const animal = profile ? "Owner 核准的專業介紹" : "你的 Agent 已經知道，誰值得認識你";
   const summary = profile?.summary || "把反覆出現的興趣、動機與難題，變成一份你確認過的介紹。";
   const titleLines = linesFor(title, 25, 2);
   const summaryLines = linesFor(summary, profile ? 47 : 58, 3);

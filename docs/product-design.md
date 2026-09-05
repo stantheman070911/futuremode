@@ -118,33 +118,42 @@ Import 畫面可直接接收 profile object，也會為了復原相容性解開�
 非 JSON 文字、已知傳輸 debug payload、review preview、未知 profile 欄位、格式錯誤、
 缺少 confidence 或超過設定上限的內容都會被拒絕。
 
-Valid content becomes an editable document-style form. `history_scope` appears first;
-qualitative confidence controls appear beside their target fields. Edits are saved in
-browser storage. Continue opens a separate read-only review, and Back to edit preserves
-the draft.
+Valid content opens the original final-review document as a directly editable page.
+`history_scope` appears first; `animal_persona`, narrative text, and individual topic
+blocks can be edited inline; topic blocks can be added or removed; and qualitative
+confidence controls appear beside all six target fields. Edits are saved in browser
+storage. The JSON paste page and this visual edit/final-confirmation page are the only
+two PitchYourOwner import screens.
 
-合法內容會轉成文件式可編輯表單；`history_scope` 置頂，定性 confidence 顯示在對應欄位
-旁。修改會保存於瀏覽器。Continue 進入獨立唯讀 review，Back to edit 會保留草稿。
+合法內容會直接開啟原本 final review 的文件式畫面並可直接編輯；`history_scope` 置頂，
+`animal_persona`、段落文字與每個主題 block 都可行內修改，主題可新增或刪除，六個目標
+欄位旁都顯示定性 confidence。修改會保存於瀏覽器。JSON 貼上頁與這個視覺化編輯／最終
+確認頁，是 PitchYourOwner 匯入流程僅有的兩個畫面。
 
-The owner supplies a 1–40-character single-line display name during final review. Display
-name is publication metadata, not AI-derived profile content. Only the final publish
-button creates the `approvedAt` value and sends the strict publish envelope. The server
+There is no separate `display_name` input. The owner-approved `animal_persona` is the
+Hackathon profile's presentation name. Only **確認並上傳** on the visual-edit page
+creates the `approvedAt` value and sends the strict publish envelope. The server
 validates the envelope again and publishes atomically; no client-only state counts as
-consent.
+consent. Failed retries reuse the same locally persisted idempotency key and approval
+timestamp while the draft is unchanged.
 
-Owner 在 final review 輸入 1–40 字元、不可換行的 display name。Display name 是發布
-metadata，不是 AI 推論的 profile 內容。只有最後的發布按鈕會建立 `approvedAt` 並送出
-嚴格 publish envelope；server 會再次驗證並以原子交易發布。任何僅存在 client 的狀態都
-不構成同意。
+流程沒有獨立的 `display_name` 輸入；owner 核准的 `animal_persona` 就是 Hackathon profile
+的顯示名稱。只有視覺化編輯頁的 **確認並上傳** 會建立 `approvedAt` 並送出嚴格 publish
+envelope；server 會再次驗證並以原子交易發布。草稿未改變時，失敗重試沿用保存在本機的
+同一個 idempotency key 與核准時間。任何僅存在 client 的狀態都不構成同意。
 
 ### Match and invitation｜配對與邀請
 
 After publication, the browser starts matching through the authenticated API and polls
 Matches every six seconds for up to three minutes while results are pending. An empty
-state never inserts filler profiles.
+state never inserts filler profiles. Profile publication is committed before matching is
+triggered; a matching-trigger failure keeps the profile published and shows a recoverable
+matching-only state instead of reporting a publish failure.
 
 發布後，瀏覽器透過 authenticated API 啟動 matching；結果尚未完成時，Matches 最多三分鐘
-每六秒檢查一次。空白狀態不會加入 filler profile。
+每六秒檢查一次。空白狀態不會加入 filler profile。Profile publication 會先完成並在本機
+確認，再觸發 matching；matching trigger 失敗時 profile 仍維持已發布，只顯示可恢復的
+配對狀態，不會誤報為發布失敗。
 
 Every shown match answers:
 
@@ -188,7 +197,6 @@ Do not duplicate field limits in prompts, UI code, or documentation.
 | `history_scope` | Discloses accessible context | Owner only |
 | `animal_persona` | Memorable professional presentation metaphor | Public |
 | `confidence` | Qualitative extraction-review metadata | Edit and final review only |
-| `display_name` | Owner-supplied publication metadata | Owner and matched peers |
 
 `confidence` is required and contains exactly the six matchable field names with
 `high`, `medium`, or `low` values. It is never a truth score. The server excludes
@@ -204,8 +212,8 @@ Do not duplicate field limits in prompts, UI code, or documentation.
 Authorized context
   → inference and sensitive-data handling inside the chosen AI
   → owner-confirmed profile JSON
-  → editable PitchYourOwner draft
-  → separate publication approval
+  → editable PitchYourOwner final document
+  → explicit 確認並上傳 publication approval
   → published profile used for matching
 ```
 
@@ -262,14 +270,14 @@ The signed-in application has four persistent areas:
 | My Pitch | Published owner profile without confidence; edit and regenerate entry points |
 | Settings | Public/Private status, Computer API capability, delete, sign out, Privacy, Terms, and Support |
 
-Onboarding uses `/assistant`, `/handoff`, `/import`, and `/review` without the
+Onboarding uses `/assistant`, `/handoff`, and `/import` without the
 persistent navigation. The browser restores authentication progress, prompt handoff,
-draft edits, display name, demo state, and recent matching progress from
+draft edits, publish-retry identity, demo state, and recent matching progress from
 `localStorage`.
 
-Onboarding 使用 `/assistant`、`/handoff`、`/import` 與 `/review`，不顯示常駐
-navigation。瀏覽器會從 `localStorage` 復原登入進度、prompt handoff、草稿修改、
-display name、demo state 與近期 matching 進度。
+Onboarding 使用 `/assistant`、`/handoff` 與 `/import`，不顯示常駐 navigation。瀏覽器會從
+`localStorage` 復原登入進度、prompt handoff、草稿修改、發布重試識別、demo state 與近期
+matching 進度。舊 `/review` URL 會安全返回 `/import`，不會自動發布。
 
 The Hackathon UI is Traditional Chinese only. Layout is constrained to a 430px mobile
 column, includes a 320px compact breakpoint, exposes a skip link and live region, and

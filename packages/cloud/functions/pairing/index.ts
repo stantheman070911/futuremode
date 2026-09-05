@@ -120,7 +120,7 @@ async function edgeView(tableName: string, owner: CurrentProfile, item: ResultSe
     peer: {
       profile_id: item.candidateId,
       public_slug: peerCurrent.publicSlug,
-      display_name: String(peerVersion.displayName ?? peerCurrent.displayName ?? "另一位 owner"),
+      display_name: profileAnimalPersona(peerVersion.profile),
       animal_persona: profileAnimalPersona(peerVersion.profile),
       summary: shareable.summary,
       ...(detail ? { profile: { ...shareable, animal_persona: profileAnimalPersona(peerVersion.profile) } } : {}),
@@ -197,12 +197,12 @@ async function sendInvite(tableName: string, owner: CurrentProfile, pairId: stri
   const expiresAt = Math.floor(Date.now() / 1000) + 14 * DAY;
   const origin = requiredEnvironment("PUBLIC_SITE_ORIGIN").replace(/\/$/, "");
   const email = renderInvitationEmail({
-    inviterName: String(ownVersion.displayName ?? owner.displayName ?? "一位 owner"), animal: profileAnimalPersona(ownVersion.profile), summary: ownVersion.profile.summary, profile: publicProfile(ownVersion.profile),
+    inviterName: profileAnimalPersona(ownVersion.profile), animal: profileAnimalPersona(ownVersion.profile), summary: ownVersion.profile.summary, profile: publicProfile(ownVersion.profile),
     reason: String(edge.whatWeBothCareAbout ?? edge.strongestSignal ?? "你們有值得深入聊的共同關注。"), acceptUrl: `${origin}/accept#token=${encodeURIComponent(rawToken)}`,
     profileUrl: owner.publicSlug ? `${origin}/p/${encodeURIComponent(owner.publicSlug)}` : undefined,
   });
   const fixtureMeta = owner.isTestProfile === true && owner.cleanupSafe === true && owner.testRunId ? { isTestProfile: true, cleanupSafe: true, testRunId: owner.testRunId } : {};
-  const snapshot = { display_name: ownVersion.displayName ?? owner.displayName, profile: { ...publicProfile(ownVersion.profile), animal_persona: profileAnimalPersona(ownVersion.profile) } };
+  const snapshot = { display_name: profileAnimalPersona(ownVersion.profile), profile: { ...publicProfile(ownVersion.profile), animal_persona: profileAnimalPersona(ownVersion.profile) } };
   await documentDynamo.send(new TransactWriteCommand({ TransactItems: [
     { Put: { TableName: tableName, Item: { pk: `INVITATION#${pairId}`, sk: "META", entityType: "INVITATION", pairId, senderProfileId: owner.profileId, recipientProfileId: peer.profileId, senderEmail: owner.email, recipientEmail: peer.email, senderSnapshot: snapshot, explanation: { whatWeBothCareAbout: edge.whatWeBothCareAbout, whyItMattersNow: edge.whyItMattersNow, whatWeCouldDiscuss: edge.whatWeCouldDiscuss, evidenceLabels: edge.evidenceLabels }, status: "pending", tokenHash, createdAt: now, expiresAt, ...fixtureMeta }, ConditionExpression: "attribute_not_exists(pk)" } },
     { Put: { TableName: tableName, Item: { pk: `INVITE_TOKEN#${tokenHash}`, sk: "META", entityType: "INVITATION_TOKEN", pairId, status: "active", createdAt: now, expiresAt, ...fixtureMeta }, ConditionExpression: "attribute_not_exists(pk)" } },
@@ -236,7 +236,7 @@ async function respondToken(tableName: string, rawToken: string, decision: "acce
     const senderName = String((invite.senderSnapshot as Record<string, unknown>)?.display_name ?? "另一位 owner");
     const recipient = await getCurrent(tableName, String(invite.recipientProfileId));
     const recipientVersion = recipient ? await getVersion(tableName, recipient.profileId, recipient.versionId) : undefined;
-    const recipientName = String(recipientVersion?.displayName ?? recipient?.displayName ?? "另一位 owner");
+    const recipientName = recipientVersion?.profile ? profileAnimalPersona(recipientVersion.profile) : "另一位 owner";
     const recipientSnapshot = recipientVersion?.profile ? { display_name: recipientName, profile: { ...publicProfile(recipientVersion.profile), animal_persona: profileAnimalPersona(recipientVersion.profile) } } : { display_name: recipientName, profile: { animal_persona: genericAnimal } };
     const emailA = renderConnectionEmail(recipientName, String(invite.recipientEmail));
     const emailB = renderConnectionEmail(senderName, String(invite.senderEmail));
@@ -256,7 +256,7 @@ async function connectionView(tableName: string, ownerId: string, pairId: string
   if (!connection) throw new Error("connection_not_found");
   const peer = await getCurrent(tableName, String(connection.peerProfileId));
   const version = profileIsPublic(peer) ? await getVersion(tableName, peer.profileId, peer.versionId) : undefined;
-  const snapshot = version?.profile ? { display_name: version.displayName ?? peer?.displayName, profile: { ...publicProfile(version.profile), animal_persona: profileAnimalPersona(version.profile) } } : connection.peerSnapshot;
+  const snapshot = version?.profile ? { display_name: profileAnimalPersona(version.profile), profile: { ...publicProfile(version.profile), animal_persona: profileAnimalPersona(version.profile) } } : connection.peerSnapshot;
   return { connection_id: pairId, connected_at: connection.connectedAt, peer: { ...(snapshot as Record<string, unknown>), contact_email: connection.peerEmail }, explanation: connection.explanation };
 }
 
@@ -271,8 +271,8 @@ async function invitationLists(tableName: string, ownerId: string) {
     const connection = state === "connected" ? (await documentDynamo.send(new GetCommand({ TableName: tableName, Key: { pk: `PROFILE#${ownerId}`, sk: `CONNECTION#${item.pairId}` }, ConsistentRead: true }))).Item : undefined;
     const connectedSnapshot = connection?.peerSnapshot as { display_name?: string; profile?: OwnerPitchProfile } | undefined;
     const permittedSenderSnapshot = peerId === item.senderProfileId ? senderSnapshot : undefined;
-    const displayName = version?.displayName ?? connectedSnapshot?.display_name ?? permittedSenderSnapshot?.display_name ?? (profileIsPublic(peer) ? peer.displayName : undefined) ?? "另一位 owner";
     const profile = version?.profile ?? connectedSnapshot?.profile ?? permittedSenderSnapshot?.profile;
+    const displayName = profile ? profileAnimalPersona(profile) : connectedSnapshot?.display_name ?? permittedSenderSnapshot?.display_name ?? "另一位 owner";
     return { match_id: item.pairId, connection_id: state === "connected" ? item.pairId : undefined, state, peer: { display_name: displayName, animal_persona: profileAnimalPersona(profile), summary: profile?.summary ?? "" }, explanation: { what_we_both_care_about: (item.explanation as Record<string, unknown>)?.whatWeBothCareAbout ?? "你們有一個值得深入聊的共同關注。", evidence_labels: (item.explanation as Record<string, unknown>)?.evidenceLabels ?? [] } };
   };
   return {

@@ -25,7 +25,6 @@ export interface OwnerPitchProfile {
 
 export interface PublishPayload {
   schema: typeof PROFILE_SCHEMA;
-  display_name: string;
   profile: OwnerPitchProfile;
   locale: "zh-Hant" | "en";
   consent: {
@@ -34,7 +33,7 @@ export interface PublishPayload {
 }
 
 const PROFILE_KEYS = new Set([...CORE_PROFILE_FIELDS, "confidence"]);
-const PAYLOAD_KEYS = new Set(["schema", "display_name", "profile", "locale", "consent"]);
+const PAYLOAD_KEYS = new Set(["schema", "profile", "locale", "consent"]);
 
 function objectRecord(value: unknown, label: string): Record<string, unknown> {
   if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error(`${label} must be an object`);
@@ -94,15 +93,12 @@ export function validatePublishPayload(value: unknown): PublishPayload {
   rejectUnknownKeys(raw, PAYLOAD_KEYS, "payload");
   if (raw.schema !== PROFILE_SCHEMA) throw new Error("unsupported payload schema");
   if (!['zh-Hant', 'en'].includes(String(raw.locale))) throw new Error("locale is unsupported");
-  const displayName = requiredString(raw.display_name, "payload.display_name", 40);
-  if (/[\r\n]/.test(displayName)) throw new Error("payload.display_name cannot contain newlines");
   const consent = objectRecord(raw.consent, "consent");
   rejectUnknownKeys(consent, new Set(["approvedAt"]), "consent");
   const approvedAt = requiredString(consent.approvedAt, "consent.approvedAt", 64);
   if (Number.isNaN(Date.parse(approvedAt))) throw new Error("consent.approvedAt must be an ISO date");
   return {
     schema: PROFILE_SCHEMA,
-    display_name: displayName,
     profile: validateOwnerPitchProfile(raw.profile),
     locale: raw.locale as PublishPayload["locale"],
     consent: { approvedAt },

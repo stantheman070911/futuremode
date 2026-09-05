@@ -25,6 +25,35 @@ async function api(path, actor, options = {}) {
   return body;
 }
 
+const publishProfile = {
+  history_scope: `隔離 E2E 首次發布驗證 ${artifact.runId}；未使用任何私人聊天內容。`,
+  animal_persona: "校準發布管線的綠色水獺",
+  summary: "用一個全新隔離帳號驗證介紹發布、公開連結與重試不會建立重複版本。",
+  interests: ["發布管線可靠性"],
+  motivations: ["讓使用者重試時不會丟失或重複資料"],
+  active_problems: ["如何同時確保 public slug 與 idempotency receipt 一致"],
+  recurring_topics: ["全新帳號的首次發布"],
+  friend_intent: "想認識同樣關心可恢復網路流程與資料一致性的人。",
+  confidence: { summary: "high", interests: "high", motivations: "high", active_problems: "high", recurring_topics: "high", friend_intent: "high" },
+};
+const publishApprovedAt = new Date().toISOString();
+const publishBody = JSON.stringify({ schema: "pitchyourowner.profile-publish.v1", profile: publishProfile, locale: "zh-Hant", consent: { approvedAt: publishApprovedAt } });
+const publishKey = `e2e-first-publish-${artifact.runId}`;
+const firstPublish = await api("/v1/profile-versions", "P", { method: "POST", headers: { "idempotency-key": publishKey }, body: publishBody });
+assert.equal(firstPublish.idempotent_replay, false);
+assert.match(firstPublish.public_slug, /^[A-Za-z0-9_-]{22}$/);
+const publishReplay = await api("/v1/profile-versions", "P", { method: "POST", headers: { "idempotency-key": publishKey }, body: publishBody });
+assert.equal(publishReplay.idempotent_replay, true);
+assert.equal(publishReplay.version_id, firstPublish.version_id);
+assert.equal(publishReplay.public_slug, firstPublish.public_slug);
+const publishedOwner = await api("/v1/profiles/me", "P");
+assert.equal(publishedOwner.display_name, publishProfile.animal_persona);
+assert.equal(publishedOwner.public_slug, firstPublish.public_slug);
+const deprecatedResponse = await fetch(`${site}/v1/profile-versions`, { method: "POST", headers: { ...headers("P"), "idempotency-key": `${publishKey}-deprecated` }, body: JSON.stringify({ schema: "pitchyourowner.profile-publish.v1", display_name: "Legacy name", profile: publishProfile, locale: "zh-Hant", consent: { approvedAt: publishApprovedAt } }) });
+assert.equal(deprecatedResponse.status, 400);
+assert.equal((await deprecatedResponse.json()).error, "invalid_publish_payload");
+assert.equal((await api("/v1/profiles/me", "P", { method: "DELETE", body: '{"confirm":"DELETE"}' })).deleted, true);
+
 const lambda = new LambdaClient({ region });
 const invoked = await lambda.send(new InvokeCommand({ FunctionName: artifact.matchingFunctionName, InvocationType: "RequestResponse", Payload: new TextEncoder().encode(JSON.stringify({ includeTestProfiles: true, testRunId: artifact.runId })) }));
 const matching = JSON.parse(new TextDecoder().decode(invoked.Payload));
@@ -34,7 +63,7 @@ assert.equal(matching.pairs_written, 66);
 
 const first = await api("/v1/matches?page=1", "A");
 assert.equal(first.total, 11); assert.equal(first.matches.length, 10); assert.equal(first.page, 1); assert.equal(first.total_pages, 2);
-assert.deepEqual(first.matches.slice(0, 2).map((item) => item.peer.display_name), ["Ren", "Mika"]);
+assert.deepEqual(first.matches.slice(0, 2).map((item) => item.peer.display_name), ["跳著舞的粉色羊駝", "叼著分鏡穿過片場的赤狐"]);
 const second = await api(`/v1/matches?set=${encodeURIComponent(first.result_set_id)}&page=2`, "A");
 assert.equal(second.result_set_id, first.result_set_id); assert.equal(second.matches.length, 1);
 const reloaded = await api(`/v1/matches?set=${encodeURIComponent(first.result_set_id)}&page=1`, "A");
@@ -79,7 +108,7 @@ const accepted = await api("/v1/invitation-tokens/respond", null, { method: "POS
 assert.equal(accepted.state, "connected");
 items = await records(); assert.equal(items.filter((item) => item.entityType === "CONNECTION" && item.pairId === matchC.match_id).length, 2); assert.equal(items.filter((item) => item.entityType === "EMAIL_OUTBOX" && item.kind === "connection").length, 2);
 const connectionA = await api(`/v1/connections/${matchC.match_id}`, "A"); const connectionC = await api(`/v1/connections/${matchC.match_id}`, "C");
-assert.equal(connectionA.peer.display_name, "Mika"); assert.equal(connectionC.peer.display_name, "Ari"); assert.ok(connectionA.peer.contact_email); assert.ok(connectionC.peer.contact_email);
+assert.equal(connectionA.peer.display_name, "叼著分鏡穿過片場的赤狐"); assert.equal(connectionC.peer.display_name, "追著舞台光線的銀狐"); assert.ok(connectionA.peer.contact_email); assert.ok(connectionC.peer.contact_email);
 let unauthorizedConnection = 0; try { await api(`/v1/connections/${matchC.match_id}`, "B"); } catch { unauthorizedConnection = 1; } assert.equal(unauthorizedConnection, 1);
 let anonymousConnection = 0; try { await api(`/v1/connections/${matchC.match_id}`, null); } catch { anonymousConnection = 1; } assert.equal(anonymousConnection, 1);
 
@@ -92,7 +121,7 @@ await api("/v1/profiles/me", "C", { method: "PATCH", body: '{"visibility":"priva
 const privateView = await api(`/v1/public-profiles/${profileC.public_slug}`, null); assert.deepEqual(privateView, { visibility: "private" });
 const privateHtml = await fetch(`${site}/p/${profileC.public_slug}`); const privateMarkup = await privateHtml.text(); assert.equal(privateHtml.status, 200); assert.match(privateMarkup, /此介紹目前設為不公開/); assert.match(privateMarkup, /noindex, nofollow/); assert.doesNotMatch(privateMarkup, /Mika|赤狐|電影導演/);
 const privateImage = await fetch(`${site}/og/profile/${profileC.public_slug}.png?version=${profileC.version_id}`); assert.equal(privateImage.status, 404);
-const retainedConnection = await api(`/v1/connections/${matchC.match_id}`, "A"); assert.equal(retainedConnection.peer.display_name, "Mika"); assert.ok(retainedConnection.peer.contact_email); assert.match(retainedConnection.peer.profile.summary, /電影導演/);
+const retainedConnection = await api(`/v1/connections/${matchC.match_id}`, "A"); assert.equal(retainedConnection.peer.display_name, "叼著分鏡穿過片場的赤狐"); assert.ok(retainedConnection.peer.contact_email); assert.match(retainedConnection.peer.profile.summary, /電影導演/);
 const stableAfterPrivacy = await api(`/v1/matches?set=${encodeURIComponent(first.result_set_id)}&page=1`, "A"); assert.equal(stableAfterPrivacy.result_set_id, first.result_set_id); assert.ok(stableAfterPrivacy.matches.some((item) => item.match_id === matchC.match_id && item.unavailable));
 await api("/v1/profiles/me", "C", { method: "PATCH", body: '{"visibility":"public"}' });
 const changed = await api(`/v1/matches/refresh?set=${encodeURIComponent(first.result_set_id)}`, "A", { method: "POST", body: "{}" }); assert.notEqual(changed.result_set_id, first.result_set_id);
@@ -102,5 +131,5 @@ const half = { width: Math.floor(png.width / 2), height: Math.floor(png.height /
 for (let y = 0; y < half.height; y += 1) for (let x = 0; x < half.width; x += 1) { const source = ((y * 2) * png.width + x * 2) * 4; const target = (y * half.width + x) * 4; half.data.set(png.data.subarray(source, source + 4), target); }
 assert.equal(jsQR(half.data, half.width, half.height)?.data, `${site}/p/${profileC.public_slug}`);
 
-const report = { passed: true, runId: artifact.runId, siteUrl: site, assertions: { profiles: 12, candidates: 11, page1: 10, page2: 1, deterministicTopTwo: true, unchangedGraphReusesSet: true, changedGraphCreatesSet: true, inviteIdempotent: true, previewReadOnly: true, rejectFinal: true, connectionRecords: 2, connectionEmails: 2, unauthorizedConnectionRejected: true, privacyPlaceholderStable: true, connectedSnapshotRetainedWhenPrivate: true, privateSocialImageRevoked: true, socialImage: "1200x630", socialQrDecodedAt: ["1200x630", "600x315"] } };
+const report = { passed: true, runId: artifact.runId, siteUrl: site, assertions: { firstPublishWithoutDisplayName: true, publicSlugLength: 22, publishIdempotentReplay: true, deprecatedDisplayNameRejected: true, profiles: 12, candidates: 11, page1: 10, page2: 1, deterministicTopTwo: true, unchangedGraphReusesSet: true, changedGraphCreatesSet: true, inviteIdempotent: true, previewReadOnly: true, rejectFinal: true, connectionRecords: 2, connectionEmails: 2, unauthorizedConnectionRejected: true, privacyPlaceholderStable: true, connectedSnapshotRetainedWhenPrivate: true, privateSocialImageRevoked: true, socialImage: "1200x630", socialQrDecodedAt: ["1200x630", "600x315"] } };
 const reportPath = artifactPath.replace(/\.json$/, "-report.json"); await writeFile(reportPath, JSON.stringify(report, null, 2)); console.log(JSON.stringify({ passed: true, reportPath }, null, 2));

@@ -4,7 +4,7 @@ import { embedText } from "../../lib/reusable/bedrock.js";
 import { loadSession, profileIdForEmailHash } from "../shared/auth.js";
 import { canonicalMatchingDocument, payloadHash, PROFILE_SCHEMA, validatePublishPayload } from "../shared/contracts.js";
 import { json, parseJsonBody } from "../shared/http.js";
-import { randomOpaqueToken } from "../shared/security.js";
+import { randomPublicSlug } from "../shared/security.js";
 import { documentDynamo, requiredEnvironment } from "../shared/storage.js";
 
 async function embed(document: string): Promise<number[]> {
@@ -56,9 +56,16 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
     }));
     if (existing.Item) {
       if (existing.Item.payloadHash !== digest) return json(409, { error: "idempotency_key_conflict" });
+      const replayCurrent = existing.Item.publicSlug ? undefined : await documentDynamo.send(new GetCommand({
+        TableName: tableName,
+        Key: { pk: `PROFILE#${existing.Item.profileId}`, sk: "CURRENT" },
+        ConsistentRead: true,
+        ProjectionExpression: "publicSlug",
+      }));
       return json(200, {
         profile_id: existing.Item.profileId,
         version_id: existing.Item.versionId,
+        public_slug: existing.Item.publicSlug ?? replayCurrent?.Item?.publicSlug,
         status: "published",
         matching_status: "queued",
         idempotent_replay: true,
@@ -75,7 +82,8 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
       }))
       : undefined;
     const versionId = crypto.randomUUID();
-    const publicSlug = typeof current.Item?.publicSlug === "string" ? current.Item.publicSlug : randomOpaqueToken(12);
+    const publicSlug = typeof current.Item?.publicSlug === "string" ? current.Item.publicSlug : randomPublicSlug();
+    const displayName = payload.profile.animal_persona;
     const matchingDocument = canonicalMatchingDocument(payload.profile);
     const [vector, fieldEmbeddings] = await Promise.all([embed(matchingDocument), embedFields(payload.profile)]);
     const createdAt = new Date().toISOString();
@@ -92,7 +100,7 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
             profileId,
             versionId,
             emailHash: session.emailHash,
-            displayName: payload.display_name,
+            displayName,
             profile: payload.profile,
             locale: payload.locale,
             payloadHash: digest,
@@ -117,7 +125,7 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
             versionId,
             email: session.email,
             emailHash: session.emailHash,
-            displayName: payload.display_name,
+            displayName,
             publicSlug,
             visibility: "public",
             matchingState: "active",
@@ -152,6 +160,7 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
             payloadHash: digest,
             profileId,
             versionId,
+            publicSlug,
             createdAt,
             expiresAt,
           },

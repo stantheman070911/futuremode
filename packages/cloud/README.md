@@ -181,7 +181,6 @@ All responses are JSON. Owner routes require
 ```json
 {
   "schema": "pitchyourowner.profile-publish.v1",
-  "display_name": "Ari C.",
   "profile": {
     "history_scope": "可使用選定的近期對話；無法使用已刪除對話。",
     "animal_persona": "追著舞台光線的銀狐",

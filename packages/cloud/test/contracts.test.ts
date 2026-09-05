@@ -24,7 +24,6 @@ const profile = {
 
 const payload = {
   schema: "pitchyourowner.profile-publish.v1",
-  display_name: "Ari C.",
   profile,
   locale: "zh-Hant",
   consent: { approvedAt: "2026-09-04T08:00:00.000Z" },
@@ -34,14 +33,12 @@ test("validates the public animal persona, seven matching fields, and owner-only
   const parsed = validatePublishPayload(payload);
   assert.equal(parsed.profile.summary, profile.summary);
   assert.equal(parsed.profile.animal_persona, profile.animal_persona);
-  assert.equal(parsed.display_name, "Ari C.");
   assert.equal(parsed.profile.confidence.friend_intent, "low");
 });
 
-test("requires a short single-line display name outside the profile", () => {
-  assert.throws(() => validatePublishPayload({ ...payload, display_name: "" }), /display_name/);
-  assert.throws(() => validatePublishPayload({ ...payload, display_name: "Ari\nC." }), /newlines/);
-  assert.equal("display_name" in validatePublishPayload(payload).profile, false);
+test("uses animal_persona without accepting separate display-name metadata", () => {
+  assert.throws(() => validatePublishPayload({ ...payload, display_name: "Ari C." }), /unknown fields/);
+  assert.equal(validatePublishPayload(payload).profile.animal_persona, "追著光線的銀狐");
 });
 
 test("matching document excludes scope and confidence", () => {

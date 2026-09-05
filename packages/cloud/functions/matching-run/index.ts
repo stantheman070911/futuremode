@@ -1,5 +1,5 @@
 import { ScanCommand, TransactWriteCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
-import { randomOpaqueToken, sha256 } from "../shared/security.js";
+import { randomPublicSlug, sha256 } from "../shared/security.js";
 import { documentDynamo, requiredEnvironment } from "../shared/storage.js";
 import type { OwnerPitchProfile } from "../shared/contracts.js";
 
@@ -119,7 +119,7 @@ function loadedProfiles(items: Array<Record<string, unknown>>, scope: MatchingSc
 
 async function ensurePublicSlug(tableName: string, entry: LoadedProfile): Promise<void> {
   if (entry.current.publicSlug) return;
-  const publicSlug = randomOpaqueToken(12);
+  const publicSlug = randomPublicSlug();
   await documentDynamo.send(new TransactWriteCommand({ TransactItems: [
     { Put: { TableName: tableName, Item: { pk: `PUBLIC_SLUG#${publicSlug}`, sk: "PROFILE", entityType: "PUBLIC_PROFILE_POINTER", profileId: entry.current.profileId, createdAt: new Date().toISOString() }, ConditionExpression: "attribute_not_exists(pk)" } },
     { Update: { TableName: tableName, Key: { pk: `PROFILE#${entry.current.profileId}`, sk: "CURRENT" }, UpdateExpression: "SET publicSlug = :slug, visibility = if_not_exists(visibility, :public)", ExpressionAttributeValues: { ":slug": publicSlug, ":public": "public", ":version": entry.current.versionId }, ConditionExpression: "attribute_not_exists(publicSlug) AND versionId = :version" } },

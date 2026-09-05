@@ -108,7 +108,6 @@ try {
     headers: { "Idempotency-Key": `api-smoke-${Date.now()}` },
     body: JSON.stringify({
       schema: "pitchyourowner.profile-publish.v1",
-      display_name: DEMO_PROFILES[0].displayName,
       profile: draftRead.body.profile,
       locale: "en",
       consent: { approvedAt: new Date().toISOString() },

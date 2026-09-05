@@ -7,7 +7,7 @@ import * as cdk from "aws-cdk-lib";
 import { Template } from "aws-cdk-lib/assertions";
 import type { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
 import { decodeFloatEmbedding, parseJsonObject } from "../lib/reusable/bedrock.js";
-import { contentFingerprint, normalizeEmail, randomOpaqueToken, stableStringify } from "../lib/reusable/core.js";
+import { contentFingerprint, normalizeEmail, randomOpaqueToken, randomPublicSlug, stableStringify } from "../lib/reusable/core.js";
 import { createProtectedSingleTable } from "../lib/reusable/infrastructure.js";
 import { DynamoSessionStore } from "../lib/reusable/session-store.js";
 import { objectRecord, rejectUnknownKeys, requiredString, stringArray } from "../lib/reusable/validation.js";
@@ -29,6 +29,8 @@ test("provides deterministic project-neutral fingerprints", () => {
   assert.equal(contentFingerprint({ beta: 2, alpha: 1 }), contentFingerprint({ alpha: 1, beta: 2 }));
   assert.equal(normalizeEmail("  PERSON@Example.COM "), "person@example.com");
   assert.match(randomOpaqueToken(), /^[A-Za-z0-9_-]{40,}$/);
+  assert.match(randomPublicSlug(), /^[A-Za-z0-9_-]{22}$/);
+  assert.throws(() => randomOpaqueToken(12), /between 16 and 128/);
 });
 
 test("provides strict reusable validation primitives", () => {

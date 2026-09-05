@@ -16,6 +16,10 @@ export function randomOpaqueToken(bytes = 32): string {
   return randomBytes(bytes).toString("base64url");
 }
 
+export function randomPublicSlug(): string {
+  return randomOpaqueToken(16);
+}
+
 export function numericVerificationCode(digits = 6): string {
   if (!Number.isSafeInteger(digits) || digits < 4 || digits > 9) throw new Error("verification code length must be between 4 and 9");
   const upperBound = 10 ** digits;
