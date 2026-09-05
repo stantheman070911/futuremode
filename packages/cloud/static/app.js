@@ -138,6 +138,52 @@ Object.assign(COPY["zh-Hant"], {
   "handoff.openedManual": "已在新分頁開啟 {ai}。若 Prompt 沒有自動帶入，可在下方再次複製或展開完整 Prompt 手動複製。"
 });
 
+Object.assign(COPY.en, {
+  "share.eyebrow": "PUBLISHED PROFILE",
+  "share.title": "Share your public introduction",
+  "share.body": "Every shared item leads to the same public Profile URL. Compatible platforms may show the preview below; each platform controls its rendering and cache.",
+  "share.copyLink": "Copy public link",
+  "share.more": "More sharing options",
+  "share.view": "View public Profile",
+  "share.download": "Download PNG",
+  "share.copyPost": "Copy post text",
+  "share.platforms": "Platform sharing options",
+  "share.platformNote": "X will attempt to prefill text and a link; Facebook's sharer receives the public URL; Threads support may vary. Each platform still controls previews and caching. Instagram has no reliable one-click web feed posting, so download the PNG and share it manually.",
+  "share.privateTitle": "Sharing is paused",
+  "share.privateBody": "This Profile is Private. Make it Public in Settings before sharing it again.",
+  "share.previewAlt": "Social preview generated from your approved public Profile",
+  "share.postText": "My agent prepared this introduction for me: {title}",
+  "share.linkCopied": "Public Profile link copied.",
+  "share.postCopied": "Post text and public link copied.",
+  "share.fallbackCopied": "System sharing is unavailable, so the public link was copied.",
+  "share.copyUnavailable": "This browser cannot share or copy the public link. Open the public Profile and copy its address manually.",
+  "share.handedToSystem": "The sharing action was handed to your device.",
+  "share.afterPublish": "View/share public Profile"
+});
+
+Object.assign(COPY["zh-Hant"], {
+  "share.eyebrow": "已發布介紹",
+  "share.title": "分享公開介紹",
+  "share.body": "所有分享內容都導向同一個公開介紹網址。相容平台可能顯示下方預覽；實際呈現與更新時間由各平台及其快取決定。",
+  "share.copyLink": "複製公開連結",
+  "share.more": "更多分享",
+  "share.view": "查看公開頁",
+  "share.download": "下載 PNG",
+  "share.copyPost": "複製貼文文字",
+  "share.platforms": "平台分享選項",
+  "share.platformNote": "X 會嘗試帶入文字與連結；Facebook 分享器會收到公開網址；Threads 支援可能變動。各平台仍自行決定預覽與快取。Instagram 不提供可靠的 Web 一鍵貼文，請下載 PNG 後手動分享。",
+  "share.privateTitle": "分享已暫停",
+  "share.privateBody": "這份介紹目前是私人狀態。請先到設定重新公開，再進行分享。",
+  "share.previewAlt": "依 owner 已核准公開介紹產生的社群預覽卡",
+  "share.postText": "我的 Agent 替我整理了這份介紹：{title}",
+  "share.linkCopied": "公開介紹連結已複製。",
+  "share.postCopied": "貼文文字與公開連結已複製。",
+  "share.fallbackCopied": "這台裝置無法使用系統分享，已改為複製公開連結。",
+  "share.copyUnavailable": "這個瀏覽器無法分享或複製公開連結。請開啟公開頁後手動複製網址。",
+  "share.handedToSystem": "分享動作已交給你的裝置。",
+  "share.afterPublish": "查看／分享公開介紹"
+});
+
 let activeLocale = "zh-Hant";
 
 function t(key, variables = {}) {
@@ -377,6 +423,78 @@ function matchStateLabel(state) {
 
 function peerPresentationName(peer) {
   return peer?.animal_persona || peer?.profile?.animal_persona || peer?.display_name || genericAnimal;
+}
+
+function profileImageFor(presentation, variant = "detail") {
+  if (typeof presentation?.profile_image_url === "string") return presentation.profile_image_url;
+  const image = presentation?.profile_image;
+  if (!image || typeof image !== "object") return "";
+  return variant === "thumbnail" ? image.thumbnail_url || "" : image.detail_url || "";
+}
+
+function profilePortrait(presentation, variant = "detail", extraClass = "") {
+  const name = peerPresentationName(presentation);
+  const url = profileImageFor(presentation, variant);
+  const classes = `profile-portrait ${variant} ${extraClass}`.trim();
+  if (url) return `<img class="${classes}" src="${esc(url)}" alt="${esc(`${name}的動物角色`)}" width="${variant === "thumbnail" ? 192 : 768}" height="${variant === "thumbnail" ? 192 : 768}" loading="lazy" decoding="async">`;
+  return `<div class="${classes} placeholder" role="img" aria-label="${esc(`${name}的角色圖片準備中`)}"><span>${esc(name.slice(0, 1) || "動")}</span></div>`;
+}
+
+function currentPublicShareData() {
+  const slug = String(runtime.profile?.public_slug || "").trim();
+  if (!slug) return null;
+  const encodedSlug = encodeURIComponent(slug);
+  const publicUrl = new URL(`/p/${encodedSlug}`, location.origin).toString();
+  const imageUrl = new URL(`/og/profile/${encodedSlug}.png`, location.origin);
+  const versionId = String(runtime.profile?.version_id || "").trim();
+  if (versionId) imageUrl.searchParams.set("version", versionId);
+  const title = String(runtime.profile?.profile?.animal_persona || "PitchYourOwner").trim();
+  const caption = t("share.postText", { title });
+  return { slug, publicUrl, imageUrl: imageUrl.toString(), title, caption, postText: `${caption}\n${publicUrl}` };
+}
+
+function socialShareTargets(share) {
+  if (!share) return [];
+  const encodedText = encodeURIComponent(share.postText);
+  const encodedUrl = encodeURIComponent(share.publicUrl);
+  return [
+    { id: "x", label: "X", href: `https://twitter.com/intent/tweet?text=${encodedText}` },
+    { id: "facebook", label: "Facebook", href: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}&quote=${encodedText}` },
+    { id: "threads", label: "Threads", href: `https://www.threads.net/intent/post?text=${encodedText}` },
+  ];
+}
+
+function publicProfileSharePanel() {
+  const share = currentPublicShareData();
+  if (!share) return "";
+  if (runtime.profile?.visibility === "private") {
+    return `<section class="profile-share" id="profile-share" tabindex="-1" aria-labelledby="profile-share-title">
+      <p class="eyebrow">${esc(t("share.eyebrow"))}</p>
+      <h2 id="profile-share-title">${esc(t("share.privateTitle"))}</h2>
+      <div class="notice">${esc(t("share.privateBody"))}</div>
+      <div class="share-primary-actions"><button class="button primary" disabled>${esc(t("share.copyLink"))}</button><button class="button" disabled>${esc(t("share.more"))}</button></div>
+    </section>`;
+  }
+  const platforms = socialShareTargets(share);
+  return `<section class="profile-share" id="profile-share" tabindex="-1" aria-labelledby="profile-share-title">
+    <p class="eyebrow">${esc(t("share.eyebrow"))}</p>
+    <h2 id="profile-share-title">${esc(t("share.title"))}</h2>
+    <p class="profile-share-body">${esc(t("share.body"))}</p>
+    <figure class="profile-share-preview">
+      <img class="public-share-card" src="${esc(share.imageUrl)}" alt="${esc(t("share.previewAlt"))}" width="1200" height="630" loading="lazy" decoding="async">
+    </figure>
+    <div class="share-primary-actions">
+      <button class="button primary" data-action="copy-public-profile-link">${esc(t("share.copyLink"))}</button>
+      <button class="button" data-action="share-public-profile">${esc(t("share.more"))}</button>
+      <a class="button quiet" href="${esc(share.publicUrl)}" target="_blank" rel="noopener noreferrer">${esc(t("share.view"))}</a>
+    </div>
+    <div class="share-platform-actions" aria-label="${esc(t("share.platforms"))}">${platforms.map((target) => `<a class="button quiet" href="${esc(target.href)}" target="_blank" rel="noopener noreferrer">${esc(target.label)}</a>`).join("")}</div>
+    <div class="share-utility-actions">
+      <a class="text-action" href="${esc(share.imageUrl)}" download="pitchyourowner-${esc(share.slug)}.png">${esc(t("share.download"))}</a>
+      <button class="text-action" data-action="copy-public-profile-post">${esc(t("share.copyPost"))}</button>
+    </div>
+    <p class="share-platform-note">${esc(t("share.platformNote"))}</p>
+  </section>`;
 }
 
 function useLocale() {
@@ -623,10 +741,11 @@ async function api(path, options = {}) {
 
 function shell(content, { nav = false, active = "", action = "" } = {}) {
   const homeHref = runtime.session || runtime.demo ? (runtime.profile?.visibility === "private" ? "/pitch" : "/matches") : "/";
+  const publishedNotice = runtime.notice === t("notice.published") || runtime.notice === t("notice.publishedMatchingPending");
   return `<div class="app-shell"><section class="screen ${nav ? "" : "no-nav"}">
     <header class="wordmark"><a href="${homeHref}" data-link>PITCHYOUROWNER</a>${action}</header>
     ${errorNotice()}
-    ${runtime.notice ? `<div class="notice success">${esc(runtime.notice)}</div>` : ""}
+    ${runtime.notice ? `<div class="notice success" role="status"><div>${esc(runtime.notice)}</div>${publishedNotice && runtime.profile?.public_slug ? `<button class="text-action notice-action" data-action="open-published-share">${esc(t("share.afterPublish"))}</button>` : ""}</div>` : ""}
     ${content}
   </section>${nav ? bottomNav(active) : ""}</div>`;
 }
@@ -766,6 +885,42 @@ async function copyPromptBestEffort(prompt) {
     return false;
   } finally {
     clearTimeout(timeoutId);
+  }
+}
+
+async function copyPublicProfileLink({ fallback = false } = {}) {
+  const share = currentPublicShareData();
+  if (!share || runtime.profile?.visibility === "private") return;
+  const copied = await copyPromptBestEffort(share.publicUrl);
+  runtime.notice = t(copied ? (fallback ? "share.fallbackCopied" : "share.linkCopied") : "share.copyUnavailable");
+  announce(runtime.notice);
+  render();
+}
+
+async function copyPublicProfilePost() {
+  const share = currentPublicShareData();
+  if (!share || runtime.profile?.visibility === "private") return;
+  const copied = await copyPromptBestEffort(share.postText);
+  runtime.notice = t(copied ? "share.postCopied" : "share.copyUnavailable");
+  announce(runtime.notice);
+  render();
+}
+
+async function sharePublicProfile() {
+  const share = currentPublicShareData();
+  if (!share || runtime.profile?.visibility === "private") return;
+  if (!navigator.share) {
+    await copyPublicProfileLink({ fallback: true });
+    return;
+  }
+  try {
+    await navigator.share({ title: share.title, text: share.caption, url: share.publicUrl });
+    runtime.notice = t("share.handedToSystem");
+    announce(runtime.notice);
+    render();
+  } catch (error) {
+    if (error?.name === "AbortError") return;
+    await copyPublicProfileLink({ fallback: true });
   }
 }
 
@@ -1180,7 +1335,7 @@ function acceptScreen() {
   }
   const preview = runtime.invitationPreview;
   const inviter = preview.inviter || {};
-  return shell(`<p class="eyebrow">PitchYourOwner 邀請</p><h1 class="page-title">${esc(t("accept.title"))}</h1><p class="page-intro">${esc(peerPresentationName(inviter))} 的 Agent 覺得你們現在值得聊聊。</p>${publicProfileDocument(inviter.profile)}<div class="question-card"><section class="question"><div class="step-label">為什麼值得聊</div><h2>${esc(preview.explanation?.whatWeBothCareAbout || "你們有一個具體的共同關注。")}</h2><p>${esc(preview.explanation?.whatWeCouldDiscuss || "可以從最近正在嘗試的方法開始交換。")}</p></section></div><p class="subtle">${esc(t("accept.note"))}</p><div class="button-row"><button class="button" data-action="respond-token" data-decision="not_now">${esc(t("accept.notNow"))}</button><button class="button primary" data-action="respond-token" data-decision="accept">${esc(t("accept.accept"))}</button></div>`);
+  return shell(`<p class="eyebrow">PitchYourOwner 邀請</p><h1 class="page-title">${esc(t("accept.title"))}</h1>${profilePortrait(inviter, "detail", "hero-portrait")}<p class="page-intro">${esc(peerPresentationName(inviter))} 的 Agent 覺得你們現在值得聊聊。</p>${publicProfileDocument(inviter.profile)}<div class="question-card"><section class="question"><div class="step-label">為什麼值得聊</div><h2>${esc(preview.explanation?.whatWeBothCareAbout || "你們有一個具體的共同關注。")}</h2><p>${esc(preview.explanation?.whatWeCouldDiscuss || "可以從最近正在嘗試的方法開始交換。")}</p></section></div><p class="subtle">${esc(t("accept.note"))}</p><div class="button-row"><button class="button" data-action="respond-token" data-decision="not_now">${esc(t("accept.notNow"))}</button><button class="button primary" data-action="respond-token" data-decision="accept">${esc(t("accept.accept"))}</button></div>`);
 }
 
 async function loadInvitationPreview() {
@@ -1207,7 +1362,7 @@ function connectionScreen(connectionId) {
   }
   const peer = runtime.connection.peer || {};
   const manualPrompt = runtime.connectionPromptFallback ? `<section class="connection-prompt-fallback"><label class="field"><span class="field-label">${esc(t("connection.promptFallbackTitle"))}</span><span class="field-hint">${esc(t("connection.promptFallbackBody"))}</span><textarea class="prompt-box" readonly rows="12">${esc(runtime.connection.first_email_prompt)}</textarea></label></section>` : "";
-  return shell(`<a href="/invitations" data-link class="eyebrow" style="text-decoration:none">← 返回邀請</a><h1 class="page-title">${esc(t("connection.title"))}</h1><p class="page-intro">你和 ${esc(peerPresentationName(peer))} 都明確接受了這次介紹。</p>${publicProfileDocument(peer.profile)}<div class="notice success"><span class="field-label">${esc(t("connection.email"))}</span><p><a href="mailto:${esc(peer.contact_email)}">${esc(peer.contact_email)}</a></p></div><section class="connection-ai"><p class="eyebrow">${esc(t("connection.aiEyebrow"))}</p><h2>${esc(t("connection.aiTitle"))}</h2><p>${esc(t("connection.aiBody"))}</p><div class="button-stack"><button class="button primary" data-action="write-connection-email" data-ai="ChatGPT">${esc(t("connection.chatgpt"))}</button><button class="button" data-action="write-connection-email" data-ai="Claude">${esc(t("connection.claude"))}</button></div></section>${manualPrompt}`, { nav: true, active: "invitations" });
+  return shell(`<a href="/invitations" data-link class="eyebrow" style="text-decoration:none">← 返回邀請</a><h1 class="page-title">${esc(t("connection.title"))}</h1>${profilePortrait(peer, "detail", "hero-portrait")}<p class="page-intro">你和 ${esc(peerPresentationName(peer))} 都明確接受了這次介紹。</p>${publicProfileDocument(peer.profile)}<div class="notice success"><span class="field-label">${esc(t("connection.email"))}</span><p><a href="mailto:${esc(peer.contact_email)}">${esc(peer.contact_email)}</a></p></div><section class="connection-ai"><p class="eyebrow">${esc(t("connection.aiEyebrow"))}</p><h2>${esc(t("connection.aiTitle"))}</h2><p>${esc(t("connection.aiBody"))}</p><div class="button-stack"><button class="button primary" data-action="write-connection-email" data-ai="ChatGPT">${esc(t("connection.chatgpt"))}</button><button class="button" data-action="write-connection-email" data-ai="Claude">${esc(t("connection.claude"))}</button></div></section>${manualPrompt}`, { nav: true, active: "invitations" });
 }
 
 async function loadConnection(connectionId) {
@@ -1244,7 +1399,7 @@ function pitchScreen() {
     <p>${esc(t("pitch.draftChoiceBody"))}</p>
     <div class="button-stack"><button class="button primary" data-action="resume-pitch-draft">${esc(t("pitch.resumeDraft"))}</button><button class="button" data-action="confirm-edit-published">${esc(t("pitch.editPublished"))}</button><button class="button quiet" data-action="cancel-edit-choice">${esc(t("common.cancel"))}</button></div>
   </div>` : "";
-  return shell(`<h1 class="page-title">${esc(t("pitch.title"))}</h1><p class="page-intro">${esc(t("pitch.approved"))}</p>${draftChoice}${profileDocument(runtime.profile.profile, false)}<div class="pitch-new-action"><button class="button" data-action="create-new-pitch">${esc(t("pitch.new"))}</button><p class="subtle">${esc(t("pitch.newHint"))}</p></div>`, { nav: true, active: "pitch", action: `<button class="text-action" data-action="edit-pitch">${esc(t("pitch.edit"))}</button>` });
+  return shell(`<h1 class="page-title">${esc(t("pitch.title"))}</h1><p class="page-intro">${esc(t("pitch.approved"))}</p>${draftChoice}${profilePortrait(runtime.profile, "detail", "hero-portrait")}${profileDocument(runtime.profile.profile, false)}${publicProfileSharePanel()}<div class="pitch-new-action"><button class="button" data-action="create-new-pitch">${esc(t("pitch.new"))}</button><p class="subtle">${esc(t("pitch.newHint"))}</p></div>`, { nav: true, active: "pitch", action: `<button class="text-action" data-action="edit-pitch">${esc(t("pitch.edit"))}</button>` });
 }
 
 function startPublishedPitchEdit({ replaceDraft = false } = {}) {
@@ -1321,7 +1476,7 @@ function matchesScreen() {
   const result = runtime.matchResult || { page: 1, total_pages: 1, total: visible.length, result_set_id: "" };
   const context = result.result_set_id ? `?set=${encodeURIComponent(result.result_set_id)}&page=${result.page}` : "";
   const pagination = result.total_pages > 1 ? `<nav class="pagination" aria-label="配對分頁"><a class="button quiet ${result.page <= 1 ? "disabled" : ""}" ${result.page > 1 ? `href="/matches?set=${encodeURIComponent(result.result_set_id)}&page=${result.page - 1}" data-link` : "aria-disabled=\"true\""}>${esc(t("matches.previous"))}</a><span>${esc(t("matches.page", { page: result.page, total: result.total_pages }))}</span><a class="button quiet ${result.page >= result.total_pages ? "disabled" : ""}" ${result.page < result.total_pages ? `href="/matches?set=${encodeURIComponent(result.result_set_id)}&page=${result.page + 1}" data-link` : "aria-disabled=\"true\""}>${esc(t("matches.next"))}</a></nav>` : "";
-  return shell(`<div class="match-title-row"><div><h1 class="page-title">${esc(t("matches.title"))}</h1><p class="page-intro">${esc(t("matches.total", { count: result.total }))}</p></div><button class="text-action" data-action="refresh-matches">${esc(t("matches.refresh"))}</button></div><div class="match-list">${visible.map((match) => match.unavailable ? `<div class="match-card unavailable"><h2>${esc(t("match.unavailable"))}</h2><p>${esc(t("match.unavailableBody"))}</p></div>` : `<a class="match-card" href="/matches/${encodeURIComponent(match.match_id)}${context}" data-link><div class="match-card-head"><h2 class="animal-persona compact">${esc(peerPresentationName(match.peer))}</h2><div class="match-card-meta"><span class="status-label">${esc(match.state === "suggested" ? t("match.viewDetail") : matchStateLabel(match.state))}</span></div></div>${match.peer?.is_fixture ? `<div class="evidence"><span class="evidence-label">${esc(t("match.demoData"))}</span></div>` : ""}<p>${esc(match.peer.summary || match.explanation.what_we_both_care_about)}</p><p class="shared-signal">共同訊號：${esc(match.strongest_shared_signal || match.explanation.what_we_both_care_about)}</p></a>`).join("")}</div>${pagination}`, { nav: true, active: "matches" });
+  return shell(`<div class="match-title-row"><div><h1 class="page-title">${esc(t("matches.title"))}</h1><p class="page-intro">${esc(t("matches.total", { count: result.total }))}</p></div><button class="text-action" data-action="refresh-matches">${esc(t("matches.refresh"))}</button></div><div class="match-list">${visible.map((match) => match.unavailable ? `<div class="match-card unavailable"><h2>${esc(t("match.unavailable"))}</h2><p>${esc(t("match.unavailableBody"))}</p></div>` : `<a class="match-card" href="/matches/${encodeURIComponent(match.match_id)}${context}" data-link><div class="match-card-head"><div class="match-card-identity">${profilePortrait(match.peer, "thumbnail")}<h2 class="animal-persona compact">${esc(peerPresentationName(match.peer))}</h2></div><div class="match-card-meta"><span class="status-label">${esc(match.state === "suggested" ? t("match.viewDetail") : matchStateLabel(match.state))}</span></div></div>${match.peer?.is_fixture ? `<div class="evidence"><span class="evidence-label">${esc(t("match.demoData"))}</span></div>` : ""}<p>${esc(match.peer.summary || match.explanation.what_we_both_care_about)}</p><p class="shared-signal">共同訊號：${esc(match.strongest_shared_signal || match.explanation.what_we_both_care_about)}</p></a>`).join("")}</div>${pagination}`, { nav: true, active: "matches" });
 }
 
 async function loadMatches({ polling = false } = {}) {
@@ -1373,7 +1528,6 @@ function matchDetailScreen(matchId) {
   }
   const match = runtime.match;
   const peerName = peerPresentationName(match.peer);
-  const initial = peerName.slice(0, 1).toUpperCase();
   const explanation = match.explanation;
   const questions = [
     [t("match.q1"), explanation.what_we_both_care_about],
@@ -1399,7 +1553,7 @@ function matchDetailScreen(matchId) {
   const backQuery = location.search || (runtime.matchResult?.result_set_id ? `?set=${encodeURIComponent(runtime.matchResult.result_set_id)}&page=${runtime.matchResult.page}` : "");
   return shell(`<a href="/matches${backQuery}" data-link class="eyebrow" style="text-decoration:none">${esc(t("match.back"))}</a>
     ${demoMarker}
-    <div class="person"><div class="initial">${esc(initial)}</div><div><h1 class="animal-persona compact">${esc(peerName)}</h1><p>${esc(match.peer.profile?.interests?.[0] || t("match.ownerPitch"))}</p></div></div>
+    <div class="person">${profilePortrait(match.peer, "detail")}<div><h1 class="animal-persona compact">${esc(peerName)}</h1><p>${esc(match.peer.profile?.interests?.[0] || t("match.ownerPitch"))}</p></div></div>
     ${connectedBlock}
     ${publicProfileDocument(match.peer.profile)}
     <div class="question-card">${questions.map(([label, text]) => `<section class="question"><div class="step-label">${esc(label)}</div><h2>${esc(text)}</h2><div class="evidence">${explanation.evidence_labels.map((evidence) => `<span class="evidence-label">${esc(t("match.evidence", { label: evidenceLabel(evidence) }))}</span>`).join("")}</div></section>`).join("")}</div>
@@ -1420,7 +1574,7 @@ function invitationsScreen() {
     return shell(`<div class="loading">${esc(t("invites.loading"))}</div>`, { nav: true, active: "invitations" });
   }
   const sections = [["invites.incoming", runtime.invitations.incoming], ["invites.outgoing", runtime.invitations.outgoing], ["invites.connected", runtime.invitations.connected]];
-  return shell(`<h1 class="page-title invitations-title">${esc(t("invites.title"))}</h1>${sections.map(([label, items]) => `<div class="divider-label">${esc(t(label))} · ${items.length}</div><div class="match-list">${items.length ? items.map((match) => `<a class="match-card" href="${match.state === "connected" ? `/connections/${encodeURIComponent(match.connection_id)}` : `/matches/${encodeURIComponent(match.match_id)}`}" data-link><div class="match-card-head"><h2 class="animal-persona compact">${esc(peerPresentationName(match.peer))}</h2><span class="status-label">${esc(matchStateLabel(match.state))}</span></div><p>${esc(match.explanation?.what_we_both_care_about || match.peer?.summary || "")}</p></a>`).join("") : `<div class="notice">${esc(t("invites.empty"))}</div>`}</div>`).join("")}`, { nav: true, active: "invitations" });
+  return shell(`<h1 class="page-title invitations-title">${esc(t("invites.title"))}</h1>${sections.map(([label, items]) => `<div class="divider-label">${esc(t(label))} · ${items.length}</div><div class="match-list">${items.length ? items.map((match) => `<a class="match-card" href="${match.state === "connected" ? `/connections/${encodeURIComponent(match.connection_id)}` : `/matches/${encodeURIComponent(match.match_id)}`}" data-link><div class="match-card-head"><div class="match-card-identity">${profilePortrait(match.peer, "thumbnail")}<h2 class="animal-persona compact">${esc(peerPresentationName(match.peer))}</h2></div><span class="status-label">${esc(matchStateLabel(match.state))}</span></div><p>${esc(match.explanation?.what_we_both_care_about || match.peer?.summary || "")}</p></a>`).join("") : `<div class="notice">${esc(t("invites.empty"))}</div>`}</div>`).join("")}`, { nav: true, active: "invitations" });
 }
 
 async function loadInvitations() {
@@ -1579,6 +1733,17 @@ document.addEventListener("click", async (event) => {
     if (action === "cancel-edit-choice") { runtime.pendingPitchEdit = false; render(); }
     if (action === "cancel-pitch-edit") { clearDraftState(); runtime.demoDraft = false; writeJson(DEMO_DRAFT_KEY, null); navigate("/pitch"); }
     if (action === "create-new-pitch") { clearDraftState(); clearHandoff(); runtime.demoDraft = false; writeJson(DEMO_DRAFT_KEY, null); navigate("/assistant"); }
+    if (action === "open-published-share") {
+      navigate("/pitch");
+      requestAnimationFrame(() => {
+        const sharePanel = document.getElementById("profile-share");
+        sharePanel?.scrollIntoView({ block: "start" });
+        sharePanel?.focus({ preventScroll: true });
+      });
+    }
+    if (action === "copy-public-profile-link") await copyPublicProfileLink();
+    if (action === "share-public-profile") await sharePublicProfile();
+    if (action === "copy-public-profile-post") await copyPublicProfilePost();
     if (action === "refresh-matches") await refreshMatches();
     if (action === "retry-matches") { runtime.error = ""; runtime.matchesPollError = false; runtime.matches = null; render(); }
     if (action === "error-retry") await retryCurrentScreen();
@@ -1942,4 +2107,16 @@ window.addEventListener("pageshow", () => {
   if (location.pathname === "/handoff") { rehydrateHandoff(); render(); }
   if (location.pathname === "/signin") ensureOtpCountdown();
 });
+document.addEventListener("error", (event) => {
+  const image = event.target;
+  if (!(image instanceof HTMLImageElement) || !image.classList.contains("profile-portrait")) return;
+  const placeholder = document.createElement("div");
+  placeholder.className = `${image.className} placeholder`;
+  placeholder.setAttribute("role", "img");
+  placeholder.setAttribute("aria-label", image.alt ? `${image.alt}準備中` : "角色圖片準備中");
+  const marker = document.createElement("span");
+  marker.textContent = (image.alt || "動").slice(0, 1);
+  placeholder.append(marker);
+  image.replaceWith(placeholder);
+}, true);
 loadProfileSchemaConfig().finally(render);

@@ -6,6 +6,8 @@
     "embeddingModelId": "global.cohere.embed-v4:0",
     "embeddingDimensions": 1024,
     "matchJudgeModelId": "apac.amazon.nova-pro-v1:0",
+    "geminiImageModelId": "gemini-3.1-flash-lite-image",
+    "geminiImageReviewModelId": "gemini-3.5-flash-lite",
     "matchJudgeMinMutualScore": 65,
     "emailProvider": "resend",
     "verificationEmailEnabled": true,

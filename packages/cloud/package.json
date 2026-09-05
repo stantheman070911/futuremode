@@ -22,13 +22,17 @@
     "e2e:run": "node scripts/e2e/run.mjs",
     "e2e:cleanup": "node scripts/e2e/cleanup.mjs",
     "fixtures:seed-private": "node --import tsx scripts/fixtures/seed-private-owner-fixtures.ts",
-    "report:funnel": "node scripts/report-hackathon-funnel.mjs"
+    "report:funnel": "node scripts/report-hackathon-funnel.mjs",
+    "images:secret": "node scripts/profile-images/put-secret.mjs",
+    "images:backfill": "node scripts/profile-images/backfill.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-bedrock-runtime": "3.1111.0",
     "@aws-sdk/client-cloudformation": "^3.1111.0",
     "@aws-sdk/client-dynamodb": "3.1111.0",
     "@aws-sdk/client-lambda": "^3.1111.0",
+    "@aws-sdk/client-s3": "^3.1111.0",
+    "@aws-sdk/client-secrets-manager": "^3.1111.0",
     "@aws-sdk/client-sesv2": "3.1111.0",
     "@aws-sdk/client-sns": "3.1111.0",
     "@aws-sdk/client-sqs": "3.1111.0",
@@ -37,7 +41,8 @@
     "@resvg/resvg-wasm": "^2.6.2",
     "aws-cdk-lib": "2.265.0",
     "constructs": "10.8.1",
-    "qrcode": "^1.5.4"
+    "qrcode": "^1.5.4",
+    "sharp": "^0.35.4"
   },
   "devDependencies": {
     "@types/aws-lambda": "8.10.152",

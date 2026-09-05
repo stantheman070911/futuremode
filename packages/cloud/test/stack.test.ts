@@ -49,6 +49,7 @@ test("exposes phone paste-back, draft API, pairing, and invitation routes", () =
     "GET /og/profile/{slug}",
     "GET /og/{slug}",
     "GET /p/{slug}",
+    "GET /profile-images/{slug}/{variant}",
     "GET /v1/connections/{connectionId}",
     "GET /v1/invitations",
     "GET /v1/matches",
@@ -77,6 +78,27 @@ test("enables matching email only after captured journey verification", () => {
   template().hasOutput("EmailVerificationState", { Value: "ENABLED" });
   template().hasOutput("MatchingEmailDeliveryState", { Value: "ENABLED" });
   template().resourcePropertiesCountIs("AWS::Lambda::EventSourceMapping", { Enabled: true }, 2);
+  assert.equal(Object.keys(template().findResources("AWS::Lambda::EventSourceMapping")).length, 3);
+});
+
+test("keeps profile images private and isolates the Gemini secret to the worker", () => {
+  template().hasResourceProperties("AWS::S3::Bucket", {
+    LifecycleConfiguration: Match.objectLike({ Rules: Match.arrayWith([Match.objectLike({ Status: "Enabled" })]) }),
+    PublicAccessBlockConfiguration: {
+      BlockPublicAcls: true,
+      BlockPublicPolicy: true,
+      IgnorePublicAcls: true,
+      RestrictPublicBuckets: true,
+    },
+  });
+  template().hasResourceProperties("AWS::Lambda::Function", {
+    FunctionName: "pitchyourowner-dev-profile-image-worker",
+    Environment: { Variables: Match.objectLike({ GEMINI_IMAGE_MODEL_ID: "gemini-3.1-flash-lite-image", GEMINI_IMAGE_REVIEW_MODEL_ID: "gemini-3.5-flash-lite", GEMINI_IMAGE_SECRET_ARN: Match.anyValue(), PROFILE_IMAGE_BUCKET_NAME: Match.anyValue() }) },
+  });
+  const policies = Object.values(template().findResources("AWS::IAM::Policy"));
+  const secretPolicies = policies.filter((resource) => JSON.stringify(resource).includes("secretsmanager:GetSecretValue"));
+  assert.equal(secretPolicies.length, 1);
+  assert.match(JSON.stringify(secretPolicies[0]), /ProfileImageWorker/);
 });
 
 test("uses isolated PitchYourOwner resource names and budget", () => {

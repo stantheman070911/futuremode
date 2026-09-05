@@ -1,14 +1,17 @@
 import { GetCommand } from "@aws-sdk/lib-dynamodb";
+import { GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { Resvg, initWasm } from "@resvg/resvg-wasm";
 import type { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from "aws-lambda";
 import { profileAnimalPersona, publicProfile, type OwnerPitchProfile } from "../shared/contracts.js";
 import { renderSocialSvg } from "../shared/social-image.js";
+import { readyProfileImage } from "../shared/profile-image.js";
 import { documentDynamo, requiredEnvironment } from "../shared/storage.js";
 
 let wasmReady: Promise<void> | undefined;
 let font: Uint8Array | undefined;
+const s3 = new S3Client({});
 function fontBuffer() { return font ??= readFileSync(join(__dirname, "og-font.otf")); }
 async function initialize() { await (wasmReady ??= initWasm(readFileSync(join(__dirname, "node_modules", "@resvg", "resvg-wasm", "index_bg.wasm")))); }
 function plain(statusCode: number, body: string): APIGatewayProxyResultV2 { return { statusCode, headers: { "content-type": "text/plain; charset=utf-8", "cache-control": "no-store", "x-content-type-options": "nosniff" }, body }; }
@@ -32,6 +35,16 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
       if (!version?.profile) return plain(404, "not found");
       const profile = version.profile as OwnerPitchProfile;
       const shareable = publicProfile(profile);
+      let portraitDataUri: string | undefined;
+      const image = readyProfileImage(current);
+      if (image?.thumbnailKey) {
+        try {
+          const object = await s3.send(new GetObjectCommand({ Bucket: requiredEnvironment("PROFILE_IMAGE_BUCKET_NAME"), Key: image.thumbnailKey }));
+          if (object.Body) portraitDataUri = `data:image/webp;base64,${Buffer.from(await object.Body.transformToByteArray()).toString("base64")}`;
+        } catch {
+          // A social card remains valid while an asynchronous portrait is absent.
+        }
+      }
       svg = renderSocialSvg({
         profile: {
           animalPersona: profileAnimalPersona(profile),
@@ -39,6 +52,7 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
           signals: [...shareable.interests, ...shareable.active_problems, ...shareable.recurring_topics].slice(0, 3),
         },
         profileUrl: `${origin}/p/${encodeURIComponent(raw)}`,
+        portraitDataUri,
         fontBase64: Buffer.from(fontBuffer()).toString("base64"),
       });
     }

@@ -3,6 +3,7 @@ import type { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from "aws-lambda
 import { loadSession, profileIdForEmailHash } from "../shared/auth.js";
 import { profileAnimalPersona, type OwnerPitchProfile } from "../shared/contracts.js";
 import { json, parseJsonBody } from "../shared/http.js";
+import { profileImageUrl } from "../shared/profile-image.js";
 import { documentDynamo, requiredEnvironment } from "../shared/storage.js";
 import { randomPublicSlug } from "../shared/security.js";
 
@@ -121,6 +122,10 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
         public_slug: publicSlug,
         visibility: current.visibility === "private" || current.matchingState === "paused" ? "private" : "public",
         matching_state: current.matchingState ?? "active",
+        profile_image: {
+          thumbnail_url: profileImageUrl(current, requiredEnvironment("PUBLIC_SITE_ORIGIN"), "thumbnail"),
+          detail_url: profileImageUrl(current, requiredEnvironment("PUBLIC_SITE_ORIGIN"), "detail"),
+        },
         updated_at: current.updatedAt,
       });
     }

@@ -19,6 +19,7 @@ import * as logs from "aws-cdk-lib/aws-logs";
 import * as s3 from "aws-cdk-lib/aws-s3";
 import * as s3deploy from "aws-cdk-lib/aws-s3-deployment";
 import * as scheduler from "aws-cdk-lib/aws-scheduler";
+import * as secretsmanager from "aws-cdk-lib/aws-secretsmanager";
 import * as sns from "aws-cdk-lib/aws-sns";
 import * as snsSubscriptions from "aws-cdk-lib/aws-sns-subscriptions";
 import * as sqs from "aws-cdk-lib/aws-sqs";
@@ -40,6 +41,8 @@ export class PitchYourOwnerCloudStack extends cdk.Stack {
     const embeddingFoundationModelId = embeddingModelId.replace(/^(global|us|eu|apac)\./, "");
     const matchJudgeModelId = String(this.node.tryGetContext("matchJudgeModelId") ?? "apac.amazon.nova-pro-v1:0");
     const matchJudgeFoundationModelId = matchJudgeModelId.replace(/^(global|us|eu|apac)\./, "");
+    const geminiImageModelId = String(this.node.tryGetContext("geminiImageModelId") ?? "gemini-3.1-flash-lite-image");
+    const geminiImageReviewModelId = String(this.node.tryGetContext("geminiImageReviewModelId") ?? "gemini-3.5-flash-lite");
     const embeddingDimensions = Number(this.node.tryGetContext("embeddingDimensions") ?? 1_024);
     const verificationEmailEnabled = String(this.node.tryGetContext("verificationEmailEnabled") ?? "true") === "true";
     const matchingEmailDeliveryEnabled = String(this.node.tryGetContext("matchingEmailDeliveryEnabled") ?? "false") === "true";
@@ -178,6 +181,20 @@ export class PitchYourOwnerCloudStack extends cdk.Stack {
       removalPolicy: cdk.RemovalPolicy.RETAIN,
       autoDeleteObjects: false,
     });
+    const profileImageBucket = new s3.Bucket(this, "ProfileImageBucket", {
+      bucketName: `${prefix}-profile-images-${cdk.Aws.ACCOUNT_ID}`,
+      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+      enforceSSL: true,
+      encryption: s3.BucketEncryption.S3_MANAGED,
+      removalPolicy: cdk.RemovalPolicy.RETAIN,
+      autoDeleteObjects: false,
+      lifecycleRules: [{ abortIncompleteMultipartUploadAfter: cdk.Duration.days(1) }],
+    });
+    const geminiImageSecret = secretsmanager.Secret.fromSecretNameV2(
+      this,
+      "GeminiImageApiKey",
+      `pitchyourowner/${environment}/gemini-image-api-key`,
+    );
     const responseHeaders = new cloudfront.ResponseHeadersPolicy(this, "CloudWebsiteSecurityHeaders", {
       responseHeadersPolicyName: `${prefix}-website-security`,
       securityHeadersBehavior: {
@@ -251,7 +268,9 @@ export class PitchYourOwnerCloudStack extends cdk.Stack {
         EMBEDDING_DIMENSIONS: String(embeddingDimensions),
       },
     });
-    const accessProfile = functionFor("ProfileAccess", "profile-access");
+    const accessProfile = functionFor("ProfileAccess", "profile-access", {
+      environment: { PUBLIC_SITE_ORIGIN: publicSiteOrigin },
+    });
     const publicProfile = functionFor("PublicProfile", "public-profile", {
       environment: { PUBLIC_SITE_ORIGIN: publicSiteOrigin },
     });
@@ -271,7 +290,34 @@ export class PitchYourOwnerCloudStack extends cdk.Stack {
           ],
         },
       },
-      environment: { PUBLIC_SITE_ORIGIN: publicSiteOrigin },
+      environment: { PUBLIC_SITE_ORIGIN: publicSiteOrigin, PROFILE_IMAGE_BUCKET_NAME: profileImageBucket.bucketName },
+    });
+    const profileImageWorker = functionFor("ProfileImageWorker", "profile-image-worker", {
+      timeout: cdk.Duration.minutes(2),
+      memorySize: 1_536,
+      bundling: {
+        minify: true,
+        sourceMap: true,
+        bundleAwsSDK: true,
+        nodeModules: ["sharp"],
+        // Local CDK bundling must install the native dependency for Lambda rather
+        // than for the developer workstation. The stack's shared Lambda default is
+        // ARM_64, so these npm selectors intentionally mirror that target.
+        environment: {
+          npm_config_os: "linux",
+          npm_config_cpu: "arm64",
+          npm_config_libc: "glibc",
+        },
+      },
+      environment: {
+        GEMINI_IMAGE_MODEL_ID: geminiImageModelId,
+        GEMINI_IMAGE_REVIEW_MODEL_ID: geminiImageReviewModelId,
+        GEMINI_IMAGE_SECRET_ARN: geminiImageSecret.secretArn,
+        PROFILE_IMAGE_BUCKET_NAME: profileImageBucket.bucketName,
+      },
+    });
+    const profileImage = functionFor("ProfileImage", "profile-image", {
+      environment: { PROFILE_IMAGE_BUCKET_NAME: profileImageBucket.bucketName },
     });
     const profileDrafts = functionFor("ProfileDrafts", "profile-drafts", {
       environment: { PUBLIC_SITE_ORIGIN: publicSiteOrigin },
@@ -311,6 +357,13 @@ export class PitchYourOwnerCloudStack extends cdk.Stack {
     }
     table.grantReadData(publicProfile);
     table.grantReadData(profileOgImage);
+    table.grantReadWriteData(profileImageWorker);
+    table.grantReadData(profileImage);
+    table.grantStreamRead(profileImageWorker);
+    profileImageBucket.grantReadWrite(profileImageWorker);
+    profileImageBucket.grantRead(profileImage);
+    profileImageBucket.grantRead(profileOgImage);
+    geminiImageSecret.grantRead(profileImageWorker);
     table.grant(supportRequest, "dynamodb:PutItem", "dynamodb:UpdateItem");
     table.grantStreamRead(relayOutbox);
     outboxQueue.grantSendMessages(relayOutbox);
@@ -346,6 +399,13 @@ export class PitchYourOwnerCloudStack extends cdk.Stack {
       batchSize: 10,
       bisectBatchOnError: true,
       retryAttempts: 5,
+    }));
+    profileImageWorker.addEventSource(new eventSources.DynamoEventSource(table, {
+      startingPosition: lambda.StartingPosition.LATEST,
+      batchSize: 10,
+      bisectBatchOnError: true,
+      retryAttempts: 2,
+      maxBatchingWindow: cdk.Duration.seconds(2),
     }));
     dispatchEmail.addEventSource(new eventSources.SqsEventSource(outboxQueue, {
       enabled: matchingEmailDeliveryEnabled,
@@ -385,6 +445,7 @@ export class PitchYourOwnerCloudStack extends cdk.Stack {
     addRoute("/p/{slug}", apigwv2.HttpMethod.GET, publicProfile);
     addRoute("/og/{slug}", apigwv2.HttpMethod.GET, profileOgImage);
     addRoute("/og/profile/{slug}", apigwv2.HttpMethod.GET, profileOgImage);
+    addRoute("/profile-images/{slug}/{variant}", apigwv2.HttpMethod.GET, profileImage);
     addRoute("/v1/upload-sessions", apigwv2.HttpMethod.POST, profileDrafts);
     addRoute("/v1/profile-drafts", apigwv2.HttpMethod.POST, profileDrafts);
     addRoute("/v1/profile-drafts", apigwv2.HttpMethod.GET, profileDrafts);
@@ -420,6 +481,12 @@ export class PitchYourOwnerCloudStack extends cdk.Stack {
       // A private switch must revoke the social image immediately. The image
       // Lambda is already inexpensive and performs a strongly consistent
       // visibility check, so correctness wins over edge caching here.
+      cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED,
+      originRequestPolicy: cloudfront.OriginRequestPolicy.ALL_VIEWER_EXCEPT_HOST_HEADER,
+      viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+    });
+    distribution.addBehavior("/profile-images/*", apiOrigin, {
+      allowedMethods: cloudfront.AllowedMethods.ALLOW_GET_HEAD_OPTIONS,
       cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED,
       originRequestPolicy: cloudfront.OriginRequestPolicy.ALL_VIEWER_EXCEPT_HOST_HEADER,
       viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
@@ -497,6 +564,9 @@ export class PitchYourOwnerCloudStack extends cdk.Stack {
     new cdk.CfnOutput(this, "MatchingEmailDeliveryState", { value: matchingEmailDeliveryEnabled ? "ENABLED" : "DISABLED" });
     new cdk.CfnOutput(this, "EmailProvider", { value: emailProvider });
     new cdk.CfnOutput(this, "OperationsTopicArn", { value: operationsTopic.topicArn });
+    new cdk.CfnOutput(this, "ProfileImageBucketName", { value: profileImageBucket.bucketName });
+    new cdk.CfnOutput(this, "ProfileImageWorkerFunctionName", { value: profileImageWorker.functionName });
+    new cdk.CfnOutput(this, "GeminiImageModelId", { value: geminiImageModelId });
     new cdk.CfnOutput(this, "MonthlyBudgetUsd", { value: String(monthlyBudgetUsd) });
   }
 }

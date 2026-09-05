@@ -60,7 +60,7 @@ export interface SocialProfile {
   signals: string[];
 }
 
-export function renderSocialSvg(input: { profile?: SocialProfile; profileUrl?: string; fontBase64?: string }): string {
+export function renderSocialSvg(input: { profile?: SocialProfile; profileUrl?: string; fontBase64?: string; portraitDataUri?: string }): string {
   const profile = input.profile;
   const title = profile?.animalPersona || "PitchYourOwner";
   const animal = profile ? "Owner 核准的專業介紹" : "你的 Agent 已經知道，誰值得認識你";
@@ -70,6 +70,9 @@ export function renderSocialSvg(input: { profile?: SocialProfile; profileUrl?: s
   const signals = (profile?.signals ?? ["AI-assisted pitch", "Owner review", "Explainable matches"]).slice(0, 3).map((item) => clampVisualText(item, 23));
   const fontFace = input.fontBase64 ? `<defs><style>@font-face{font-family:PyoOg;src:url(data:font/otf;base64,${input.fontBase64}) format('opentype');font-weight:700}</style></defs>` : "";
   const qr = profile && input.profileUrl ? qrSvg(input.profileUrl, 900, 205, 205) : "";
+  const portrait = profile && input.portraitDataUri
+    ? `<defs><clipPath id="portrait-clip"><rect x="715" y="190" width="155" height="155" rx="22"/></clipPath></defs><rect x="710" y="185" width="165" height="165" rx="27" fill="#fff" stroke="#17213d" stroke-width="5"/><image href="${escapeXml(input.portraitDataUri)}" x="715" y="190" width="155" height="155" preserveAspectRatio="xMidYMid slice" clip-path="url(#portrait-clip)"/>`
+    : "";
   return `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" font-family="PyoOg,Arial,sans-serif">${fontFace}
   <rect width="1200" height="630" fill="#fff6ec"/><circle cx="1080" cy="72" r="170" fill="#eee7ff"/><circle cx="92" cy="594" r="170" fill="#e8fff4"/>
   <rect x="38" y="38" width="1124" height="554" rx="34" fill="#fffdf8" stroke="#17213d" stroke-width="8"/>
@@ -77,6 +80,7 @@ export function renderSocialSvg(input: { profile?: SocialProfile; profileUrl?: s
   ${titleLines.map((line, index) => `<text x="78" y="${205 + index * 57}" font-size="50" font-weight="700" fill="#17213d">${escapeXml(line)}</text>`).join("")}
   <text x="78" y="${titleLines.length > 1 ? 325 : 270}" font-size="27" font-weight="700" fill="#7258e8">${escapeXml(clampVisualText(animal, 39))}</text>
   ${summaryLines.map((line, index) => `<text x="78" y="${365 + index * 34}" font-size="23" font-weight="700" fill="#3d435f">${escapeXml(line)}</text>`).join("")}
+  ${portrait}
   ${signals.map((signal, index) => `<g transform="translate(${78 + index * 255} 490)"><rect width="232" height="48" rx="24" fill="#fff" stroke="#17213d" stroke-width="3"/><text x="18" y="31" font-size="16" font-weight="700" fill="#17213d"># ${escapeXml(signal)}</text></g>`).join("")}
   ${qr}${profile ? `<text x="1002" y="440" text-anchor="middle" font-size="18" font-weight="700" fill="#17213d">掃描查看完整介紹</text>` : `<text x="910" y="286" font-size="70" font-weight="700" fill="#7258e8">→</text><text x="835" y="335" font-size="21" font-weight="700" fill="#17213d">讓 Agent 找到值得認識的人</text>`}
   <text x="78" y="568" font-size="18" font-weight="700" fill="#686b7d">Your agent knows you. Let it pitch you.</text></svg>`;

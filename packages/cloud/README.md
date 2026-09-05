@@ -342,6 +342,8 @@ CDK context lives in `cdk.json`. These values are consumed by the application:
 | `embeddingDimensions` | `1024` | Embedding and vector-index dimensions |
 | `matchJudgeModelId` | `apac.amazon.nova-pro-v1:0` | Bedrock model used once per unordered pair for both directional explanations |
 | `matchJudgeMinMutualScore` | Legacy setting | Retained for deploy compatibility; no public score threshold |
+| `geminiImageModelId` | `gemini-3.1-flash-lite-image` | Gemini model used asynchronously for owner-approved profile mascots |
+| `geminiImageReviewModelId` | `gemini-3.5-flash-lite` | Low-cost vision model that rejects text, color, or multiple animals before an image is published |
 | `emailProvider` | `resend` | `resend` or `ses` |
 | `verificationEmailEnabled` | `true` | OTP delivery availability |
 | `matchingEmailDeliveryEnabled` | `true` | DynamoDB-stream and SQS invitation/connection email consumers |
@@ -365,6 +367,22 @@ CloudFormation requires three deployment parameters:
 Lambda environment variables are created by CDK and should not be configured manually.
 Demo scripts additionally recognize `AWS_REGION` / `AWS_DEFAULT_REGION`,
 `PYO_STACK_KEY`, `PYO_STACK_ENVIRONMENT`, and `PYO_OUTPUTS_FILE`.
+
+Profile-mascot generation, Gemini secret handling, latest-version backfill, and image
+compression rules are documented in
+[`docs/operations/gemini-profile-image-runbook.md`](../../docs/operations/gemini-profile-image-runbook.md).
+
+The secret and backfill commands are dry-run by default:
+
+```bash
+npm run images:secret
+npm run images:secret -- --apply
+npm run images:backfill
+npm run images:backfill -- --apply
+```
+
+Backfill targets only current non-fixture profiles unless an operator explicitly opts
+into fixtures. There is no user-facing regeneration action.
 
 ## Deployment
 

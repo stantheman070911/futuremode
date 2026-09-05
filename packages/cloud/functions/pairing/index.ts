@@ -3,6 +3,7 @@ import type { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from "aws-lambda
 import { loadSession, profileIdForEmailHash } from "../shared/auth.js";
 import { profileAnimalPersona, publicProfile, type OwnerPitchProfile } from "../shared/contracts.js";
 import { json, parseJsonBody } from "../shared/http.js";
+import { profileImageUrl } from "../shared/profile-image.js";
 import { randomOpaqueToken, sha256 } from "../shared/security.js";
 import { documentDynamo, requiredEnvironment } from "../shared/storage.js";
 
@@ -143,6 +144,7 @@ async function edgeView(tableName: string, owner: CurrentProfile, item: ResultSe
   const [peerVersion, invite] = await Promise.all([getVersion(tableName, item.candidateId, item.candidateVersionId), invitation(tableName, item.pairId)]);
   if (!peerVersion?.profile) return { match_id: item.pairId, state: "unavailable", unavailable: true };
   const shareable = publicProfile(peerVersion.profile);
+  const origin = requiredEnvironment("PUBLIC_SITE_ORIGIN");
   return {
     match_id: item.pairId,
     state: stateFor(invite, owner.profileId),
@@ -152,6 +154,7 @@ async function edgeView(tableName: string, owner: CurrentProfile, item: ResultSe
       display_name: profileAnimalPersona(peerVersion.profile),
       animal_persona: profileAnimalPersona(peerVersion.profile),
       summary: shareable.summary,
+      profile_image_url: profileImageUrl(peerCurrent, origin, detail ? "detail" : "thumbnail"),
       is_fixture: peerCurrent.isFixtureProfile === true,
       ...(detail ? { profile: { ...shareable, animal_persona: profileAnimalPersona(peerVersion.profile) } } : {}),
     },
@@ -197,7 +200,7 @@ async function findAuthorizedEdge(tableName: string, owner: CurrentProfile, pair
 
 type EmailProfile = Pick<OwnerPitchProfile, "interests" | "motivations" | "active_problems" | "recurring_topics" | "friend_intent">;
 type PublicProfile = Omit<OwnerPitchProfile, "history_scope" | "confidence">;
-interface ProfilePresentation { display_name?: string; profile?: Partial<PublicProfile> }
+interface ProfilePresentation { display_name?: string; profile?: Partial<PublicProfile>; profile_image_url?: string; public_slug?: string }
 
 const EMAIL_COLORS = { paper: "#f4f2ed", white: "#ffffff", ink: "#131313", muted: "#74746d", line: "#d3d0c7", blue: "#0f5ae0" } as const;
 
@@ -305,7 +308,7 @@ async function sendInvite(tableName: string, owner: CurrentProfile, pairId: stri
     profileUrl: owner.publicSlug ? `${origin}/p/${encodeURIComponent(owner.publicSlug)}` : undefined,
   });
   const fixtureMeta = owner.isTestProfile === true && owner.cleanupSafe === true && owner.testRunId ? { isTestProfile: true, cleanupSafe: true, testRunId: owner.testRunId } : {};
-  const snapshot = { display_name: profileAnimalPersona(ownVersion.profile), profile: { ...publicProfile(ownVersion.profile), animal_persona: profileAnimalPersona(ownVersion.profile) } };
+  const snapshot = { display_name: profileAnimalPersona(ownVersion.profile), public_slug: owner.publicSlug, profile_image_url: profileImageUrl(owner, origin, "detail"), profile: { ...publicProfile(ownVersion.profile), animal_persona: profileAnimalPersona(ownVersion.profile) } };
   await documentDynamo.send(new TransactWriteCommand({ TransactItems: [
     { Put: { TableName: tableName, Item: { pk: `INVITATION#${pairId}`, sk: "META", entityType: "INVITATION", pairId, senderProfileId: owner.profileId, recipientProfileId: peer.profileId, senderEmail: owner.email, recipientEmail: peer.email, senderSnapshot: snapshot, explanation: { whatWeBothCareAbout: edge.whatWeBothCareAbout, whyItMattersNow: edge.whyItMattersNow, whatWeCouldDiscuss: edge.whatWeCouldDiscuss, evidenceLabels: edge.evidenceLabels }, status: "pending", tokenHash, createdAt: now, expiresAt, ...fixtureMeta }, ConditionExpression: "attribute_not_exists(pk)" } },
     { Put: { TableName: tableName, Item: { pk: `INVITE_TOKEN#${tokenHash}`, sk: "META", entityType: "INVITATION_TOKEN", pairId, status: "active", createdAt: now, expiresAt, ...fixtureMeta }, ConditionExpression: "attribute_not_exists(pk)" } },
@@ -341,7 +344,7 @@ async function respondToken(tableName: string, rawToken: string, decision: "acce
     const recipient = await getCurrent(tableName, String(invite.recipientProfileId));
     const recipientVersion = recipient ? await getVersion(tableName, recipient.profileId, recipient.versionId) : undefined;
     const recipientName = recipientVersion?.profile ? profileAnimalPersona(recipientVersion.profile) : "另一位 owner";
-    const recipientSnapshot = recipientVersion?.profile ? { display_name: recipientName, profile: { ...publicProfile(recipientVersion.profile), animal_persona: profileAnimalPersona(recipientVersion.profile) } } : { display_name: recipientName, profile: { animal_persona: genericAnimal } };
+    const recipientSnapshot = recipientVersion?.profile ? { display_name: recipientName, public_slug: recipient?.publicSlug, profile_image_url: profileImageUrl(recipient, origin, "detail"), profile: { ...publicProfile(recipientVersion.profile), animal_persona: profileAnimalPersona(recipientVersion.profile) } } : { display_name: recipientName, profile: { animal_persona: genericAnimal } };
     const connectionUrl = `${origin}/connections/${encodeURIComponent(String(token.pairId))}`;
     const emailA = renderConnectionEmail(recipientName, String(invite.recipientEmail), connectionUrl);
     const emailB = renderConnectionEmail(senderName, String(invite.senderEmail), connectionUrl);
@@ -369,15 +372,16 @@ async function connectionView(tableName: string, ownerId: string, pairId: string
     profileIsPublic(peer) ? getVersion(tableName, peer.profileId, peer.versionId) : undefined,
     owner ? getVersion(tableName, owner.profileId, owner.versionId) : undefined,
   ]);
-  const peerFallback = peerVersion?.profile ? { display_name: profileAnimalPersona(peerVersion.profile), profile: { ...publicProfile(peerVersion.profile), animal_persona: profileAnimalPersona(peerVersion.profile) } } : undefined;
-  const ownerFallback = ownerVersion?.profile ? { display_name: profileAnimalPersona(ownerVersion.profile), profile: { ...publicProfile(ownerVersion.profile), animal_persona: profileAnimalPersona(ownerVersion.profile) } } : undefined;
+  const origin = requiredEnvironment("PUBLIC_SITE_ORIGIN");
+  const peerFallback = peerVersion?.profile ? { display_name: profileAnimalPersona(peerVersion.profile), public_slug: peer?.publicSlug, profile_image_url: profileImageUrl(peer, origin, "detail"), profile: { ...publicProfile(peerVersion.profile), animal_persona: profileAnimalPersona(peerVersion.profile) } } : undefined;
+  const ownerFallback = ownerVersion?.profile ? { display_name: profileAnimalPersona(ownerVersion.profile), public_slug: owner?.publicSlug, profile_image_url: profileImageUrl(owner, origin, "detail"), profile: { ...publicProfile(ownerVersion.profile), animal_persona: profileAnimalPersona(ownerVersion.profile) } } : undefined;
   const peerSnapshot = (connection.peerSnapshot ?? peerFallback ?? { display_name: genericAnimal, profile: { animal_persona: genericAnimal } }) as ProfilePresentation;
   const selfSnapshot = (reciprocal?.peerSnapshot ?? ownerFallback ?? { display_name: genericAnimal, profile: { animal_persona: genericAnimal } }) as ProfilePresentation;
   return {
     connection_id: pairId,
     connected_at: connection.connectedAt,
     self: selfSnapshot,
-    peer: { ...peerSnapshot, contact_email: connection.peerEmail },
+    peer: { ...peerSnapshot, ...(peer ? { public_slug: peer.publicSlug, profile_image_url: profileImageUrl(peer, origin, "detail") } : {}), contact_email: connection.peerEmail },
     explanation: connection.explanation,
     first_email_prompt: buildFirstEmailPrompt({ sender: selfSnapshot, recipient: peerSnapshot, explanation: connection.explanation as Record<string, unknown> | undefined }),
   };
@@ -396,7 +400,7 @@ async function invitationLists(tableName: string, ownerId: string) {
     const permittedSenderSnapshot = peerId === item.senderProfileId ? senderSnapshot : undefined;
     const profile = version?.profile ?? connectedSnapshot?.profile ?? permittedSenderSnapshot?.profile;
     const displayName = profile ? profileAnimalPersona(profile) : connectedSnapshot?.display_name ?? permittedSenderSnapshot?.display_name ?? "另一位 owner";
-    return { match_id: item.pairId, connection_id: state === "connected" ? item.pairId : undefined, state, peer: { display_name: displayName, animal_persona: profileAnimalPersona(profile), summary: profile?.summary ?? "" }, explanation: { what_we_both_care_about: (item.explanation as Record<string, unknown>)?.whatWeBothCareAbout ?? "你們有一個值得深入聊的共同關注。", evidence_labels: (item.explanation as Record<string, unknown>)?.evidenceLabels ?? [] } };
+    return { match_id: item.pairId, connection_id: state === "connected" ? item.pairId : undefined, state, peer: { display_name: displayName, animal_persona: profileAnimalPersona(profile), summary: profile?.summary ?? "", profile_image_url: profileImageUrl(peer, requiredEnvironment("PUBLIC_SITE_ORIGIN"), "thumbnail") }, explanation: { what_we_both_care_about: (item.explanation as Record<string, unknown>)?.whatWeBothCareAbout ?? "你們有一個值得深入聊的共同關注。", evidence_labels: (item.explanation as Record<string, unknown>)?.evidenceLabels ?? [] } };
   };
   return {
     incoming: await Promise.all(items.filter((item) => item?.recipientProfileId === ownerId && item.status === "pending").map((item) => view(item!, "incoming"))),
@@ -412,7 +416,9 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
     if (method === "POST" && event.rawPath === "/v1/invitation-tokens/preview") {
       const body = parseJsonBody(event.body) as { token?: unknown };
       const { invite } = await previewToken(tableName, String(body.token ?? ""));
-      return json(200, { invitation_id: invite.pairId, expires_at: new Date(Number(invite.expiresAt) * 1000).toISOString(), inviter: invite.senderSnapshot, explanation: invite.explanation });
+      const sender = await getCurrent(tableName, String(invite.senderProfileId));
+      const inviter = { ...(invite.senderSnapshot as Record<string, unknown>), ...(sender ? { public_slug: sender.publicSlug, profile_image_url: profileImageUrl(sender, requiredEnvironment("PUBLIC_SITE_ORIGIN"), "detail") } : {}) };
+      return json(200, { invitation_id: invite.pairId, expires_at: new Date(Number(invite.expiresAt) * 1000).toISOString(), inviter, explanation: invite.explanation });
     }
     if (method === "POST" && event.rawPath === "/v1/invitation-tokens/respond") {
       const body = parseJsonBody(event.body) as { token?: unknown; decision?: unknown };
