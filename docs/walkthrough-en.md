@@ -62,14 +62,13 @@ per-field confidence, ending in "Confirm and upload" (確認並上傳). This sin
 action is the only thing that creates the owner's approval timestamp and publishes the
 profile — nothing that exists only in the browser counts as consent.
 
-## 8. A match: three questions, not a score
+## 8. A match: three grounded questions
 
 ![Match detail](verification/evidence/2026-09-05-next-round-fixes/09-match-detail-390-2026-09-05T05-10-51-630Z.png)
 
 _Demo data._ Every match answers the same three plain-language questions — what both
 owners care about, why it matters now, what they could discuss — backed by evidence
-labels naming which profile fields support each answer. No compatibility score,
-ranking number, or popularity signal appears anywhere on this screen.
+labels naming which profile fields support each answer.
 
 ## 9. Invitations
 

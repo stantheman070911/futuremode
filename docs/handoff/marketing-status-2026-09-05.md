@@ -6,58 +6,55 @@ supported by what the product actually does.
 
 ## 1. Cohort progress (P0-M1)
 
-**Zero confirmed real published profiles as of this report.** No recruiting has been
-executed by me — I don't have access to real contacts, Discord/Slack, or a phone to run
-a live session, so actual outreach and onboarding has to run through you/the team.
+**Zero confirmed P0-M1 non-team cohort completions are visible to this workstream as of
+this report.** Recruiting has been escalated to and accepted by the project owner. I
+have not substituted fixture data, team accounts, or estimates for cohort progress.
 
-What exists instead is the execution kit, so the first session can start without more
-planning: `docs/handoff/recruiting-kit.md` — a specialist-naming worksheet, EN/ZH
-outreach messages for personal-network and hackathon-community channels, a 45-minute
-live-session facilitator script, and a tracking table. The plan behind it (in this
-conversation): 12-18 completed profiles is realistic within 48 hours of the first live
-session running, against the brief's 10-15 target, *if* run as 1-2 synchronous cohort
-sessions rather than an async link.
-
-**Ask:** tell me when the first session is scheduled or has run, and I'll fold real
-numbers into the submission doc and README immediately — those are wired to accept
-them (see Section 2).
+The execution kit is ready for the owner's first session:
+`docs/handoff/recruiting-kit.md` now includes a specialist-naming worksheet, EN/ZH
+outreach messages, a 45-minute facilitated session, a live tracker, an exact written
+quotation-permission request, a separate before/after-panel permission request, and the
+exact two post-session questions. The submission and README are wired to accept real
+numbers as soon as Development's fixture-excluding funnel report exists.
 
 ## 2. Assets — status
 
 | Deliverable | Status | Notes |
 |---|---|---|
-| `docs/handoff/recruiting-kit.md` (P0-M1 support) | **Done** | Outreach + session script + tracker. Waiting on execution, not content. |
+| `docs/handoff/recruiting-kit.md` (P0-M1 support) | **Done** | Outreach, session script, tracker, exact written permission language, separate before/after permission, and the exact two post-session questions. Execution belongs to the project owner. |
 | P0-M2 visual assets (before/after panel, exclusion recording) | **Not started** | Structurally cannot start — both require a real, consenting cohort member's actual bio and a real assistant session recording. Blocked on Section 1. |
-| `docs/round1-submission.md` (P0-M3) | **Drafted, not lockable** | Full six-section structure written per the brief. Results section and the one quoted pairing are `[PENDING]` — waiting on the cohort and on Development's funnel report (their JTBD-3). Two technical claims are flagged `[VERIFY AGAINST LIVE APP BEFORE LOCK]` — see Section 3. Written under the approved headline framing with an explicit status note that it is contingent on Development's JTBD-1 — not resolved by me. |
-| README (opening problem statement, Current product, new Results section) (P0-M4) | **Done**, within my ownership boundary | Left everything from `## Architecture` onward untouched, per the file-ownership split with Development. Results table is `[PENDING]` placeholders wired to the same evidence as the submission doc. |
+| `docs/round1-submission.md` (P0-M3) | **Drafted; framing locked, cohort results pending** | Removed the JTBD-1 contingency. Added the cleared anonymized pairing verbatim and the live-run figures: 7 pairs, 7 model explanations, 0 fallbacks, 4.875 s median model latency, approximately USD 0.060 estimated run cost. Real-cohort figures remain `[PENDING]`. The score-free claim and match-list imagery remain withheld pending PM handoff confirmation and visible recheck. |
+| README (opening problem statement, Current product, new Results section) (P0-M4) | **Done**, within my ownership boundary | Three-agent story is explicit, the AI exclusion step is corrected, and technical verification is separated from pending real-cohort outcomes. Left Development-owned sections from `## Architecture` onward untouched. |
 | `ROADMAP.md` (P0-M4) | **Done** | Six items, each grounded in something that already exists in the repo (e.g., the MCP-server item cites the actual upload-capability API routes), not a wishlist. |
-| `docs/round2-demo-script.md` (P0-M5) | **Drafted, not rehearsed** | Full beat sheet with target times; actual timings, live-vs-staged flags, and the fallback JSON path are `[PENDING]` on Development's JTBD-4. Rehearsal itself needs a real phone and presenter — I can't do that part. |
+| `docs/round2-demo-script.md` (P0-M5) | **Framing locked; not rehearsed** | Removed the JTBD-1 hedge, added the model's honest oblique-link beat, and made the third-agent handoff precise. Actual timings and fallback JSON remain `[PENDING]`; match-list rehearsal/capture waits for score removal. |
 | `docs/walkthrough-en.md` (P1-M6) | **Done** | 10 captioned screenshots, sign-in through connection, all real captures from `docs/verification/evidence/`. Two are explicitly labelled demo data; the rest are live UI. |
-| `docs/handoff/terminology-and-claims.md` (P1-M7) | **Done** | One-pager derived directly from the brief's claims/terminology sections, including the same JTBD-1 open question. |
+| `docs/handoff/terminology-and-claims.md` (P1-M7) | **Done** | Three roles and the deployed explanation path are locked; the global score-free claim is explicitly blocked until the new score-removal handoff is PM-confirmed and visibly reverified. |
 
 ## 3. Where the story isn't supported by the product yet — escalate, don't guess
 
-- **JTBD-1 (real match explanations) is unconfirmed.** Everything under the approved
-  "agents introducing their owners to each other" headline assumes it ships. I have not
-  resolved this either direction, per your original instruction — `round1-submission.md`
-  and the terminology sheet both carry the same explicit flag and point to the brief's
-  contingency (fall back to "consent-first portability of AI context") if it slips.
-  **This needs your call before the submission draft locks, not mine.**
+- **The score state changed during this workstream.** The PM's last instruction said the
+  match-list score was still live. Main then advanced to `fd19eb9`, including removal
+  commit `9d8df3f` and a deployment report stating that the live `app.js` no longer has
+  a score-render path and result sets are capped at five. A direct fetch of the deployed
+  asset agrees at source level, but this is not a visible UI pass. Because the PM said
+  they would announce when the change shipped, keep the global score-free claim and
+  match-list imagery blocked until that explicit handoff and a visible recheck.
 
-- **Contradiction found between the two source documents on the match-score claim.**
-  `docs/product-design.md` (the canonical contract) states no numeric score is ever
-  shown. The Development brief's JTBD-2 says a score out of 100 currently renders on
-  every match card and still needs removing. I checked today's screenshots in
-  `docs/verification/evidence/` and the match-detail capture shows no visible score —
-  but I can't confirm whether that capture predates or postdates the fix. I did not
-  assert either way in the submission doc; it's flagged `[VERIFY AGAINST LIVE APP
-  BEFORE LOCK]`. **Two-minute check against the live app resolves this — worth doing
-  before anyone treats "no score" as a safe claim.**
+- **A fresh live browser walkthrough is still unavailable in this workstream.** The
+  compliant browser inventory returned no available browser surface, so I did not use a
+  standalone script as a substitute. Code inspection and the retained verification
+  artifacts support the edits above, but they are not a new live UI pass.
 
-- **The entire Results section, in both the README and the submission doc, is
-  currently placeholder.** This is the biggest single gap against judged weight (35%
-  Problem/Impact + 20% Results in Round 1 alone) and it is entirely downstream of
-  Section 1 above — nothing else is blocking it.
+- **Real-cohort outcomes remain entirely placeholder.** The technical Results evidence
+  is now real and cited, but real published-profile, invitation, connection, and quote
+  numbers must still come from Development's fixture-excluding funnel script.
+
+- **The funnel script appeared in the shared worktree but is not handed off yet.**
+  `packages/cloud/scripts/report-hackathon-funnel.mjs` and its `package.json` command are
+  currently uncommitted Development changes. Without the owner-supplied
+  `PYO_TEAM_EMAILS` classification input, the script deliberately withholds the real
+  non-team and team counts as `Unclassified live`. Do not quote its output until
+  Development commits the script and the owner provides the complete team list.
 
 - **P0-M2's two visual assets don't exist yet**, for the same reason. The before/after
   panel is called out in the brief as the single strongest asset for Round 1 Problem
@@ -66,7 +63,8 @@ them (see Section 2).
 
 ## Bottom line
 
-Everything that doesn't require a real human to have gone through the product is done
-and wired to receive real numbers the moment they exist. Everything that does is
-waiting on the first live cohort session. That session is the one thing blocking four
-of the five remaining gaps above.
+The three-agent story is now backed end to end, and the public-use explanation example
+is in the Round 1 draft. The critical remaining work is external: owner-run cohort
+execution, Development's fixture-excluding funnel report, the two participant-cleared
+visual assets, PM confirmation of the new score-removal handoff, and a compliant fresh
+live walkthrough.

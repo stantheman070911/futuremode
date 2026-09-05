@@ -5,6 +5,13 @@
 > If this brief and the product contract ever disagree, the product contract wins and you
 > escalate to the PM.
 
+> **PM resolution, 2026-09-05.** Real per-pair judge-model explanations are deployed;
+> the "agents introducing their owners to each other" framing is locked. The PM's last
+> instruction said the match-list score was still live. Commits `9d8df3f` and `fd19eb9`
+> subsequently added code and deployment evidence for its removal, but Marketing still
+> needs the PM's explicit confirmation and a visible live recheck before publishing a
+> global score-free claim or a match-list screenshot.
+
 You have access to the repository and the deployed application. Where this brief
 describes product behavior, verify it by using the app rather than assuming.
 
@@ -18,9 +25,10 @@ Problem Definition & Impact 35% | Technical Implementation 30% | Results / Demon
 **Round 2 — Live demo**
 User Value 30% | User Experience 25% | Results / Demonstration 20% | Product Maturity 15% | Future Development 10%
 
-A parallel Development workstream is shipping four must-have changes before submission.
-The most important of them makes our central claim true; details are in the dependency
-section below, because your narrative depends on it.
+A parallel Development workstream is shipping the remaining must-have changes before
+submission. The judge-model change that makes the central framing true is already
+deployed and verified; the score removal, funnel report, share assets, CI evidence, and
+demo-path timings remain tracked in the dependency section below.
 
 Our assessed position: Technical Implementation and Product Maturity are already strong
 and need no more work. We are losing points in two places. First, Problem Definition &
@@ -44,7 +52,8 @@ into our site, edit any field inline, and explicitly approve publication. Only t
 anything become matchable. Matching runs on the approved profile, surfaces a small
 number of people, and explains each pairing. Either side can send one invitation.
 Contact details appear only after both people accept. After connecting, an assistant
-drafts the first email from both profiles and the match reason.
+receives both approved profiles and the match reason through an owner-triggered handoff,
+then drafts the first email.
 
 ## The primary problem
 
@@ -113,8 +122,9 @@ opening — it is abstract, and Round 2 rewards immediately understandable value
 - There are two independent approval gates, in two different products. Exclusion happens
   in the AI; publication happens on our site and requires an explicit action that creates
   the stored approval timestamp. Nothing that exists only in a browser counts as consent.
-- Every match is explained rather than scored. No compatibility percentage, no ranking
-  language, no popularity signal.
+- Every match receives a three-part, evidence-labelled explanation. The score-free
+  presentation is the approved design, but the global score-free claim remains withheld
+  until the new deployment evidence noted above is confirmed and visibly reverified.
 - Contact details are exchanged only on mutual acceptance, and declining reveals nothing
   to the other party.
 
@@ -134,7 +144,6 @@ opening — it is abstract, and Round 2 rewards immediately understandable value
   tokens and sessions together.
 - Invitations are single-use and expire; opening an invitation link changes nothing until
   the recipient explicitly chooses.
-- The interface shows no compatibility score, follower count or popularity signal.
 - Every published version stores the owner's approval timestamp and a payload hash.
 
 ## Claims we must avoid
@@ -332,22 +341,20 @@ when each artifact arrives.
 
 | What is coming | Why it matters to you | Evidence you receive | How to use it |
 |---|---|---|---|
-| **Real model-generated match explanations** | This is the dependency your entire headline framing rests on. Today the middle agent is a string template — one hard-coded sentence appears on every match in the system. Until this ships, "a judge model explains each pair" is not a claim we can defend. | Before/after screenshots of one match; three screenshots showing three distinct explanations; one anonymized example pairing with its three answers | Quote the example pairing verbatim in the Round 1 Results section. Use the before/after in the technical section. Demo beat 2:30 depends entirely on this. |
+| **Real model-generated match explanations — shipped and verified** | This is the evidence the headline framing rests on. The deployed worker now calls Amazon Nova Pro once per pair and keeps a truthful fallback path. | `docs/verification/2026-09-05-jtbd-1-model-explanations.md`: 7/7 model explanations, 0 fallbacks, latency/cost figures, and one anonymized public-use example | Quote the example pairing verbatim in the Round 1 Results section. At demo beat 2:30, make the model's refusal to invent shared ground the point. |
 | **Funnel and performance report** | Turns your recruiting into numbers | Markdown table of profiles, invitations, acceptances, connections, excluding fixtures; publish-to-match latency; cost per profile | Results section of the submission; the closing line of the demo |
-| **Score removed, results capped at five** | Aligns the screenshots you take with the claim that we show no compatibility score and surface only a small number of people | Before/after screenshots of the match list | Retake any screenshot showing the old card. Verify the claim before you publish it. |
+| **Score removal and five-result cap — code/deployment evidence arrived; PM confirmation pending** | Aligns the screenshots you take with the intended score-free, small-result experience | `docs/verification/2026-09-05-jtbd-2-score-cap.md`; a fresh visible match-list check is still required | Do not publish the broad claim or a new match-list screenshot until the PM confirms the handoff and the list is visibly reverified. |
 | **Rebranded public profile page and social card** | Your shareable assets | Regenerated 1200×630 PNG; public profile screenshot | Submission imagery and any link preview |
 | **CI badge** | Open-Source Quality | Green badge | First screenful of the README |
 | **Documentation corrections** | Prevents the submission contradicting the repository | A note per corrected claim | Reconcile against your sections before submitting |
 | **Demo path timings and staging procedure** | Your demo script must match what actually happens | Per-step timings; which steps are live vs pre-staged | Set the beat sheet to real durations, not hoped-for ones |
 
-## Contingency you must plan for
+## Framing resolution
 
-If the model-generated explanations do not ship in time, **stop using "agents introducing
-their owners to each other" as the headline.** Fall back to *consent-first portability of
-AI context* as the lead framing, which the product fully supports without the judge model,
-demote the middle agent from a claim to a roadmap item, and shorten demo beat 2:30 to lean
-on the mutual-consent connection instead. The PM will tell you which path is live before
-the submission draft is locked. Do not resolve this ambiguity on your own.
+The PM confirmed that the model-generated explanation path shipped and passed live
+verification. Use **"agents introducing their owners to each other"** as the headline in
+both rounds. Keep *consent-first portability of AI context* in the Round 1 technical
+section only. The former contingency is retired; do not reintroduce it into drafts.
 
 ---
 

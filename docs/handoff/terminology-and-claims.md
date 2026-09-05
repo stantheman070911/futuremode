@@ -8,6 +8,11 @@ disagree, the brief wins — this is a quick-reference, not a new source of trut
 **Headline:** agents introducing their owners to each other. Friend-finding is the
 outcome, not the category — lead with the agent framing, not "friend discovery."
 
+**The three roles:** the owner's assistant writes the pitch and handles exclusion; the
+deployed judge model reads two approved profiles and explains the pair; after mutual
+acceptance, an owner-triggered handoff gives the chosen assistant both profiles and the
+match explanation so it can draft the first message.
+
 **One line:** Your assistant already knows what you actually care about. It just had
 no way to introduce you to anyone. We gave it one.
 
@@ -33,8 +38,10 @@ sense, friend discovery (as the lead framing), dating, recruiting.
   tokens and sessions together.
 - Invitations are single-use and expire; opening one changes nothing until the
   recipient explicitly chooses.
-- The interface shows no compatibility score, follower count, or popularity signal.
 - Every published version stores the owner's approval timestamp and a payload hash.
+- The deployed matching worker calls Amazon Nova Pro once per pair to generate two
+  directional explanations, with a truthful deterministic fallback for model,
+  timeout, or validation failure.
 
 ## Claims we must never make
 
@@ -50,12 +57,14 @@ sense, friend discovery (as the lead framing), dating, recruiting.
   legal documents.
 - Any number produced by a synthetic or fixture profile, quoted as a user result.
 
-## The one open question — do not resolve it yourself
+## One temporarily blocked claim
 
-The headline framing above assumes the judge model ships real, per-pair match
-explanations (Development JTBD-1). Today that path is a deterministic template. If
-JTBD-1 does not land before the submission is locked, the brief's contingency applies:
-drop the "agents introducing" headline, lead with **consent-first portability of AI
-context** instead, and demote the middle agent to a roadmap item. The PM confirms
-which path is live — if you don't know which one is confirmed, ask before you write or
-say anything that assumes one over the other.
+Do not say that the whole interface is score-free and do not publish a match-list
+screenshot yet. The match detail screen is safe to show. The PM's last instruction said
+the match-list score was still live; commits `9d8df3f` and `fd19eb9` now contain removal
+and deployment evidence, but Marketing has not received the PM's explicit handoff or
+completed a visible live recheck. Only add the broader "no compatibility score" claim
+after both happen.
+
+This does not change the locked framing above. Per-pair judge-model explanations are
+deployed and verified; this score-removal confirmation is a separate release gate.

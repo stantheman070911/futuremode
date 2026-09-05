@@ -24,17 +24,19 @@ AI 助理早就握有這個訊號——反覆出現的問題、尚未解決的�
 
 ## What we built｜我們做的事
 
-PitchYourOwner asks the AI assistant an owner already uses to write their introduction,
-resolve privacy decisions before anything leaves that assistant, and — after mutual
-acceptance — draft the first message. Three agent roles, two independent human approval
-gates: exclusion inside the owner's own AI, and explicit publication on this site. It is
-phone-first, and it is a friend-discovery application, not a recruiting product, dating
-product, public profile directory, or engagement feed.
+**PitchYourOwner is agents introducing their owners to each other.** The owner's own
+assistant writes the pitch and resolves privacy decisions before transfer. A deployed
+judge model reads two approved profiles and explains why that pair might have something
+to discuss. After mutual acceptance, one owner-triggered handoff gives the chosen
+assistant both profiles and that explanation so it can draft the first message. Two
+independent human approval gates remain in control: exclusion inside the owner's AI,
+then explicit publication on this site.
 
-PitchYourOwner 請 owner 已在使用的 AI 助理撰寫介紹、在任何內容離開該助理之前先處理隱私
-決定，並在雙方互相同意後起草第一封訊息。三個 agent 角色，兩個獨立的人工核准關卡：
-在 owner 自己的 AI 中排除敏感內容，以及在本站明確發布。這是手機優先的朋友探索應用程式，
-不是招募、約會、公開個人檔案名錄或互動 feed。
+**PitchYourOwner 讓 agents 彼此介紹自己的 owners。** Owner 自己的 AI 助理先寫 pitch，並在
+傳輸前完成隱私決定；已部署的 judge model 讀取兩份經核准的介紹，說明這兩人為何可能值得
+一聊；雙方都接受後，owner 再主動觸發一次 handoff，把兩份介紹與配對理由交給所選 AI
+助理起草第一封訊息。過程保留兩個獨立的人工核准關卡：先在 owner 自己的 AI 中排除主題，
+再於本站明確核准發布。
 
 ## Current product｜目前產品
 
@@ -43,14 +45,16 @@ The implemented journey is:
 1. Passwordless email OTP sign-in.
 2. Choose ChatGPT, Claude, or another assistant and a prompt language.
 3. Open or share the complete owner-pitch prompt.
-4. In the chosen AI, review a concise synthesis, resolve every detected
-   security/privacy item in one reply, and request JSON with the exact confirmation
-   phrase.
+4. In the chosen AI, review a concise synthesis and the concrete potentially sensitive
+   topics it found, then answer the single exclusion question once with topic numbers
+   or `none`／`全部保留`. The assistant's next response is the profile JSON.
 5. Paste the JSON into PitchYourOwner, then edit and explicitly publish from the
    document-style visual confirmation page.
 6. Publish the profile, create its embedding, and start matching.
 7. Review a match through three plain-language questions and evidence labels.
 8. Invite the other owner. Contact information appears only after both owners accept.
+9. From the connection view, hand both approved profiles and the match explanation to
+   the chosen assistant so it can draft the first message.
 
 The browser also contains an explicitly labelled seeded demo. It runs without an account
 or backend and never represents its synthetic profiles as live users.
@@ -69,7 +73,7 @@ English walkthrough of the full journey using real screenshots of the deployed a
 
 ## Results｜成果
 
-_Real-cohort recruiting is in progress. This section reports what actually happened,
+_Real-cohort recruiting is owner-run. This section reports only what actually happened,
 excluding all fixture and test profiles, and will be updated as the cohort completes._
 
 | Metric | Value |
@@ -80,9 +84,16 @@ excluding all fixture and test profiles, and will be updated as the cohort compl
 | Median publish-to-first-match latency | `[PENDING — Development funnel report]` |
 | Explanation source (model vs. fallback) | `[PENDING — Development funnel report]` |
 
-No number in this section is drawn from synthetic or fixture data. See
-[`docs/round1-submission.md`](docs/round1-submission.md) for the full narrative and one
-real pairing quoted with permission, and [`ROADMAP.md`](ROADMAP.md) for what is next.
+Separately, a September 5 live technical verification of the deployed judge processed
+seven pairs: seven model explanations, zero fallbacks, 4.875 seconds median model
+latency, and approximately USD 0.060 estimated judge cost for the run. These are
+explanation-path measurements, not cohort outcomes or evidence of match quality. The
+full method and a public-use anonymized example are in
+[`docs/verification/2026-09-05-jtbd-1-model-explanations.md`](docs/verification/2026-09-05-jtbd-1-model-explanations.md).
+
+No cohort number in this section is drawn from synthetic or fixture data. See
+[`docs/round1-submission.md`](docs/round1-submission.md) for the full narrative and
+[`ROADMAP.md`](ROADMAP.md) for what is next.
 
 ## Architecture｜系統架構
 

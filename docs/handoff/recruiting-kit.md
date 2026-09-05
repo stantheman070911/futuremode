@@ -76,26 +76,76 @@ something that happens in the room.
 6. **35-40 min — Read explanations aloud, send invitations.** Since everyone's still in
    the room, invitations sent now can be accepted now instead of days later.
 7. **40-45 min — Capture, right here, before anyone leaves:**
-   - Verbal or written **"yes, you can quote my pitch/match in the submission"** — write
-     down who said yes.
-   - The two one-liners from the brief: *did the pitch describe you accurately?* and
-     *would you actually message the person you were shown?*
+   - Use the exact written permission request in Section 5 and save the response.
+   - Ask exactly the two follow-up questions in Section 5, without combining them or
+     turning the answers into a match-quality score.
+   - For the first willing participant, collect their public bio source and the separate
+     before/after-panel permission before the session ends.
 
 ## 4. Tracking
 
 One row per person. Update live during the session, not after.
 
-| Name | Field / specific problem | Recruited via | Published? | Invitation sent? | Mutual accept? | Quote permission? | One-liner: accurate? | One-liner: would message? |
-|---|---|---|---|---|---|---|---|---|
-| | | | | | | | | |
+| Name | Field / specific problem | Recruited via | Published? | Invitation sent? | Mutual accept? | Quote permission? | Before/after permission + bio source | Answer 1: accurate? | Answer 2: would message? |
+|---|---|---|---|---|---|---|---|---|---|
+| | | | | | | | | | |
 
 Development's read-only funnel script (per the brief) will produce the official
 numbers for the submission — this table is just for running the session, not for
 quoting in the document.
 
-## 5. Guardrail
+## 5. Exact capture language
 
-If a participant asks "does the AI actually explain why we're a good match, or is that
-canned?" — answer honestly. The brief's contingency section says the PM hasn't
-confirmed yet whether the real model-generated explanation has shipped. Don't promise
-either way in front of a cohort member; if asked, say it's being finalized.
+Send the permission request in writing so the response can be retained. An answer to
+the product's invitation or publish action is not permission to quote.
+
+**Permission to quote — ZH（繁體）**
+
+> 你是否同意 PitchYourOwner 團隊在 FUTUREMODE 2026 BUILDMODE 的公開提交文件、公開
+> GitHub 文件與現場 demo 中，匿名引用你已核准的 animal persona、pitch，以及系統顯示
+> 的 match explanation？我們會移除姓名、Email、帳號與 profile／pair 識別碼。請以文字
+> 回覆：「我同意匿名引用」或「我不同意」。
+
+**Permission to quote — EN**
+
+> Do you give the PitchYourOwner team permission to quote your approved animal persona,
+> pitch, and the match explanation anonymously in our public FUTUREMODE 2026 BUILDMODE
+> submission, public GitHub materials, and live demo? We will remove your name, email,
+> account details, and profile/pair identifiers. Please reply in writing: “I agree to
+> anonymous quotation” or “I do not agree.”
+
+The before/after panel needs separate image permission because it uses a public bio as
+well as the pitch:
+
+**Before/after panel — ZH（繁體）**
+
+> 你是否同意我們在上述公開素材中，將你指定的公開 bio 截圖與 AI 產生、經你核准的 pitch
+> 並排呈現？請回覆：「我同意 before/after panel」或「我不同意」。若同意，請附上你指定
+> 的公開 bio 網址或截圖。
+
+**Before/after panel — EN**
+
+> May we show a screenshot of the public bio you choose beside the AI-generated pitch
+> you approved in those same public materials? Please reply: “I agree to the
+> before/after panel” or “I do not agree.” If you agree, include the public-bio URL or
+> screenshot you want us to use.
+
+After the person has seen their pitch and one match explanation, ask exactly these two
+questions and retain their answers verbatim:
+
+1. **ZH:**「這份 pitch 有準確描述你目前真正在意、反覆思考或正在解的事情嗎？請用一到兩句
+   自己的話回答。」
+
+   **EN:** “Does this pitch accurately describe what you currently care about, return
+   to, or are trying to solve? Please answer in one or two sentences in your own words.”
+2. **ZH:**「看完這個人的 match explanation 後，你會主動傳訊息給對方嗎？為什麼會，或為什
+   麼不會？請用一到兩句自己的話回答。」
+
+   **EN:** “After reading this person's match explanation, would you message them? Why
+   or why not? Please answer in one or two sentences in your own words.”
+
+If a participant asks whether the explanation is canned, answer: the deployed matching
+worker asks Amazon Nova Pro for a grounded explanation of each pair; if the model times
+out, errors, or returns invalid output, the product uses a deterministic fallback that
+does not invent shared ground. Do not turn that implementation fact into a claim that
+the match is good or accurate.

@@ -276,8 +276,52 @@ The signed-in application has four persistent areas:
 | --- | --- |
 | Matches | Suggested, incoming, outgoing, connected, searching, and empty states |
 | Invitations | Incoming, outgoing, and connected matches |
-| My Pitch | Published owner profile without confidence; edit and regenerate entry points |
+| My Pitch | Published owner profile without confidence; edit and regenerate entry points; public-profile preview and share actions |
 | Settings | Public/Private status, Computer API capability, delete, sign out, Privacy, Terms, and Support |
+
+### 6.1 Published-profile sharing contract｜已發布介紹的分享契約
+
+The owner shares one stable public Profile URL, `/p/{slug}`. PitchYourOwner generates
+the social image from the owner-approved public Profile; there is no separate social-card
+editor and no second publication decision. My Pitch shows the actual versioned
+`/og/profile/{slug}.png?version={version_id}` image, not a locally reconstructed mock.
+When the Profile is Private, the preview and every share action are disabled and the UI
+explains that the Profile must be made Public again before sharing.
+
+Owner actions appear in My Pitch after publication:
+
+- **Copy public link** is the primary portable action.
+- **More sharing options** uses the Web Share API when available and otherwise copies the
+  public link.
+- **View public Profile** opens `/p/{slug}`.
+- X, Facebook and Threads use platform-specific web share intents as best-effort
+  conveniences. Download PNG and copy-post-text remain the universal manual fallbacks.
+- Instagram is not a first-class one-click action because web feed posting cannot
+  reliably prefill its image, text and link; the UI instructs the owner to download the
+  PNG and post it manually.
+
+Publishing continues directly into matching. The publish-success notice adds only a
+secondary **View/share public Profile** action that returns to the sharing section in My
+Pitch; sharing never becomes another required onboarding step.
+
+The public copy must say that the URL contains Open Graph and Twitter Card metadata for
+compatible platforms and that the receiving platform controls rendering and caching. It
+must never claim that every social platform will display the preview. Unit tests proving
+the presence of metadata or a 1200×630 PNG are implementation evidence, not
+platform-rendering evidence. Platform claims require a separate, dated check in the
+relevant preview debugger or real posting surface.
+
+The card and share copy may use only the already-public presentation fields. They must
+not expose `history_scope`, `confidence`, email, identifiers or internal matching scores.
+Copy/share status is announced through the existing live region; controls remain usable
+at 320px and by keyboard.
+
+Owner 分享的是同一個穩定公開網址 `/p/{slug}`。Social card 永遠由 owner 已核准的公開
+Profile 自動產生，不另設 editor，也不增加第二次發布決定。「我的介紹」直接顯示帶版本的
+真實 OG 圖片；私人狀態則停用預覽與所有分享操作。X、Facebook、Threads 是 best-effort
+平台入口，Web Share API、複製連結、複製貼文文字與下載 PNG 提供 fallback；Instagram 僅
+提供下載 PNG 後手動分享。產品只能聲明相容平台「可能」依 metadata 產生預覽，不能保證
+任何或所有平台都會正常顯示。
 
 Onboarding uses `/assistant`, `/handoff`, and `/import` without the
 persistent navigation. The browser restores authentication progress, prompt handoff,

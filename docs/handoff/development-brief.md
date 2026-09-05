@@ -449,8 +449,56 @@ LLM call to fix the paste.
 
 # P2 — ONLY IF P0 AND P1 ARE COMPLETE AND STABLE
 
-- Surface the owner's own public profile link in My Pitch with a copy action, so a user
-  can share their pitch without visiting Settings.
+## JTBD-9 — Connect the generated social card to the owner's sharing flow
+
+**Owner decision.** Activated for implementation on 2026-09-05. Reuse VibeMate's
+platform-specific share mechanism and manual fallbacks, while following the
+PitchYourOwner visual system and privacy contract.
+
+**Objective.** Surface the owner's real public Profile URL and generated social card in
+My Pitch, so the owner can see and share what was published without discovering the URL
+inside Settings.
+
+**Expected user-facing outcome.** My Pitch contains a **分享公開介紹** section with the
+actual versioned 1200×630 OG image, Copy link, More sharing options, View public Profile,
+X, Facebook, Threads, Download PNG, and Copy post text. Publishing still continues into
+matching; its success notice offers a secondary **查看／分享公開介紹** action.
+
+**Mechanism.** Every share destination and copied post uses the same `/p/{slug}` URL;
+the downloaded `/og/profile/{slug}.png` encodes that URL in its QR. More sharing options
+uses `navigator.share({ title, text, url })` when available and falls back to copying
+the link. X receives text plus URL through its intent; Facebook receives the URL and
+relies primarily on the page's Open Graph preview; Threads receives best-effort
+prefilled text plus URL. Instagram is deliberately absent as a one-click action:
+Download PNG plus Copy post text is the supported manual path.
+
+**Claims discipline.** Say only that compatible platforms may render the page's Open
+Graph/Twitter Card metadata. Do not claim universal platform support. A metadata unit
+test, successful PNG request, or in-app preview does not prove platform rendering.
+Record real-platform or preview-debugger verification separately, including the checked
+date and any cache behavior.
+
+**Privacy and state requirements.** The card remains generated from the approved public
+Profile; do not add a social-card editor. Never show `history_scope`, `confidence`, email,
+identifiers, or internal scores. Private Profiles show an explanatory disabled state and
+make no request for the private OG image. Copy and share outcomes use the existing live
+region and do not claim that a post was published.
+
+**Acceptance criteria.** The My Pitch preview URL includes the current `version_id`;
+Copy link and Copy post text work; absent or failed Web Share falls back to Copy link;
+aborting the share sheet does not show an error; platform links are correctly encoded;
+the public page opens separately; the PNG is downloadable; Private disables the actions;
+and the layout is verified at 375px and 320px with keyboard access. Existing social-image,
+privacy-revocation, test, and build gates remain green.
+
+**Do not build.** No new route, no social-card editor or variants, no per-match share
+card, no Instagram one-click promise, and no share step added to the required publish
+flow.
+
+**Evidence to hand Marketing.** A 375px My Pitch screenshot containing the real card, a
+Private-state screenshot, the copied public URL, the 1200×630 PNG, and a platform check
+ledger that keeps implemented metadata separate from observed third-party rendering.
+
 - Reduce publish-to-first-match latency if the JTBD-3 measurements show it exceeds ten
   seconds at cohort size.
 
