@@ -21,7 +21,8 @@
     "e2e:seed": "node scripts/e2e/seed.mjs",
     "e2e:run": "node scripts/e2e/run.mjs",
     "e2e:cleanup": "node scripts/e2e/cleanup.mjs",
-    "fixtures:seed-private": "node --import tsx scripts/fixtures/seed-private-owner-fixtures.ts"
+    "fixtures:seed-private": "node --import tsx scripts/fixtures/seed-private-owner-fixtures.ts",
+    "report:funnel": "node scripts/report-hackathon-funnel.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-bedrock-runtime": "3.1111.0",
