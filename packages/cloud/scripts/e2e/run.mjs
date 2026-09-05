@@ -62,10 +62,10 @@ assert.equal(matching.profiles, 12);
 assert.equal(matching.pairs_written, 66);
 
 const first = await api("/v1/matches?page=1", "A");
-assert.equal(first.total, 11); assert.equal(first.matches.length, 10); assert.equal(first.page, 1); assert.equal(first.total_pages, 2);
+assert.equal(first.total, 5); assert.equal(first.matches.length, 5); assert.equal(first.page, 1); assert.equal(first.total_pages, 1);
 assert.deepEqual(first.matches.slice(0, 2).map((item) => item.peer.display_name), ["跳著舞的粉色羊駝", "叼著分鏡穿過片場的赤狐"]);
 const second = await api(`/v1/matches?set=${encodeURIComponent(first.result_set_id)}&page=2`, "A");
-assert.equal(second.result_set_id, first.result_set_id); assert.equal(second.matches.length, 1);
+assert.equal(second.result_set_id, first.result_set_id); assert.equal(second.page, 1); assert.deepEqual(second.matches.map((item) => item.match_id), first.matches.map((item) => item.match_id));
 const reloaded = await api(`/v1/matches?set=${encodeURIComponent(first.result_set_id)}&page=1`, "A");
 assert.deepEqual(reloaded.matches.map((item) => item.match_id), first.matches.map((item) => item.match_id));
 const unchanged = await api(`/v1/matches/refresh?set=${encodeURIComponent(first.result_set_id)}`, "A", { method: "POST", body: "{}" });
@@ -131,5 +131,5 @@ const half = { width: Math.floor(png.width / 2), height: Math.floor(png.height /
 for (let y = 0; y < half.height; y += 1) for (let x = 0; x < half.width; x += 1) { const source = ((y * 2) * png.width + x * 2) * 4; const target = (y * half.width + x) * 4; half.data.set(png.data.subarray(source, source + 4), target); }
 assert.equal(jsQR(half.data, half.width, half.height)?.data, `${site}/p/${profileC.public_slug}`);
 
-const report = { passed: true, runId: artifact.runId, siteUrl: site, assertions: { firstPublishWithoutDisplayName: true, publicSlugLength: 22, publishIdempotentReplay: true, deprecatedDisplayNameRejected: true, profiles: 12, candidates: 11, page1: 10, page2: 1, deterministicTopTwo: true, unchangedGraphReusesSet: true, changedGraphCreatesSet: true, inviteIdempotent: true, previewReadOnly: true, rejectFinal: true, connectionRecords: 2, connectionEmails: 2, unauthorizedConnectionRejected: true, privacyPlaceholderStable: true, connectedSnapshotRetainedWhenPrivate: true, privateSocialImageRevoked: true, socialImage: "1200x630", socialQrDecodedAt: ["1200x630", "600x315"] } };
+const report = { passed: true, runId: artifact.runId, siteUrl: site, assertions: { firstPublishWithoutDisplayName: true, publicSlugLength: 22, publishIdempotentReplay: true, deprecatedDisplayNameRejected: true, profiles: 12, eligibleCandidates: 11, cappedCandidates: 5, page1: 5, deterministicTopTwo: true, unchangedGraphReusesSet: true, changedGraphCreatesSet: true, inviteIdempotent: true, previewReadOnly: true, rejectFinal: true, connectionRecords: 2, connectionEmails: 2, unauthorizedConnectionRejected: true, privacyPlaceholderStable: true, connectedSnapshotRetainedWhenPrivate: true, privateSocialImageRevoked: true, socialImage: "1200x630", socialQrDecodedAt: ["1200x630", "600x315"] } };
 const reportPath = artifactPath.replace(/\.json$/, "-report.json"); await writeFile(reportPath, JSON.stringify(report, null, 2)); console.log(JSON.stringify({ passed: true, reportPath }, null, 2));

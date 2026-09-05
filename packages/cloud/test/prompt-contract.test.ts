@@ -87,7 +87,7 @@ test("asks one concrete topic-exclusion question before JSON-only output", async
   assert.match(app, /if \(form\.dataset\.form === "publish-profile"\) return/);
   assert.match(app, /data-action="remove-profile-item"/);
   assert.match(app, /data-action="add-profile-item"/);
-  assert.match(app, /相似度 \{score\} \/ 100/);
+  assert.doesNotMatch(app, /similarity-score/);
   assert.match(app, /查看詳細介紹/);
   assert.match(app, /"match\.invite": "寄送邀請"/);
   assert.doesNotMatch(app, /"match\.invite": "邀請 \{name\}"/);
