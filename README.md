@@ -1,6 +1,6 @@
 # PitchYourOwner
 
-<!-- CI badge: pending Development JTBD-6 -->
+[![CI](https://github.com/stantheman070911/futuremode/actions/workflows/ci.yml/badge.svg)](https://github.com/stantheman070911/futuremode/actions/workflows/ci.yml)
 
 > **Your agent knows you. Let it pitch you.**｜**你的 Agent 了解你，讓它來介紹你。**
 

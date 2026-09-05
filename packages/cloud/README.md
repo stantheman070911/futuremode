@@ -395,8 +395,9 @@ The current manually deployed Hackathon environment is:
 - Stack: `PitchYourOwner-hackathon`
 - Region: `ap-southeast-1`
 
-There is no CI/CD workflow in this repository. A successful local commit is not proof
-that the manual environment contains the same static assets or Lambdas.
+GitHub Actions runs `npm ci`, `npm test`, and `npm run build` on every push and pull
+request. Deployment remains deliberately manual: a green commit is not proof that the
+Hackathon environment contains the same static assets or Lambdas.
 
 ## Read-only live funnel report
 
