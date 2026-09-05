@@ -20,10 +20,11 @@ test("ships the canonical owner-pitch prompts without runtime drift", async () =
 });
 
 test("asks one concrete topic-exclusion question before JSON-only output", async () => {
-  const [zh, en, app] = await Promise.all([
+  const [zh, en, app, styles] = await Promise.all([
     text(resolve(repoDir, "docs/get_info_prompt_ch.md")),
     text(resolve(repoDir, "docs/get_info_prompt_en.md")),
     text(resolve(packageDir, "static/app.js")),
+    text(resolve(packageDir, "static/styles.css")),
   ]);
   assert.match(zh, /第一則回答不要輸出 JSON/);
   assert.match(zh, /哪些主題應該排除/);
@@ -88,6 +89,7 @@ test("asks one concrete topic-exclusion question before JSON-only output", async
   assert.match(app, /data-action="remove-profile-item"/);
   assert.match(app, /data-action="add-profile-item"/);
   assert.match(app, /similarity-score/);
+  assert.match(styles, /@media \(max-width:430px\)\{\.match-card-head\{align-items:flex-start;flex-direction:column\}/);
   assert.match(app, /查看詳細介紹/);
   assert.match(app, /"match\.invite": "寄送邀請"/);
   assert.doesNotMatch(app, /"match\.invite": "邀請 \{name\}"/);
