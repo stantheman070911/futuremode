@@ -97,6 +97,8 @@ test("sends only the six matchable fields to the explanation model", () => {
   for (const field of MATCHABLE_FIELDS) assert.match(prompt, new RegExp(`"${field}"`));
   assert.doesNotMatch(prompt, /PRIVATE_SCOPE_SENTINEL|PRIVATE_ANIMAL_SENTINEL/);
   assert.doesNotMatch(prompt, /history_scope|confidence|animal_persona|profileId|versionId|emailHash|@example\.com/);
+  assert.match(prompt, /不得使用人名/);
+  assert.match(prompt, /跨領域的間接連結/);
 });
 
 test("strictly validates both directional explanations and evidence labels", () => {
