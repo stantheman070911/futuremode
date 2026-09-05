@@ -667,13 +667,16 @@ function providerSupportsMemoryNotice(ai = runtime.selectedAi) {
   return ai === "ChatGPT" || ai === "Claude";
 }
 
-const PROVIDER_URL_PROMPT_LIMIT = 4000;
-
 function providerLaunchUrl(prompt = runtime.prompt, ai = runtime.selectedAi) {
   if (!providerSupportsMemoryNotice(ai)) return "";
   const target = new URL(ai === "Claude" ? "https://claude.ai/new" : "https://chatgpt.com/");
-  if (String(prompt || "").length <= PROVIDER_URL_PROMPT_LIMIT) target.searchParams.set("q", String(prompt || ""));
+  target.searchParams.set("q", String(prompt || ""));
   return target.toString();
+}
+
+async function openProviderWithPrompt(prompt, ai) {
+  window.open(providerLaunchUrl(prompt, ai), "_blank", "noopener,noreferrer");
+  return copyPromptBestEffort(prompt);
 }
 
 function memoryNoticeMedia() {
@@ -787,9 +790,7 @@ async function launchAiWithPrompt() {
     return;
   }
 
-  const target = providerLaunchUrl(prompt);
-  window.open(target, "_blank", "noopener,noreferrer");
-  const copied = await copyPromptBestEffort(prompt);
+  const copied = await openProviderWithPrompt(prompt, runtime.selectedAi);
   runtime.notice = t(copied ? "handoff.openedCopied" : "handoff.openedManual", { ai: runtime.selectedAi });
   announce(runtime.notice);
   render();
@@ -800,9 +801,7 @@ async function launchConnectionEmailPrompt(ai) {
   if (!providerSupportsMemoryNotice(ai)) return;
   const prompt = String(runtime.connection?.first_email_prompt || "").trim();
   if (!prompt) throw new Error(t("notice.promptMissing"));
-  const target = providerLaunchUrl(prompt, ai);
-  window.open(target, "_blank", "noopener,noreferrer");
-  const copied = await copyPromptBestEffort(prompt);
+  const copied = await openProviderWithPrompt(prompt, ai);
   runtime.connectionPromptFallback = !copied;
   runtime.notice = t(copied ? "connection.promptOpened" : "connection.promptManual", { ai });
   announce(runtime.notice);

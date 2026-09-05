@@ -71,7 +71,7 @@ test("asks one concrete topic-exclusion question before JSON-only output", async
   assert.match(app, /target\.searchParams\.set\("q", String\(prompt \|\| ""\)\)/);
   assert.match(app, /https:\/\/chatgpt\.com\//);
   assert.match(app, /https:\/\/claude\.ai\/new/);
-  assert.match(app, /window\.open\(target, "_blank", "noopener,noreferrer"\)/);
+  assert.match(app, /window\.open\(providerLaunchUrl\(prompt, ai\), "_blank", "noopener,noreferrer"\)/);
   assert.doesNotMatch(app, /window\.location\.assign\(target\.toString\(\)\)/);
   assert.match(app, /role="dialog" aria-modal="true"/);
   assert.match(app, /data-action="confirm-memory-notice"/);
@@ -100,7 +100,11 @@ test("asks one concrete topic-exclusion question before JSON-only output", async
   assert.match(app, /data-action="write-connection-email" data-ai="ChatGPT"/);
   assert.match(app, /data-action="write-connection-email" data-ai="Claude"/);
   assert.match(app, /runtime\.connection\?\.first_email_prompt/);
-  assert.match(app, /PROVIDER_URL_PROMPT_LIMIT = 4000/);
+  assert.doesNotMatch(app, /PROVIDER_URL_PROMPT_LIMIT/);
+  assert.doesNotMatch(app, /prompt[^\n]*length[^\n]*searchParams\.set/);
+  assert.match(app, /async function openProviderWithPrompt\(prompt, ai\)/);
+  assert.match(app, /await openProviderWithPrompt\(prompt, runtime\.selectedAi\)/);
+  assert.match(app, /await openProviderWithPrompt\(prompt, ai\)/);
   assert.match(app, /const DEMO_CONNECTION_ID = "demo-ren-h"/);
   assert.match(app, /runtime\.demo && connectionId === DEMO_CONNECTION_ID/);
   assert.match(app, /match\.connection_id \|\| match\.match_id/);
