@@ -22,6 +22,7 @@ deployment, and troubleshooting.
 | `functions/*/index.ts` | API, worker, and custom-resource handlers |
 | `static/` | Browser SPA and generated runtime copies of schema/prompts |
 | `scripts/sync-*.mjs` | Copy canonical contracts into runtime locations |
+| `scripts/report-hackathon-funnel.mjs` | Read-only live funnel and matching-path report |
 | `scripts/demo/` | Cloud-backed synthetic fixture and smoke-test tools |
 | `test/` | Node contract, filter, rate-limit, prompt, and CDK tests |
 | `assets/fonts/` | Source font files and licenses copied into the website |
@@ -112,6 +113,10 @@ Lambda handlers
 DynamoDB single table + native vector index
 ```
 
+The native vector index is provisioned for a future retrieval path. The current
+Hackathon matcher deliberately scans the small eligible cohort and ranks the field
+embeddings in memory; it does not query the vector index.
+
 CloudFront applies HTTPS redirect, HSTS, CSP, frame denial, content-type protection, and
 no-referrer headers. API responses use `Cache-Control: no-store`. The S3 bucket is
 private and retained; the DynamoDB table uses on-demand billing, AWS-managed encryption,
@@ -130,12 +135,17 @@ TTL, point-in-time recovery, deletion protection, and `RETAIN`.
 4. The browser calls `POST /v1/matching-runs`. The trigger invokes the matching worker
    asynchronously.
 5. The matching worker scans the small active cohort, calculates each eligible unordered
-   pair once, and writes two directed versioned similarity edges. The stored composite is
-   30% interests, 25% active problems, 20% motivations, 15% recurring topics, and 10%
-   friend intent.
-6. Matches creates a 30-day immutable ordered result set and returns ten entries per
-   page. Pagination, reload, detail, and Back keep that set stable; only explicit Refresh
-   considers a newer graph revision.
+   pair once, and calls Amazon Nova Pro once for both directional explanations. Calls are
+   limited to two concurrent pairs and time out after 20 seconds. Strict output validation
+   accepts only the six matchable fields as evidence labels; timeout, provider, throttle,
+   or shape failures persist the pair with a grounded deterministic fallback instead.
+   Every edge records whether its explanation came from the model or fallback and the
+   model-call latency. The stored composite remains 30% interests, 25% active problems,
+   20% motivations, 15% recurring topics, and 10% friend intent.
+6. Matches creates a 30-day immutable ordered result set capped at the five highest
+   composite scores. Pagination is retained for a future cap change; reload, detail, and
+   Back keep the result set stable, and only explicit Refresh considers a newer graph
+   revision.
 7. Invite transactionally creates one 14-day hashed token and one recipient outbox item.
    The public token preview is read-only. Accept creates two connection records and two
    connection-email outbox items; Not now reveals neither reason nor contact data.
@@ -166,7 +176,7 @@ All responses are JSON. Owner routes require
 | `GET /p/{slug}` | Public | Render crawler-friendly public profile HTML or a generic private notice |
 | `GET /og/{slug}` | Public | Render the generic social-card PNG (`site.png`) |
 | `GET /og/profile/{slug}` | Public profile only | Render a version-checked profile social-card PNG with QR |
-| `GET /v1/matches` | Public owner session | Read one stable, ten-per-page result set |
+| `GET /v1/matches` | Public owner session | Read one stable result set capped at five candidates |
 | `POST /v1/matches/refresh` | Public owner session | Reuse or replace the set according to graph revision |
 | `GET /v1/matches/{matchId}` | Public owner session in the result set | Read one match detail |
 | `POST /v1/matches/{matchId}/invitations` | Public owner session | Explicitly send one idempotent invitation |
@@ -260,7 +270,7 @@ The single table uses `pk` and `sk` string keys.
 | `PROFILE#<profileId> / CURRENT` | Current version, owner email, visibility, languages, matching state |
 | `PROFILE#<profileId> / VERSION#<id>` | Immutable profile, approval data, and embedding |
 | `PROFILE#<profileId> / DRAFT#<id>` | Seven-day Computer API draft |
-| `PROFILE#<profileId> / EDGE#<score>#<candidateId>` | Directed, versioned similarity edge |
+| `PROFILE#<profileId> / EDGE#<score>#<candidateId>` | Directed, versioned edge with persisted explanation source and model latency |
 | `PROFILE#<profileId> / RESULT_SET_CURRENT` | Owner's current immutable result-set pointer |
 | `IDEMPOTENCY#<emailHash> / <key>` | 24-hour publish receipt |
 | `UPLOAD#<tokenHash> / META` | 24-hour draft capability |
@@ -274,8 +284,9 @@ The single table uses `pk` and `sk` string keys.
 | `SUPPORT#<requestId> / META` | 90-day support request |
 
 Profile IDs are stable hashes derived from normalized verified-email hashes. Raw session,
-upload, and invitation-response tokens are never stored. Matching email delivery remains
-disabled until the final real-inbox verification.
+upload, and invitation-response tokens are never stored. Matching invitation and
+connection email delivery is enabled in the Hackathon stack and has been verified through
+real inboxes; the scheduled fallback matching run remains disabled.
 
 Deleting a profile follows cleanup keys stored on its match pointers so the shared match,
 both pointers, responses, tokens, and related outbox records are removed together.
@@ -293,8 +304,12 @@ The matching document includes only:
 
 `history_scope`, `confidence`, and `animal_persona` are excluded from embeddings, ranking,
 and public match explanations. The worker persists every eligible pair as two directed
-edges with five cosine components, their weighted composite, both profile versions, and
-a deterministic tie-break key. Numeric scores never leave the backend API.
+edges with five cosine components, their weighted composite, both profile versions, a
+deterministic tie-break key, and model-generated directional explanations. One strict
+JSON judge call serves both directions; any judge failure persists the grounded
+deterministic fallback, so matching still completes. The API retains a numeric score for
+compatibility, but the signed-in browser UI never displays it. Result sets expose at most
+the five highest composites with the existing deterministic tie-break.
 
 Normal runs exclude test profiles. Production rejects `includeTestProfiles` even for a
 direct Lambda invocation; only `ENVIRONMENT=e2e` accepts the explicitly scoped fixture
@@ -325,11 +340,11 @@ CDK context lives in `cdk.json`. These values are consumed by the application:
 | `region` | `ap-southeast-1` | Deployment region |
 | `embeddingModelId` | `global.cohere.embed-v4:0` | Bedrock embedding inference profile |
 | `embeddingDimensions` | `1024` | Embedding and vector-index dimensions |
-| `matchJudgeModelId` | Legacy setting | Retained for deploy compatibility; not used by pair-edge computation |
+| `matchJudgeModelId` | `apac.amazon.nova-pro-v1:0` | Bedrock model used once per unordered pair for both directional explanations |
 | `matchJudgeMinMutualScore` | Legacy setting | Retained for deploy compatibility; no public score threshold |
 | `emailProvider` | `resend` | `resend` or `ses` |
 | `verificationEmailEnabled` | `true` | OTP delivery availability |
-| `matchingEmailDeliveryEnabled` | `false` | DynamoDB-stream and SQS email consumers |
+| `matchingEmailDeliveryEnabled` | `true` | DynamoDB-stream and SQS invitation/connection email consumers |
 | `verificationCooldownSeconds` | `60` | Per-email resend cooldown |
 | `verificationEmailHourlyLimit` | `5` | Per-email hourly reservation count |
 | `verificationIpHourlyLimit` | `20` | Per-source-IP hourly reservation count |
@@ -383,6 +398,30 @@ The current manually deployed Hackathon environment is:
 There is no CI/CD workflow in this repository. A successful local commit is not proof
 that the manual environment contains the same static assets or Lambdas.
 
+## Read-only live funnel report
+
+The report command reads only the exact tagged Hackathon stack and table. It separates
+fixtures and isolated tests from live profiles, reports the funnel and explanation path,
+and never projects raw email or token fields:
+
+```bash
+AWS_PROFILE=<profile> AWS_REGION=ap-southeast-1 npm run report:funnel -- --example
+```
+
+For a quotable real-non-team versus team split, supply the complete team addresses only
+through the runtime environment. They are normalized and hashed in memory and are never
+printed:
+
+```bash
+PYO_TEAM_EMAILS=<comma-separated-team-addresses> \
+  AWS_PROFILE=<profile> AWS_REGION=ap-southeast-1 \
+  npm run report:funnel -- --example
+```
+
+Matching reruns overwrite each edge's `calculatedAt`. The report therefore labels timing
+as publish to the earliest **currently persisted** edge; after a rerun it must not be
+quoted as historical first-match latency.
+
 ## Isolated cloud E2E verification
 
 Fixture mutation is allowed only in the exact `PitchYourOwner-e2e` stack and
@@ -407,7 +446,8 @@ PYO_E2E_CONFIRM=run-isolated-e2e npm run e2e:run
 PYO_E2E_CONFIRM=cleanup-isolated-e2e npm run e2e:cleanup
 ```
 
-The automated run covers 10+1 pagination, deterministic top two, stable result sets,
+The automated run covers an eleven-candidate pool capped to the deterministic top five,
+stable result sets,
 detail allowlists, invitation idempotency, captured styled email, preview-without-mutation,
 Not now finality, Accept and two connection records/emails, owner-specific contact views,
 Public/Private behavior, stable unavailable placeholders, and a deployed 1200×630 PNG.

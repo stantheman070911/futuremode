@@ -97,8 +97,9 @@ CloudFront
                               ├── Email OTP and hashed opaque sessions
                               ├── Profile drafts, versions, and owner controls
                               ├── Bedrock Cohere profile embeddings
-                              ├── DynamoDB native vector candidate search
-                              ├── Bedrock Nova Pro match judge
+                              ├── Small-cohort field-vector ranking
+                              ├── Bedrock Nova Pro judge at pair-edge write
+                              │     └── strict validation → grounded fallback on failure
                               ├── Matches and mutual-consent invitations
                               └── Support requests
                                       │
@@ -106,11 +107,12 @@ CloudFront
                          DynamoDB single-table storage
 ```
 
-The AWS CDK stack also defines an optional DynamoDB-stream → SQS → email outbox,
-CloudWatch alarms, an SNS operations topic, and an AWS Budget. Matching email delivery
-and the fallback schedule are disabled in the current Hackathon configuration; matching
-is started through the authenticated API after publication and invitations are handled
-in the application.
+The AWS CDK stack also defines a provisioned native vector index, a DynamoDB-stream →
+SQS → email outbox, CloudWatch alarms, an SNS operations topic, and an AWS Budget. The
+current small Hackathon cohort is scanned and ranked in memory rather than queried through
+that index. Invitation and connection email delivery is enabled and verified; the
+fallback matching schedule remains disabled because matching starts through the
+authenticated API after publication.
 
 The end user's ChatGPT, Claude, or other assistant is not called by the backend.
 PitchYourOwner receives the owner-approved profile JSON, not the source conversations.
@@ -125,7 +127,7 @@ PitchYourOwner receives the owner-approved profile JSON, not the source conversa
 | `packages/cloud/static/` | Framework-free browser application and generated runtime contracts |
 | `packages/cloud/functions/` | Lambda handlers and shared validation/authentication code |
 | `packages/cloud/lib/` | CDK stack and product-neutral serverless building blocks |
-| `packages/cloud/scripts/` | Contract synchronization and synthetic demo tools |
+| `packages/cloud/scripts/` | Contract synchronization, synthetic demo tools, and read-only live reporting |
 | `packages/cloud/test/` | Contract, matching-filter, rate-limit, prompt, and CDK tests |
 | `packages/cloud/README.md` | Engineering, API, data-model, configuration, and deployment reference |
 
@@ -183,7 +185,6 @@ reproducible behavior.
 - Browser sessions are opaque tokens stored in `localStorage`; production use would
   require a stronger browser-session and CSRF design.
 - Block, report, age-policy, and production abuse operations are not implemented.
-- Matching emails and notification deep links are not active in the current deployment.
 - ChatGPT and Claude prefilled links retain a visible copy fallback because cross-browser
   real-device behavior is provider- and browser-dependent.
 - `/privacy` and `/terms` are concise product-boundary notices, not production legal
