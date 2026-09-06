@@ -97,8 +97,9 @@ test("asks one concrete topic-exclusion question before JSON-only output", async
   assert.doesNotMatch(app, /invitationsScreen\(\)[\s\S]{0,500}t\("invites\.intro"\)/);
   assert.doesNotMatch(app, /引介需要雙方同意；現在不要的理由不會傳給對方/);
   assert.doesNotMatch(app, /AI 仍須在 history_scope/);
-  assert.match(app, /type="hidden" name="history_scope"/);
-  assert.doesNotMatch(app, /<section class="scope-block"><div class="field-label">\$\{esc\(t\("profile\.scope"\)\)\}/);
+  assert.doesNotMatch(app, /type="hidden" name="history_scope"/);
+  assert.match(app, /textarea\("history_scope", "scope-editor", 3\)/);
+  assert.match(app, /<section class="scope-block"><span class="field-label">/);
   assert.match(app, /data-action="write-connection-email" data-ai="ChatGPT"/);
   assert.match(app, /data-action="write-connection-email" data-ai="Claude"/);
   assert.match(app, /runtime\.connection\?\.first_email_prompt/);
@@ -119,7 +120,7 @@ test("asks one concrete topic-exclusion question before JSON-only output", async
   assert.match(app, /runtime\.importJson = JSON\.stringify\(runtime\.draft, null, 2\)/);
   assert.match(app, /notice\.publishedMatchingPending/);
   assert.match(app, /runtime\.busy = false;\s*throw error;/);
-  assert.match(app, /\[1, 2, 3\]\.map/);
+  assert.match(app, /\[1, 2, 3, 4, 5, 6\]\.map/);
   for (const field of ["history_scope", "animal_persona", "summary", "interests", "motivations", "active_problems", "recurring_topics", "friend_intent"]) {
     assert.match(app, new RegExp(`\\b${field}\\b`));
   }

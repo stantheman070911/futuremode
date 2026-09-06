@@ -1,0 +1,30 @@
+{
+  "history_scope": "Local UI preview fixture: selected recent chats were available; deleted and voice chats were not available.",
+  "animal_persona": "追著光線的銀狐",
+  "summary": "人像攝影師，正在探索細微姿勢與引導如何改變畫面情緒。",
+  "interests": [
+    "人物引導",
+    "姿勢與張力",
+    "低光人像"
+  ],
+  "motivations": [
+    "拍出自然的人像，同時不讓被攝者失去明確引導"
+  ],
+  "active_problems": [
+    "在 90 秒內清楚引導第一次見面的人"
+  ],
+  "recurring_topics": [
+    "肩線提示",
+    "混合光源下的膚色",
+    "拍攝前說明"
+  ],
+  "friend_intent": "希望認識每週都在練習同類問題的舞者、導演或攝影師。",
+  "confidence": {
+    "summary": "high",
+    "interests": "high",
+    "motivations": "medium",
+    "active_problems": "medium",
+    "recurring_topics": "medium",
+    "friend_intent": "low"
+  }
+}

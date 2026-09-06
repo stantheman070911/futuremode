@@ -72,7 +72,112 @@ const COPY = {
   },
 };
 
+Object.assign(COPY.en, {
+  "start.title": "Let your agent introduce you.<span>Find someone you genuinely click with.</span>",
+  "start.kicker": "Your agent knows you. Let it pitch you.",
+  "start.copy1": "Talk with AI often? It may already understand you surprisingly well.",
+  "start.copy2": "Let your AI surface the interests, strengths, and ways of thinking that make you distinctive.",
+  "start.copy3": "Use what you are doing now to meet someone worth talking with.",
+  "start.check1.title": "Exclude topics in the external AI",
+  "start.check1.body": "The AI lists concrete sensitive topics and asks once which numbered items to exclude.",
+  "start.check2.title": "Review and publish on this site",
+  "start.check2.body": "Paste the JSON, edit the original document directly, then explicitly approve it.",
+  "start.begin": "Start",
+  "start.discoveryKicker": "Static topic examples",
+  "start.discoveryTitle": "See what owners are talking about lately",
+  "start.discoveryLead": "Examples only — these are not live users or matching results.",
+  "start.discoveryTopic": "Turn a Broadway musical into Taiwanese",
+  "start.discoveryTopic2": "Hike Taipei Grand Trail section four this weekend!",
+  "start.discoveryTopic3": "Publish an art book — digital works too!",
+  "start.discoveryTopic4": "A late-night station that only plays strange sounds!",
+  "start.discoveryLabel": "STATIC TOPIC EXAMPLE",
+  "start.discoveryBody": "A concrete topic can reveal a more relevant person to meet than a generic interest label.",
+  "start.discoveryCta": "Let my agent bring me in",
+  "signin.step1": "STEP 1 / 6 · SIGN IN",
+  "signin.step2": "STEP 2 / 6 · VERIFY",
+  "signin.heroTitle": "Make your interests and strengths visible.<span>Meet friends through what you are making now.</span>",
+  "signin.formTitle": "Start with your email",
+  "signin.emailHint": "Your account keeps the prompt, draft, pitch, and invitations under one owner.",
+  "signin.spamTitle": "Cannot find the verification email?",
+  "signin.spamBody": "Check spam or junk first, then use resend when the countdown ends.",
+  "assistant.step": "STEP 3 / 6 · CHOOSE AI",
+  "handoff.step": "STEP 4 / 6 · HAND OFF",
+  "import.stepPaste": "STEP 5 / 6 · PASTE JSON",
+  "import.stepEdit": "STEP 6 / 6 · VISUAL EDIT",
+  "matches.title": "Your agent found another owner",
+  "matches.searchingTitle": "Your agent is working hard to find you a friend",
+  "matches.searchingBody": "It only uses the current interests, active problems, motivations, recurring topics, and friend intent you approved.",
+  "matches.searchSignal1": "Current interests",
+  "matches.searchSignal2": "Active problems",
+  "matches.searchSignal3": "Recurring topics",
+  "matches.searchBubble": "Looking…",
+  "matches.searchAria": "Your agent is looking for a relevant owner using the current approved profile fields",
+  "match.waitingTitle": "Invitation delivered",
+  "match.waitingBody": "Contact details stay private while the other owner reviews the invitation. You can return to the current Invitations tab at any time.",
+  "match.waitingStatus": "Waiting for the other owner",
+  "match.waitingStamp": "INVITATION ON THE WAY",
+  "match.waitingSelf": "You",
+  "match.waitingPeer": "Other owner",
+  "match.waitingInvitations": "View sent invitations",
+  "accept.eyebrow": "Invitation received",
+  "accept.title": "Another owner's agent thinks you should meet",
+  "accept.notificationTitle": "You received an invitation",
+  "accept.notificationBody": "Contact details unlock only after both owners accept.",
+  "progress.aria": "Step {step} of 6",
+});
+
 Object.assign(COPY["zh-Hant"], {
+  "start.title": "讓你的 Agent 介紹你。<span>找到真的聊得來的人。</span>",
+  "start.kicker": "Your agent knows you. Let it pitch you.",
+  "start.copy1": "平常跟 AI 聊天嗎？你的 AI 搞不好對你超級熟。",
+  "start.copy2": "讓 AI 找出你的興趣、亮點與思考方式，看見你最值得被認識的樣子。",
+  "start.copy3": "用最近正在做的事情，在茫茫人海中遇見值得聊的人。",
+  "start.check1.title": "在外部 AI 排除主題",
+  "start.check1.body": "AI 先提出具體敏感主題，只問一次要排除哪些編號。",
+  "start.check2.title": "在網站確認並上傳",
+  "start.check2.body": "貼回 JSON 後直接編輯原文件，再由 owner 明確確認。",
+  "start.begin": "開始",
+  "start.discoveryKicker": "靜態 Topic 範例",
+  "start.discoveryTitle": "看看 Owners 最近在聊什麼",
+  "start.discoveryLead": "以下只是固定示意，不是真實使用者或即時配對結果。",
+  "start.discoveryTopic": "想要把百老匯的音樂劇製作成台語版！",
+  "start.discoveryTopic2": "週末可以臺北大縱走第四段！",
+  "start.discoveryTopic3": "想要出版畫冊，電子的也可以！",
+  "start.discoveryTopic4": "只播怪聲音的深夜電台！",
+  "start.discoveryLabel": "STATIC TOPIC EXAMPLE",
+  "start.discoveryBody": "比起寬泛的興趣標籤，一個具體主題更容易看出誰真的值得認識。",
+  "start.discoveryCta": "讓 Agent 帶我加入",
+  "signin.step1": "步驟 1 / 6 · 登入",
+  "signin.step2": "步驟 2 / 6 · 驗證",
+  "signin.heroTitle": "放大你的興趣和才華，<span>用最近做的好玩事情交朋友吧！</span>",
+  "signin.formTitle": "先用 Email 登入",
+  "signin.emailHint": "同一個帳號會保管你的 Prompt、草稿、介紹與邀請。",
+  "signin.spamTitle": "找不到驗證信嗎？",
+  "signin.spamBody": "先去垃圾郵件找找看；倒數結束後也可以重新寄送。",
+  "assistant.step": "步驟 3 / 6 · 選擇 AI",
+  "handoff.step": "步驟 4 / 6 · 交給 AI",
+  "import.stepPaste": "步驟 5 / 6 · 貼上 JSON",
+  "import.stepEdit": "步驟 6 / 6 · 視覺化編輯",
+  "matches.title": "你的 Agent 找到另一位 Owner",
+  "matches.searchingTitle": "你的 Agent 正在努力幫你找朋友",
+  "matches.searchingBody": "只沿用你已核准的現行 interests、active problems、motivations、recurring topics 與 friend intent。",
+  "matches.searchSignal1": "目前興趣",
+  "matches.searchSignal2": "正在解的問題",
+  "matches.searchSignal3": "反覆討論",
+  "matches.searchBubble": "找找看…",
+  "matches.searchAria": "你的 Agent 正使用目前已核准的介紹欄位尋找值得認識的 Owner",
+  "match.waitingTitle": "邀請送到了",
+  "match.waitingBody": "對方查看邀請期間，聯絡方式仍會保密。你隨時可以回到現有的邀請分頁查看狀態。",
+  "match.waitingStatus": "正在等待另一位 Owner 回覆",
+  "match.waitingStamp": "INVITATION ON THE WAY",
+  "match.waitingSelf": "你",
+  "match.waitingPeer": "另一位 Owner",
+  "match.waitingInvitations": "查看送出的邀請",
+  "accept.eyebrow": "收到邀請",
+  "accept.title": "另一位 Owner 的 Agent 覺得你們該認識",
+  "accept.notificationTitle": "你收到一則邀請",
+  "accept.notificationBody": "只有雙方都接受後，才會解鎖聯絡方式。",
+  "progress.aria": "步驟 {step} / 6",
   "handoff.explainer": "AI 會先整理一份專業亮點預覽，列出擬公開的具體主題，並一次問你哪些要排除。回覆編號，或回覆 none／全部保留；下一則就是可貼回的 JSON。",
   "guide.1.title": "閱讀專業亮點預覽",
   "guide.1.body": "AI 第一則先顯示介紹與擬公開主題，這一則不用複製。",
@@ -108,7 +213,7 @@ Object.assign(COPY["zh-Hant"], {
   "landing.flow": "AI 整理介紹 → 你審核 → 看建議的人 → 發出邀請 → 雙方同意後交換 Email",
   "landing.animals": "你的 AI 會依你的專業、技能與做事方式，替你生成專屬動物角色。每個人都會不同。",
   "accept.loading": "正在載入邀請",
-  "accept.title": "有人想認識你",
+  "accept.title": "另一位 Owner 的 Agent 覺得你們該認識",
   "accept.accept": "接受這次介紹",
   "accept.notNow": "現在不要",
   "accept.note": "只有按下按鈕才會送出決定。開啟這一頁不會自動接受。",
@@ -781,7 +886,7 @@ function shell(content, { nav = false, active = "", action = "" } = {}) {
 
 function progressHeader(step, labelKey) {
   return `<p class="eyebrow">${esc(t(labelKey))}</p>
-    <div class="progress" aria-label="${esc(t("progress.aria", { step }))}">${[1, 2, 3].map((segment) => `<span class="${segment <= step ? "active" : ""}"></span>`).join("")}</div>`;
+    <div class="progress" aria-label="${esc(t("progress.aria", { step }))}">${[1, 2, 3, 4, 5, 6].map((segment) => `<span class="${segment <= step ? "active" : ""}"></span>`).join("")}</div>`;
 }
 
 function onboardingExit() {
@@ -1094,29 +1199,56 @@ async function resendVerificationCode({ ignoreCountdown = false } = {}) {
 }
 
 function startScreen() {
-  return shell(`<div class="hero">
-    <h1>${t("start.title")}</h1>
-    <p class="promise">${esc(t("start.promise"))}</p>
-  </div>
-  <div class="checkpoint" aria-label="${esc(t("start.checkpoints"))}">
-    <div><strong>1</strong><span>${esc(t("start.check1"))}</span></div>
-    <div><strong>2</strong><span>${esc(t("start.check2"))}</span></div>
-  </div>
-  <p class="animal-showcase">${esc(t("landing.animals"))}</p>
-  <p class="subtle" style="text-align:center">${esc(t("landing.flow"))}</p>
-  <button class="button primary" data-action="begin">${esc(t("start.begin"))}</button>
-  ${DEMO_AVAILABLE ? `<button class="button quiet" style="margin-top:9px" data-action="demo-flow">${esc(t("start.demo"))}</button>` : ""}
-  <p class="subtle" style="text-align:center;margin:10px 0 0">${esc(t("start.duration"))}</p>`);
+  return shell(`<div class="start-adoption">
+    <div class="masked-preview" aria-hidden="true">
+      <div class="masked-card"><img src="/ui-reference/avatar-otter-radio.png" alt=""></div>
+      <div class="masked-card"><img src="/ui-reference/avatar-alpaca-dancer.png" alt=""></div>
+      <div class="masked-card"><img src="/ui-reference/avatar-bird-nest.png" alt=""></div>
+    </div>
+    <div class="start-hero">
+      <p class="start-kicker">${esc(t("start.kicker"))}</p>
+      <h1>${t("start.title")}</h1>
+      <div class="start-copy"><p>${esc(t("start.copy1"))}</p><p>${esc(t("start.copy2"))}</p><p>${esc(t("start.copy3"))}</p></div>
+    </div>
+    <div class="checkpoint start-steps" aria-label="${esc(t("start.checkpoints"))}">
+      <div><strong>01</strong><span><b>${esc(t("start.check1.title"))}</b><small>${esc(t("start.check1.body"))}</small></span></div>
+      <div><strong>02</strong><span><b>${esc(t("start.check2.title"))}</b><small>${esc(t("start.check2.body"))}</small></span></div>
+    </div>
+    <button class="button primary" data-action="begin">${esc(t("start.begin"))}</button>
+    ${DEMO_AVAILABLE ? `<button class="button quiet start-demo" data-action="demo-flow">${esc(t("start.demo"))}</button>` : ""}
+    <p class="subtle start-duration">${esc(t("start.duration"))}</p>
+    <section class="discovery" aria-labelledby="discovery-title">
+      <p class="discovery-kicker">${esc(t("start.discoveryKicker"))}</p>
+      <h2 id="discovery-title">${esc(t("start.discoveryTitle"))}</h2>
+      <p class="discovery-lead">${esc(t("start.discoveryLead"))}</p>
+      <div class="static-topic-scene" role="img" aria-label="${esc(t("start.discoveryLead"))}">
+        <div class="static-topic-orbit one"><span class="static-topic-bubble">${esc(t("start.discoveryTopic"))}</span><img class="static-topic-avatar a1" src="/ui-reference/avatar-otter-radio.png" alt="" aria-hidden="true"><img class="static-topic-avatar a2" src="/ui-reference/avatar-bird-nest.png" alt="" aria-hidden="true"><img class="static-topic-avatar a3" src="/ui-reference/avatar-otter-cabbage.png" alt="" aria-hidden="true"></div>
+        <div class="static-topic-orbit two"><span class="static-topic-bubble">${esc(t("start.discoveryTopic2"))}</span><img class="static-topic-avatar a1" src="/ui-reference/avatar-bird-nest.png" alt="" aria-hidden="true"><img class="static-topic-avatar a2" src="/ui-reference/avatar-otter-cabbage.png" alt="" aria-hidden="true"><img class="static-topic-avatar a3" src="/ui-reference/avatar-otter-radio.png" alt="" aria-hidden="true"></div>
+        <div class="static-topic-orbit three"><span class="static-topic-bubble">${esc(t("start.discoveryTopic3"))}</span><img class="static-topic-avatar a1" src="/ui-reference/avatar-otter-cabbage.png" alt="" aria-hidden="true"><img class="static-topic-avatar a2" src="/ui-reference/avatar-otter-radio.png" alt="" aria-hidden="true"><img class="static-topic-avatar a3" src="/ui-reference/avatar-bird-nest.png" alt="" aria-hidden="true"></div>
+        <div class="static-topic-orbit four"><span class="static-topic-bubble">${esc(t("start.discoveryTopic4"))}</span><img class="static-topic-avatar a1" src="/ui-reference/avatar-bird-nest.png" alt="" aria-hidden="true"><img class="static-topic-avatar a2" src="/ui-reference/avatar-otter-radio.png" alt="" aria-hidden="true"></div>
+      </div>
+      <div class="community-detail">
+        <span class="field-label">${esc(t("start.discoveryLabel"))}</span>
+        <h3>${esc(t("start.discoveryTopic"))}</h3>
+        <p>${esc(t("start.discoveryBody"))}</p>
+        <button class="button primary" data-action="begin">${esc(t("start.discoveryCta"))}</button>
+      </div>
+    </section>
+  </div>`);
 }
 
 function signinScreen() {
   const codeStep = Boolean(runtime.challengeId);
   if (codeStep) queueMicrotask(ensureOtpCountdown);
   const remaining = resendSecondsRemaining();
-  return shell(`<div>
-    <p class="eyebrow">${esc(t(codeStep ? "signin.step2" : "signin.step1"))}</p>
-    <h1 class="page-title">${esc(t(codeStep ? "signin.verifyTitle" : "signin.title"))}</h1>
-    <p class="page-intro">${codeStep ? `${esc(t("signin.sentTo"))}<br><strong style="color:var(--ink);overflow-wrap:anywhere">${esc(runtime.signinEmail)}</strong>` : esc(t("signin.intro"))}</p>
+  const introVisual = codeStep
+    ? `<figure class="verify-illustration"><img src="/ui-reference/verify-email-animals.png" alt="${esc(t("signin.verifyTitle"))}"></figure><div class="spam-tip"><span aria-hidden="true">?</span><div><strong>${esc(t("signin.spamTitle"))}</strong><p>${esc(t("signin.spamBody"))}</p></div></div>`
+    : `<div class="signin-intro"><h1>${t("signin.heroTitle")}</h1><div class="idea-collage" aria-hidden="true"><div class="idea-card tone-ink"><span>地方策畫</span><b>收集日常</b></div><div class="idea-card tone-blue"><span>聲音設計</span><b>把聲音說成故事</b></div><div class="idea-card tone-pink"><span>獨立出版</span><b>做一本畫冊</b></div><div class="idea-card tone-paper"><span>影像觀察</span><b>看見細節的光</b></div></div></div>`;
+  return shell(`<div class="signin-adoption">
+    ${progressHeader(codeStep ? 2 : 1, codeStep ? "signin.step2" : "signin.step1")}
+    ${introVisual}
+    <h2 class="signin-form-title">${esc(t(codeStep ? "signin.verifyTitle" : "signin.formTitle"))}</h2>
+    <p class="page-intro">${codeStep ? `${esc(t("signin.sentTo"))}<br><strong style="color:var(--ink);overflow-wrap:anywhere">${esc(runtime.signinEmail)}</strong>` : esc(t("signin.emailHint"))}</p>
     <form class="form" data-form="${codeStep ? "confirm-code" : "request-code"}" ${codeStep ? "novalidate" : ""}>
       ${codeStep ? `<label class="field"><span class="field-label">${esc(t("signin.code"))}</span><input name="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required value="${esc(runtime.verificationCode)}" aria-describedby="code-error" ${runtime.codeError ? 'aria-invalid="true"' : ""}><span class="field-hint" id="code-error" ${runtime.codeError ? 'role="alert"' : ""}>${esc(runtime.codeError)}</span></label>` : `<label class="field"><span class="field-label">${esc(t("signin.email"))}</span><input name="email" type="email" inputmode="email" autocomplete="email" required placeholder="owner@example.com" value="${esc(runtime.signinEmail)}"></label>`}
       <button class="button primary" ${runtime.busy ? "disabled" : ""}>${esc(runtime.busy ? t("common.loading") : t(codeStep ? "signin.verify" : "signin.send"))}</button>
@@ -1127,9 +1259,10 @@ function signinScreen() {
 
 function assistantScreen() {
   const aiOptions = [["ChatGPT", "ChatGPT"], ["Claude", "Claude"], ["Other AI", t("assistant.other")]];
-  return shell(`${progressHeader(1, "assistant.step")}
+  return shell(`${progressHeader(3, "assistant.step")}
     <h1 class="page-title">${esc(t("assistant.title"))}</h1>
     <p class="page-intro">${esc(t("assistant.intro"))}</p>
+    <figure class="choose-illustration"><img src="/ui-reference/choose-ai-otter.png" alt="${esc(t("assistant.title"))}"></figure>
     <div class="assistant-grid">${aiOptions.map(([value, label]) => `<button class="assistant-card" data-action="select-ai" data-ai="${value}" aria-pressed="${runtime.selectedAi === value}"><strong>${esc(label)}</strong><span>${esc(t(runtime.selectedAi === value ? "assistant.selected" : "assistant.choose"))}</span></button>`).join("")}</div>
     <div style="margin-top:auto;padding-top:28px"><button class="button primary" style="width:100%" data-action="create-prompt">${esc(t("assistant.create"))}</button>${onboardingExit()}</div>`, { action: `<a href="/settings" data-link class="text-action">${esc(t("account"))}</a>` });
 }
@@ -1154,14 +1287,14 @@ function handoffScreen() {
   const collapsedPrompt = afterHandoff
     ? `<div class="settings-row"><span>${esc(t("handoff.ready"))}</span><button data-action="toggle-full-prompt">${esc(t(runtime.showFullPrompt ? "handoff.hide" : "handoff.show"))}</button></div>${runtime.showFullPrompt ? prompt : ""}`
     : "";
-  return shell(`${flowNavigation("/assistant", "flow.backToAi")}
-    ${progressHeader(2, "handoff.step")}
+  return shell(`<div class="handoff-adoption">${flowNavigation("/assistant", "flow.backToAi")}
+    ${progressHeader(4, "handoff.step")}
     <div class="prompt-meta"><span>${esc(runtime.selectedAi)}</span><span>${esc(t("language.current"))}</span></div>
     <h1 class="page-title">${esc(afterHandoff ? t("handoff.afterTitle") : t("handoff.beforeTitle", { ai: runtime.selectedAi }))}</h1>
     ${providerSupportsMemoryNotice() ? `<button class="memory-reopen" data-action="open-memory-notice">${esc(t("memory.reopen", { ai: runtime.selectedAi }))}</button>` : ""}
     ${!promptReady ? `<div class="notice error">${esc(t("handoff.loadError"))}</div>` : ""}
     ${collapsedPrompt}
-    ${actions}`) + memoryNoticeModal();
+    ${actions}</div>`) + memoryNoticeModal();
 }
 
 function normalizeJsonInput(value) {
@@ -1264,7 +1397,7 @@ function importScreen() {
   const editingPublished = runtime.draftMode === "edit-published";
   if (!runtime.draft || runtime.importMode === "paste") {
     return shell(`${flowNavigation("/handoff", "flow.backToHandoff")}
-      ${progressHeader(3, "import.stepPaste")}
+      ${progressHeader(5, "import.stepPaste")}
       <h1 class="page-title">${esc(t("import.title"))}</h1>
       <p class="page-intro">${esc(t("import.intro"))}</p>
       ${jsonGuide(true)}
@@ -1274,7 +1407,7 @@ function importScreen() {
       </form>
       ${DEMO_AVAILABLE && runtime.demo && !runtime.session ? `<button class="button quiet" style="margin-top:9px" data-action="load-sample">${esc(t("import.demo"))}</button><p class="subtle" style="margin:7px 0 0">${esc(t("import.demoCaption"))}</p>` : ""}`);
   }
-  return shell(`${editingPublished ? `<div class="flow-navigation"><button class="flow-back" data-action="cancel-pitch-edit">← ${esc(t("flow.cancelEdit"))}</button></div><p class="eyebrow">${esc(t("import.editingEyebrow"))}</p>` : `${flowNavigation("/handoff", "flow.backToHandoff")}${progressHeader(3, "import.stepEdit")}`}
+  return shell(`${editingPublished ? `<div class="flow-navigation"><button class="flow-back" data-action="cancel-pitch-edit">← ${esc(t("flow.cancelEdit"))}</button></div><p class="eyebrow">${esc(t("import.editingEyebrow"))}</p>` : `${flowNavigation("/handoff", "flow.backToHandoff")}${progressHeader(6, "import.stepEdit")}`}
     <h1 class="page-title">${esc(t("import.editTitle"))}</h1>
     <p class="page-intro">${esc(t("import.editIntro"))}</p>
     <form data-form="publish-profile" novalidate>
@@ -1306,7 +1439,7 @@ function editableArrayField(profile, field) {
 function editableProfileDocument(profile) {
   const textarea = (field, className, rows) => `<textarea class="document-editor ${className}" name="${field}" rows="${rows}" data-draft-field="${field}" aria-label="${esc(fieldLabel(field))}"${textLimit(field)}>${esc(profile[field])}</textarea>`;
   return `<div class="document editable-document">
-    <input type="hidden" name="history_scope" value="${esc(profile.history_scope)}">
+    <section class="scope-block"><span class="field-label">${esc(fieldLabel("history_scope"))}</span>${textarea("history_scope", "scope-editor", 3)}</section>
     ${textarea("animal_persona", "animal-persona-editor", 1)}
     <div class="summary-editor-head"><span class="field-label">${esc(fieldLabel("summary"))}</span>${confidenceControl(profile, "summary")}</div>
     ${textarea("summary", "summary-editor", 4)}
@@ -1364,7 +1497,15 @@ function acceptScreen() {
   }
   const preview = runtime.invitationPreview;
   const inviter = preview.inviter || {};
-  return shell(`<p class="eyebrow">PitchYourOwner 邀請</p><h1 class="page-title">${esc(t("accept.title"))}</h1>${profilePortrait(inviter, "detail", "hero-portrait")}<p class="page-intro">${esc(peerPresentationName(inviter))} 的 Agent 覺得你們現在值得聊聊。</p>${publicProfileDocument(inviter.profile)}<div class="question-card"><section class="question"><div class="step-label">為什麼值得聊</div><h2>${esc(preview.explanation?.whatWeBothCareAbout || "你們有一個具體的共同關注。")}</h2><p>${esc(preview.explanation?.whatWeCouldDiscuss || "可以從最近正在嘗試的方法開始交換。")}</p></section></div><p class="subtle">${esc(t("accept.note"))}</p><div class="button-row"><button class="button" data-action="respond-token" data-decision="not_now">${esc(t("accept.notNow"))}</button><button class="button primary" data-action="respond-token" data-decision="accept">${esc(t("accept.accept"))}</button></div>`);
+  return shell(`<div class="incoming-adoption">
+    <p class="eyebrow">${esc(t("accept.eyebrow"))}</p>
+    <h1 class="page-title">${esc(t("accept.title"))}</h1>
+    <div class="incoming-notification"><div><b>PITCHYOUROWNER</b><span>${esc(runtime.locale === "zh-Hant" ? "現在" : "NOW")}</span></div><strong>${esc(t("accept.notificationTitle"))}</strong><p>${esc(t("accept.notificationBody"))}</p></div>
+    <article class="incoming-profile">${profilePortrait(inviter, "detail", "incoming-avatar")}<div><p class="animal-persona compact">${esc(peerPresentationName(inviter))}</p><p>${esc(inviter.profile?.summary || "")}</p></div></article>
+    <div class="question-card"><section class="question"><div class="step-label">${esc(runtime.locale === "zh-Hant" ? "為什麼值得聊" : "WHY THIS COULD MATTER")}</div><h2>${esc(preview.explanation?.whatWeBothCareAbout || (runtime.locale === "zh-Hant" ? "你們有一個具體的共同關注。" : "You share a concrete concern."))}</h2><p>${esc(preview.explanation?.whatWeCouldDiscuss || (runtime.locale === "zh-Hant" ? "可以從最近正在嘗試的方法開始交換。" : "Start with the approach each of you is trying now."))}</p></section></div>
+    <p class="subtle">${esc(t("accept.note"))}</p>
+    <div class="button-row"><button class="button" data-action="respond-token" data-decision="not_now">${esc(t("accept.notNow"))}</button><button class="button primary" data-action="respond-token" data-decision="accept">${esc(t("accept.accept"))}</button></div>
+  </div>`);
 }
 
 async function loadInvitationPreview() {
@@ -1502,10 +1643,28 @@ function ensureProfileImagePolling() {
   }, 3_000);
 }
 
+function matchingSearchPanel() {
+  return `<div class="matching-adoption">
+    <div class="match-search-animation" role="img" aria-label="${esc(t("matches.searchAria"))}">
+      <span class="search-radar"></span>
+      <span class="search-chip one">${esc(t("matches.searchSignal1"))}</span>
+      <span class="search-chip two">${esc(t("matches.searchSignal2"))}</span>
+      <span class="search-chip three">${esc(t("matches.searchSignal3"))}</span>
+      <img class="search-friend one" src="/ui-reference/avatar-otter-radio.png" alt="" aria-hidden="true">
+      <img class="search-friend two" src="/ui-reference/avatar-otter-cabbage.png" alt="" aria-hidden="true">
+      <img class="search-friend three" src="/ui-reference/avatar-alpaca-dancer.png" alt="" aria-hidden="true">
+      <span class="search-character">${profilePortrait(runtime.profile, "thumbnail", "search-character-image")}<small>${esc(t("matches.searchBubble"))}</small></span>
+    </div>
+    <h1>${esc(t("matches.searchingTitle"))}</h1>
+    <p class="page-intro">${esc(t("matches.searchingBody"))}</p>
+    <p class="search-status" data-match-countdown aria-live="polite"><i></i>${esc(t("matches.checking", { seconds: 6 }))}</p>
+  </div>`;
+}
+
 function matchesScreen() {
   if (!runtime.matches) {
     loadMatches();
-    return shell(`<div class="loading">${esc(t("matches.loading"))}</div>`, { nav: true, active: "matches" });
+    return shell(matchingSearchPanel(), { nav: true, active: "matches" });
   }
   const visible = runtime.matches.filter((match) => match.state !== "not_now");
   if (!visible.length && runtime.matchesPollError) {
@@ -1514,7 +1673,7 @@ function matchesScreen() {
   }
   if (!visible.length && isRecentPublish()) {
     queueMicrotask(ensureMatchesPolling);
-    return shell(`<div class="empty"><p class="eyebrow">${esc(t("matches.searchingEyebrow"))}</p><h2>${esc(t("matches.searchingTitle"))}</h2><p>${esc(t("matches.searchingBody"))}</p><p class="status-label" data-match-countdown aria-live="polite">${esc(t("matches.checking", { seconds: 6 }))}</p></div>`, { nav: true, active: "matches" });
+    return shell(matchingSearchPanel(), { nav: true, active: "matches" });
   }
   if (!visible.length) {
     stopMatchesPolling();
@@ -1527,7 +1686,7 @@ function matchesScreen() {
   const result = runtime.matchResult || { page: 1, total_pages: 1, total: visible.length, result_set_id: "" };
   const context = result.result_set_id ? `?set=${encodeURIComponent(result.result_set_id)}&page=${result.page}` : "";
   const pagination = result.total_pages > 1 ? `<nav class="pagination" aria-label="配對分頁"><a class="button quiet ${result.page <= 1 ? "disabled" : ""}" ${result.page > 1 ? `href="/matches?set=${encodeURIComponent(result.result_set_id)}&page=${result.page - 1}" data-link` : "aria-disabled=\"true\""}>${esc(t("matches.previous"))}</a><span>${esc(t("matches.page", { page: result.page, total: result.total_pages }))}</span><a class="button quiet ${result.page >= result.total_pages ? "disabled" : ""}" ${result.page < result.total_pages ? `href="/matches?set=${encodeURIComponent(result.result_set_id)}&page=${result.page + 1}" data-link` : "aria-disabled=\"true\""}>${esc(t("matches.next"))}</a></nav>` : "";
-  return shell(`<div class="match-title-row"><div><h1 class="page-title">${esc(t("matches.title"))}</h1><p class="page-intro">${esc(t("matches.total", { count: result.total }))}</p></div><button class="text-action" data-action="refresh-matches">${esc(t("matches.refresh"))}</button></div><div class="match-list">${visible.map((match) => match.unavailable ? `<div class="match-card unavailable"><h2>${esc(t("match.unavailable"))}</h2><p>${esc(t("match.unavailableBody"))}</p></div>` : `<a class="match-card" href="/matches/${encodeURIComponent(match.match_id)}${context}" data-link><div class="match-card-head"><div class="match-card-identity">${profilePortrait(match.peer, "thumbnail")}<h2 class="animal-persona compact">${esc(peerPresentationName(match.peer))}</h2></div><div class="match-card-meta"><span class="similarity-score">${esc(t("match.score", { score: match.similarity_score }))}</span><span class="status-label">${esc(match.state === "suggested" ? t("match.viewDetail") : matchStateLabel(match.state))}</span></div></div>${match.peer?.is_synthetic ? `<div class="evidence"><span class="evidence-label">${esc(t("match.demoData"))}</span></div>` : ""}<p>${esc(match.peer.summary || match.explanation.what_we_both_care_about)}</p><p class="shared-signal">共同訊號：${esc(match.strongest_shared_signal || match.explanation.what_we_both_care_about)}</p></a>`).join("")}</div>${pagination}`, { nav: true, active: "matches" });
+  return shell(`<div class="match-title-row"><div><h1 class="page-title">${esc(t("matches.title"))}</h1><p class="page-intro">${esc(t("matches.total", { count: result.total }))}</p></div><button class="text-action" data-action="refresh-matches">${esc(t("matches.refresh"))}</button></div><div class="match-list match-results-list">${visible.map((match) => match.unavailable ? `<div class="match-card unavailable"><h2>${esc(t("match.unavailable"))}</h2><p>${esc(t("match.unavailableBody"))}</p></div>` : `<a class="match-card" href="/matches/${encodeURIComponent(match.match_id)}${context}" data-link><div class="match-card-head"><div class="match-card-identity">${profilePortrait(match.peer, "thumbnail")}<h2 class="animal-persona compact">${esc(peerPresentationName(match.peer))}</h2></div><div class="match-card-meta"><span class="similarity-score">${esc(t("match.score", { score: match.similarity_score }))}</span><span class="status-label">${esc(match.state === "suggested" ? t("match.viewDetail") : matchStateLabel(match.state))}</span></div></div>${match.peer?.is_synthetic ? `<div class="evidence"><span class="evidence-label">${esc(t("match.demoData"))}</span></div>` : ""}<p>${esc(match.peer.summary || match.explanation.what_we_both_care_about)}</p><p class="shared-signal">共同訊號：${esc(match.strongest_shared_signal || match.explanation.what_we_both_care_about)}</p></a>`).join("")}</div>${pagination}`, { nav: true, active: "matches" });
 }
 
 async function loadMatches({ polling = false } = {}) {
@@ -1580,6 +1739,7 @@ function matchDetailScreen(matchId) {
     return shell(`<div class="loading">${esc(t("match.loading"))}</div>`, { nav: true, active: "matches" });
   }
   const match = runtime.match;
+  if (match.state === "outgoing") return shell(`<a href="/matches${location.search || ""}" data-link class="eyebrow" style="text-decoration:none">${esc(t("match.back"))}</a>${waitingForInvitationPanel(match)}`, { nav: true, active: "matches" });
   const peerName = peerPresentationName(match.peer);
   const explanation = match.explanation;
   const questions = [
@@ -1596,7 +1756,7 @@ function matchDetailScreen(matchId) {
     </div>` : "";
   let decisionArea;
   if (match.state === "connected") decisionArea = "";
-  else if (match.state === "outgoing") decisionArea = `${runtime.demo ? `<div class="notice"><span class="evidence-label">${esc(t("demo.marker"))}</span><p style="margin:8px 0 0">${esc(t("match.waiting"))}</p></div><button class="button primary" style="margin-top:9px;width:100%" data-action="simulate-demo-accept">${esc(t("match.simulate"))}</button>` : `<div class="notice">${esc(t("match.sent"))}</div>`}`;
+  else if (match.state === "outgoing") decisionArea = "";
   else if (match.state === "not_now") decisionArea = `<div class="notice">${esc(t("match.passed"))}</div>`;
   else if (match.state === "unavailable") decisionArea = "";
   else if (match.state === "incoming") decisionArea = `<div class="notice">請使用邀請 Email 裡的專用頁面選擇接受或現在不要。</div>`;
@@ -1606,12 +1766,30 @@ function matchDetailScreen(matchId) {
   const backQuery = location.search || (runtime.matchResult?.result_set_id ? `?set=${encodeURIComponent(runtime.matchResult.result_set_id)}&page=${runtime.matchResult.page}` : "");
   return shell(`<a href="/matches${backQuery}" data-link class="eyebrow" style="text-decoration:none">${esc(t("match.back"))}</a>
     ${demoMarker}
-    <div class="person">${profilePortrait(match.peer, "detail")}<div><h1 class="animal-persona compact">${esc(peerName)}</h1><p>${esc(match.peer.profile?.interests?.[0] || t("match.ownerPitch"))}</p><span class="similarity-score">${esc(t("match.score", { score: match.similarity_score }))}</span></div></div>
+    <div class="person match-detail-person">${profilePortrait(match.peer, "detail")}<div><h1 class="animal-persona compact">${esc(peerName)}</h1><p>${esc(match.peer.profile?.interests?.[0] || t("match.ownerPitch"))}</p><span class="similarity-score">${esc(t("match.score", { score: match.similarity_score }))}</span></div></div>
     ${connectedBlock}
     ${publicProfileDocument(match.peer.profile)}
     <div class="question-card">${questions.map(([label, text]) => `<section class="question"><div class="step-label">${esc(label)}</div><h2>${esc(text)}</h2><div class="evidence">${explanation.evidence_labels.map((evidence) => `<span class="evidence-label">${esc(t("match.evidence", { label: evidenceLabel(evidence) }))}</span>`).join("")}</div></section>`).join("")}</div>
     <div class="provenance"><span>${esc(t("profile.conversation"))}</span><span>${esc(t("profile.approved"))}</span><span>${esc(t("profile.notVerified"))}</span></div>
     ${decisionArea}`, { nav: true, active: "matches" });
+}
+
+function waitingForInvitationPanel(match) {
+  const demoAction = runtime.demo ? `<button class="button primary" data-action="simulate-demo-accept">${esc(t("match.simulate"))}</button>` : "";
+  return `<section class="invite-waiting-adoption" aria-labelledby="invite-waiting-title">
+    <div class="invite-wait-animation" role="img" aria-label="${esc(t("match.waitingStatus"))}">
+      <span class="invite-stamp">${esc(t("match.waitingStamp"))}</span>
+      <span class="invite-path"></span>
+      <span class="invite-avatar sender">${profilePortrait(runtime.profile, "thumbnail", "invite-avatar-image")}<small>${esc(t("match.waitingSelf"))}</small></span>
+      <span class="flying-invite" aria-hidden="true"></span>
+      <span class="invite-avatar receiver">${profilePortrait(match.peer, "thumbnail", "invite-avatar-image")}<small>${esc(peerPresentationName(match.peer) || t("match.waitingPeer"))}</small></span>
+      <span class="waiting-pulse" aria-hidden="true"><i></i><i></i><i></i></span>
+    </div>
+    <h2 id="invite-waiting-title">${esc(t("match.waitingTitle"))}</h2>
+    <p>${esc(t("match.waitingBody"))}</p>
+    <p class="search-status"><i></i>${esc(t("match.waitingStatus"))}</p>
+    <div class="waiting-actions">${demoAction}<a class="button" href="/invitations" data-link>${esc(t("match.waitingInvitations"))}</a></div>
+  </section>`;
 }
 
 async function loadMatch(matchId) {

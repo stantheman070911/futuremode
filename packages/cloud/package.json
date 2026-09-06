@@ -24,7 +24,8 @@
     "fixtures:seed-private": "node --import tsx scripts/fixtures/seed-private-owner-fixtures.ts",
     "report:funnel": "node scripts/report-hackathon-funnel.mjs",
     "images:secret": "node scripts/profile-images/put-secret.mjs",
-    "images:backfill": "node scripts/profile-images/backfill.mjs"
+    "images:backfill": "node scripts/profile-images/backfill.mjs",
+    "preview:ui-adoption": "node scripts/manual-test/ui-adoption-preview.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-bedrock-runtime": "3.1111.0",

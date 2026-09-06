@@ -1,0 +1,67 @@
+# UI Dump
+
+## Visible Text
+
+```text
+Visible text content:
+跳到主要內容
+PITCHYOUROWNER
+帳號
+步驟 1 / 3 · 選擇 AI
+哪個 AI 最了解你？
+選擇平常最常一起思考、且能存取相關脈絡的 AI。
+ChatGPT
+已選擇
+Claude
+選擇
+其他 AI
+選擇
+建立我的 Prompt
+```
+
+## Visible HTML
+
+```html
+HTML content:
+<html lang="zh-Hant"><head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#f4f2ed">
+  <meta name="description" content="Your agent knows you. Let it pitch you.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="PitchYourOwner">
+  <meta property="og:title" content="PitchYourOwner｜讓你的 Agent 介紹你">
+  <meta property="og:description" content="把反覆出現的興趣、動機與難題，變成一份你確認過的介紹，找到真正值得聊的人。">
+  <meta property="og:url" content="https://d1vuzznd4gxltu.cloudfront.net/">
+  <meta property="og:image" content="https://d1vuzznd4gxltu.cloudfront.net/og/site.png">
+  <meta property="og:image:secure_url" content="https://d1vuzznd4gxltu.cloudfront.net/og/site.png">
+  <meta property="og:image:type" content="image/png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="PitchYourOwner｜讓你的 Agent 介紹你">
+  <meta name="twitter:description" content="把反覆出現的興趣、動機與難題，變成一份你確認過的介紹。">
+  <meta name="twitter:image" content="https://d1vuzznd4gxltu.cloudfront.net/og/site.png">
+  <title>PitchYourOwner</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#app">跳到主要內容</a>
+  <main id="app" tabindex="-1"><div class="app-shell" aria-hidden="false"><section class="screen no-nav">
+    <header class="wordmark"><a href="/matches" data-link="">PITCHYOUROWNER</a><a href="/settings" data-link="" class="text-action">帳號</a></header>
+    
+    
+    <p class="eyebrow">步驟 1 / 3 · 選擇 AI</p>
+    <div class="progress" aria-label="步驟 1 / 3"><span class="active"></span><span class=""></span><span class=""></span></div>
+    <h1 class="page-title">哪個 AI 最了解你？</h1>
+    <p class="page-intro">選擇平常最常一起思考、且能存取相關脈絡的 AI。</p>
+    <div class="assistant-grid"><button class="assistant-card" data-action="select-ai" data-ai="ChatGPT" aria-pressed="true"><strong>ChatGPT</strong><span>已選擇</span></button><button class="assistant-card" data-action="select-ai" data-ai="Claude" aria-pressed="false"><strong>Claude</strong><span>選擇</span></button><button class="assistant-card" data-action="select-ai" data-ai="Other AI" aria-pressed="false"><strong>其他 AI</strong><span>選擇</span></button></div>
+    <div style="margin-top:auto;padding-top:28px"><button class="button primary" style="width:100%" data-action="create-prompt">建立我的 Prompt</button></div>
+  </section></div></main>
+  <div id="live-region" class="sr-only" aria-live="polite"></div>
+  
+  
+
+
+</body></html>
+```
