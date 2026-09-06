@@ -562,6 +562,7 @@ is sent to any of these services.
 | 陳睨 | UI/UX、簡報｜UI/UX, presentation |
 | 呂守洵 | 專案管理｜Product management |
 | Jeremy | 其餘所有工作｜Everything else |
+| Yili | 協助 Jeremy｜Assisting Jeremy |
 
 ## License
 
