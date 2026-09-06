@@ -1,569 +1,204 @@
-# **PitchYourOwner**
-
-> **你的 Agent 了解你。讓它替你介紹真正的你。**
-
-我們花了二十年填寫個人檔案，卻依然很難回答一個最基本的問題：
-
-**「我真正正在思考什麼？」**
-
-「攝影」、「設計」、「AI」、「音樂」——這些標籤看似在描述一個人，實際上幾乎沒有資訊量。
-
-兩個人的個人檔案都可能寫著「攝影」。
-
-其中一個人，過去三個月反覆研究低光環境下的街頭攝影；另一個人真正著迷的，是肩膀的線條如何在人像中傳達情緒。
-
-傳統 Profile 看不出兩人的差異。
-
-更重要的是，它也不會讓第二個人遇見那位正在研究**「身體如何傳遞情緒」**的編舞者——即使他們其實正在從不同媒介追問同一個問題。
-
-真正能讓人產生連結的，往往不是：
-
-**「我們喜歡同一件事。」**
-
-而是：
-
-**「原來你也在想這個問題。」**
-
----
-
-## **問題與目標｜Problem & Goal**
-
-今天，一個人最準確、最持續更新的「自我描述」，可能早已不在 LinkedIn、Instagram 或任何 Profile 裡。
-
-而是在他每天使用的 AI 助理裡。
-
-ChatGPT、Claude，以及其他個人 AI，逐漸看見一些傳統個人檔案從未捕捉到的訊號：
-
-* 你反覆追問哪些問題
-* 哪些難題幾個月後仍然沒有放下
-* 什麼主題持續佔據你的注意力
-* 你的興趣如何從表面逐漸變得具體
-* 你現在正在學什麼、做什麼、試圖理解什麼
-* 你真正想遇見什麼樣的人
-
-這些訊號，比「興趣：攝影」豐富得多。
-
-但目前，它們全部被困在私人聊天視窗裡。
-
-使用者沒有一個**由自己控制、經自己審核、可以安全帶出去**的方法，讓這些理解成為與他人建立連結的入口。
-
-**PitchYourOwner 想解決的，就是這個斷點。**
-
-我們讓你已經在使用的 AI Agent，替你回答：
-
-> **「如果你要把我介紹給一個真正可能跟我聊得來的人，你會怎麼介紹我？」**
-
-不是重新填一份 Profile。
-
-不是選更多興趣標籤。
-
-而是讓已經理解你的 AI，替你整理出那些真正值得被另一個人看見的訊號——然後由你決定，哪些可以離開聊天視窗。
-
----
-
-## **核心主張｜Core Idea**
-
-### **Your agent knows you. Let it pitch you.**
-
-PitchYourOwner 是一個 **AI-native friend discovery experience**。
-
-使用者讓自己的 AI 助理撰寫一份「Owner Pitch」；經過隱私審核與本人確認後，系統依據其中真正有意義的內容尋找可能正在思考相似問題的人。
-
-我們不是在匹配兩組關鍵字。
-
-我們希望匹配的是：
-
-**問題、好奇心、長期注意力，以及正在進行中的人生脈絡。**
-
-例如：
-
-> 「喜歡攝影」不是一個好的 match signal。
-
-但：
-
-> 「最近持續研究人在低光環境裡如何被城市空間吞沒」
-
-可能會讓攝影師遇見燈光設計師、電影導演、建築師，甚至正在研究夜間城市感知的研究者。
-
-媒介不同。
-
-問題相同。
-
-這就是 PitchYourOwner 想找到的連結。
-
----
-
-## **目標使用者｜Target Users**
-
-PitchYourOwner 面向已經把 AI 助理當成日常思考工具的人。
-
-他們可能每天使用 ChatGPT、Claude 或其他 assistant，討論：
-
-研究、side project、創作、職涯問題、技術難題、閱讀、興趣，以及那些還不知道該叫什麼名字的想法。
-
-他們不一定想 networking。
-
-也不一定在找工作、約會，或累積 followers。
-
-他們只是希望：
-
-> **遇見另一個剛好也在認真想同一件事的人。**
-
-因此 PitchYourOwner **明確不是**：
-
-* 招募平台
-* Dating App
-* 公開人物目錄
-* Social Feed
-* 以 engagement 為核心的社交網路
-
-我們的核心使用情境更接近：
-
-**「我的 AI 覺得，我應該認識這個人。」**
-
-Phone-first，低摩擦，而且不要求使用者建立另一個需要長期維護的社交身份。
-
----
-
-## **產品流程｜How It Works**
-
-整個產品只有一個重要原則：
-
-### **AI 可以理解你，但不能替你決定什麼可以公開。**
-
-PitchYourOwner 將流程拆成三個 Agent 角色，以及兩個彼此獨立的人類批准關卡。
-
-### **1. Your Agent：理解你**
-
-使用者選擇自己原本就在使用的 AI 助理，例如 ChatGPT 或 Claude。
-
-PitchYourOwner 提供完整 Prompt。
-
-使用者在自己的 AI 裡執行它。
-
-AI 根據既有對話脈絡，整理：
-
-* 持續性的興趣
-* 正在探索的問題
-* 當前專案與目標
-* 有辨識度的思考方式
-* 可能適合認識的人
-* 潛在敏感或不應公開的資訊
-
-這個階段完全發生在使用者自己的 AI 環境中。
-
----
-
-### **2. Privacy Gate：先刪除，再輸出**
-
-在任何資料離開原本的 assistant 之前，AI 必須先列出可能涉及安全或隱私的內容。
-
-使用者一次完成確認：
-
-**哪些保留、哪些排除、哪些必須改寫。**
-
-只有完成這一步後，AI 才輸出結構化 Profile JSON。
-
-PitchYourOwner 的 backend：
-
-**不讀取原始聊天紀錄。**
-
-**不登入使用者的 AI。**
-
-**不呼叫使用者的 Assistant API。**
-
-**只接收使用者已經明確批准的 Profile JSON。**
-
----
-
-### **3. Publication Gate：再次確認**
-
-即使內容已經在原本的 AI 中通過隱私篩選，也不代表它自動公開。
-
-PitchYourOwner 會把 Profile 重新呈現在一個 document-style confirmation page。
-
-使用者看到的，就是即將被系統用於 matching 的實際內容。
-
-只有再次按下明確的 Publish，Profile 才會進入 matching pool。
-
-因此整個流程有兩道獨立的人類核准：
-
-**Gate 1 — 私密 AI 內的內容排除**
-
-**Gate 2 — PitchYourOwner 上的明確發布**
-
-AI 負責理解。
-
-Owner 保有最後決定權。
-
----
-
-## **核心功能｜Core Features**
-
-### **Passwordless Email OTP**
-
-以 Email OTP 登入，不儲存密碼。
-
-Session 使用 hashed opaque tokens，降低帳號系統本身需要持有的敏感資訊。
-
----
-
-### **Owner Pitch Prompt**
-
-使用者選擇：
-
-* ChatGPT
-* Claude
-* 其他 assistant
-* Prompt 語言
-
-PitchYourOwner 產生完整的 Owner Pitch Prompt，讓使用者直接在自己的 AI 中開啟或分享。
-
-Assistant 會先生成簡潔的人物理解，再辨識安全與隱私項目；使用者一次完成確認後，AI 才輸出符合 schema 的 JSON，以及指定 confirmation phrase。
-
-**原始 conversation 永遠不需要傳給 PitchYourOwner。**
-
----
-
-### **Meaning-based Matching**
-
-PitchYourOwner 不以 category 或 keyword 作為主要匹配方法。
-
-Profile 使用 **Amazon Bedrock Cohere `embed-v4`** 建立 embeddings，再透過 **DynamoDB native vector search** 找出語意相近的候選人。
-
-候選人之間再依 `interests`、`active_problems`、`motivations`、`recurring_topics`、`friend_intent` 五個欄位分別計算 cosine similarity，並以加權方式得出 composite score，找出真正值得展開對話的交集。
-
-因此：
-
-> Photography ↔ Photography
-
-並不一定是好 match。
-
-而：
-
-> Portrait photographer studying body language
-> ↔ Choreographer studying emotional movement
-
-反而可能高度相關。
-
----
-
-### **Grounded Match Explanations**
-
-AI 不只告訴使用者：
-
-**「你們很適合認識。」**
-
-每一組 Match 都會被轉換成三個可以真正開始對話的問題，並附上 evidence labels，清楚指出這個判斷來自雙方 Profile 中的哪些訊號。
-
-說明文字直接由分數最高的相似欄位與雙方實際填寫的內容生成，不經過額外的模型改寫，因此每一句都能追溯回 Profile 中的原文。
-
-例如：
-
-> **你們是否都在研究「姿態如何傳達情緒」？**
-
-> 你：反覆探索人像中的肩線與姿勢
-> 對方：正在研究編舞中微小身體動作的情緒效果
-
-使用者可以立即理解：
-
-**為什麼是這個人。**
-
-而不是被迫相信一個黑盒推薦分數。
-
----
-
-### **Mutual-consent Introductions**
-
-沒有冷 DM。
-
-沒有公開聯絡方式。
-
-沒有誰可以直接闖進另一個人的 Inbox。
-
-當一方對 Match 有興趣，可以送出 invitation。
-
-只有在：
-
-**雙方都接受**
-
-之後，PitchYourOwner 才揭露聯絡資訊。
-
-接著 AI 可以根據兩人的共同脈絡，起草第一則訊息。
-
-它不是一句：
-
-> 「嗨，我看到你也喜歡攝影。」
-
-而可能是：
-
-> 「你提到你最近一直在研究動作幅度變小之後，情緒反而更明顯。我最近在人像裡也一直注意肩線和微小姿勢，感覺我們可能正在從兩個媒介碰同一個問題。」
-
-**AI 找到交集。**
-
-**人決定是否見面。**
-
----
-
-### **Labelled Seeded Demo**
-
-為了讓任何人能在不建立帳號、不連接 backend 的情況下理解產品，PitchYourOwner 提供完整 browser-based seeded demo。
-
-Demo 中所有 synthetic profiles 都會清楚標示為示範資料。
-
-它們永遠不會被呈現成真實使用者，也不會與 live matching pool 混淆。
-
----
-
-The interface is Traditional Chinese only, by deliberate scope decision. If you cannot
-read Chinese, [`docs/walkthrough-en.md`](docs/walkthrough-en.md) is an annotated English
-walkthrough of the full journey using real screenshots of the deployed app.
-
-介面僅提供繁體中文，這是刻意的範圍決定。產品行為與 UX 契約以
-[`docs/product-design.md`](docs/product-design.md) 為準；Profile 的 machine-readable
-契約以
-[`config/pitchyourowner-profile-schema.json`](config/pitchyourowner-profile-schema.json)
-為準。
-
----
-
-## **隱私設計｜Privacy by Architecture**
-
-對 PitchYourOwner 而言，privacy 不是 Privacy Policy 裡的一段文字。
-
-它是產品架構本身。
-
-我們刻意選擇了一條較嚴格的路：
-
-> **不要把完整聊天紀錄交給一個新的平台，再要求使用者相信我們會妥善處理。**
-
-相反地：
-
-**讓最敏感的理解留在使用者原本的 AI 裡。**
-
-AI 在那裡完成 synthesis。
-
-使用者在那裡完成 exclusion。
-
-PitchYourOwner 最終只接收：
-
-**Owner 明確批准、刻意帶出來的最小必要資訊。**
-
-這讓「AI 很了解我」第一次可以成為產品優勢，而不必同時變成：
-
-**「另一家公司也必須看到我的全部聊天紀錄。」**
-
----
-
-## **我們真正想改變的事情｜What We Want to Change**
-
-今天的網路擅長回答：
-
-**你認識誰？**
-
-**你追蹤誰？**
-
-**你在哪裡工作？**
-
-**你喜歡哪些類別？**
-
-但它不擅長回答：
-
-> **現在，世界上還有誰正在認真思考我正在思考的問題？**
-
-AI assistants 正在第一次建立足夠豐富的個人脈絡，可以回答這個問題。
-
-PitchYourOwner 希望建立那個缺失的介面：
-
-**從私人 AI 理解，到 owner-controlled identity；
-從 identity，到有意義的 discovery；
-從 discovery，到雙方自願開始的一段對話。**
-
-你的 Agent 已經了解你。
-
-**現在，讓它替你找到值得認識的人。**
-
-## 系統架構｜Architecture
-
-```text
-Vanilla-JS mobile SPA
-        │
-        ▼
-CloudFront
-  ├── private S3 static origin
-  └── same-origin /v1/* → API Gateway HTTP API
-                              │
-                              ├── Email OTP and hashed opaque sessions
-                              ├── Profile drafts, versions, and owner controls
-                              ├── Bedrock Cohere profile embeddings
-                              ├── DynamoDB native vector candidate search
-                              ├── Weighted field-similarity scoring
-                              ├── Matches and mutual-consent invitations
-                              └── Support requests
-                                      │
-                                      ▼
-                         DynamoDB single-table storage
-```
-
-**前端｜Frontend.** A framework-free mobile SPA served from a private S3 origin through
-CloudFront. It calls the API same-origin at `/v1/*`, so there is no CORS surface.
-
-**後端｜Backend.** API Gateway HTTP API in front of Node.js 22 Lambda handlers, which own
-authentication, profile drafts and versions, matching, invitations, and support requests.
-
-**模型｜Models.** Lambdas call Amazon Bedrock directly: Cohere `embed-v4` to embed a
-published profile. Matching itself is deterministic: per-field cosine similarity over the
-stored embeddings, combined into a weighted composite score, with explanations generated
-from the strongest-scoring field and the owners' own profile text — no judge model is
-invoked. A separate worker calls Google Gemini to generate and review profile images. The
-end user's ChatGPT, Claude, or other assistant is never called by the backend.
-
-**資料庫｜Database.** One DynamoDB single-table design holds sessions, profiles, embeddings,
-matches, and invitations, and serves candidate search through native vector search.
-
-**外部服務｜External services.** Resend delivers OTP email. The CDK stack also defines an
-optional DynamoDB-stream → SQS → email outbox, CloudWatch alarms, an SNS operations topic,
-and an AWS Budget. Matching email delivery and the fallback schedule are disabled in the
-current Hackathon configuration; matching is started through the authenticated API after
-publication, and invitations are handled in the application.
-
-## 使用技術｜Technology used
-
-| 類別 | 技術／服務 | 用途 |
-| --- | --- | --- |
-| AI 模型 | Amazon Bedrock — Cohere `embed-v4` | Published-profile embeddings for candidate search |
-| AI 模型 | Google Gemini (`gemini-3.1-flash-lite-image`, `gemini-3.5-flash-lite`) | Profile image generation and review |
-| AI 模型 | ChatGPT / Claude / other assistant (owner-operated) | Runs the owner-pitch prompt and the privacy gate; never called by the backend |
-| 前端 | Vanilla JavaScript, HTML, CSS (no framework) | Phone-first SPA, seeded browser demo |
-| 前端 | Amazon CloudFront + private Amazon S3 | Static hosting and same-origin `/v1/*` API routing |
-| 後端 | Amazon API Gateway HTTP API + AWS Lambda (Node.js 22, TypeScript) | Auth, profiles, matching, invitations, support |
-| 後端 | Amazon DynamoDB (single table, native vector search) | Sessions, profiles, embeddings, matches, invitations |
-| 後端 | AWS CDK | Infrastructure as code for the whole stack |
-| 後端 | Amazon SQS, SNS, CloudWatch, AWS Budgets, SES (optional) | Email outbox, alarms, operations topic, cost guardrail |
-| 後端 | Resend | Passwordless OTP email delivery |
-| Sponsor 技術 | 未使用｜None | This project does not use any sponsor technology |
-
-## 安裝與執行｜Installation and running
-
-Requirements:
-
-- Node.js 20 or newer; deployed Lambdas use Node.js 22.
-- npm.
-- AWS credentials only for deployment or cloud-backed demo scripts.
-
-```bash
-git clone https://github.com/stantheman070911/futuremode.git
-cd futuremode/packages/cloud
-npm ci
-npm test      # syncs canonical schema + prompts, then runs the suite
-npm run build # strict TypeScript compilation
-npm run synth # CDK synth
-```
-
-For a backend-free UI walkthrough:
-
-```bash
-python3 -m http.server 8000 --directory packages/cloud/static
-# open http://localhost:8000/?demo=1
-```
-
-This server does not proxy `/v1/*`; use only the seeded demo locally. There is no separate
-lint command — strict TypeScript compilation and the test suite are the repository's
-automated code checks. See [`packages/cloud/README.md`](packages/cloud/README.md) for
-configuration, deployment, API, persistence, and troubleshooting details.
-
-儲存庫結構｜Repository structure:
-
-| Path | Ownership |
-| --- | --- |
-| `docs/product-design.md` | Current product behavior, consent boundaries, and UX constraints |
-| `docs/get_info_prompt_ch.md`, `docs/get_info_prompt_en.md` | Executable owner-pitch prompt sources |
-| `config/pitchyourowner-profile-schema.json` | Canonical profile field and validation configuration |
-| `packages/cloud/static/` | Framework-free browser application and generated runtime contracts |
-| `packages/cloud/functions/` | Lambda handlers and shared validation/authentication code |
-| `packages/cloud/lib/` | CDK stack and product-neutral serverless building blocks |
-| `packages/cloud/scripts/` | Contract synchronization and synthetic demo tools |
-| `packages/cloud/test/` | Contract, matching-filter, rate-limit, prompt, and CDK tests |
-| `packages/cloud/README.md` | Engineering, API, data-model, configuration, and deployment reference |
-
-`docs/product-memo-v1.md` is a frozen source memo retained for provenance. It is not a
-current specification.
-
-## 作品展示｜Demo
-
-- 作品展示網址｜Application: <https://d1vuzznd4gxltu.cloudfront.net>
-- 評選影片｜Judging video: N/A
-
-Stack `PitchYourOwner-hackathon`, region `ap-southeast-1`. This is a manually deployed
-Hackathon environment, not a production service or an automatic deployment of every
-repository commit. Repository HEAD remains the source for reproducible behavior.
-
-成果｜Results. _Real-cohort recruiting is in progress. This table reports what actually
-happened, excluding all fixture and test profiles, and will be updated as the cohort
-completes._
-
-| Metric | Value |
-| --- | --- |
-| Real published profiles | `[PENDING — P0-M1 cohort]` |
-| Invitations sent | `[PENDING — P0-M1 cohort]` |
-| Mutual connections | `[PENDING — P0-M1 cohort]` |
-| Median publish-to-first-match latency | `[PENDING — Development funnel report]` |
-
-No number here is drawn from synthetic or fixture data. See
-[`docs/round1-submission.md`](docs/round1-submission.md) for the full narrative and one
-real pairing quoted with permission.
-
-## 限制與未來工作｜Limitations and future work
-
-Known limitations:
-
-- Matching has been exercised with synthetic photographer, dancer, and sound-designer
-  profiles. No real 10–30-person validation cohort has been completed, so the repository
-  does not claim real-user match quality.
-- Matching scans the small active cohort and scores candidates per seed. Its provider work
-  approaches O(n²) across a cohort and is intentionally sized for fewer than about 50
-  Hackathon participants.
-- Browser sessions are opaque tokens stored in `localStorage`; production use would require
-  a stronger browser-session and CSRF design.
-- Block, report, age-policy, and production abuse operations are not implemented.
-- Matching emails and notification deep links are not active in the current deployment.
-- ChatGPT and Claude prefilled links retain a visible copy fallback because cross-browser
-  real-device behavior is provider- and browser-dependent.
-- `/privacy` and `/terms` are concise product-boundary notices, not production legal
-  documents.
-
-Future work: complete the real validation cohort and publish its funnel numbers, replace
-the per-seed O(n²) judging pass with a scalable ranking stage, harden browser sessions,
-add block/report and age-policy operations, and enable matching email and notification
-deep links. [`ROADMAP.md`](ROADMAP.md) tracks the ordered plan.
-
-## 第三方服務、資料與素材｜Third-party services, data, and assets
-
-| 項目 | 來源 | 授權／取用方式 |
-| --- | --- | --- |
-| Amazon Bedrock (Cohere `embed-v4`) | <https://aws.amazon.com/bedrock/> | AWS account credentials, supplied at deploy time via environment configuration |
-| Google Gemini API | <https://ai.google.dev/> | API key supplied at deploy time via environment configuration |
-| AWS DynamoDB, Lambda, API Gateway, S3, CloudFront, SQS, SNS, CloudWatch, Budgets, SES (optional) | <https://aws.amazon.com/> | Same AWS account credentials; provisioned by the CDK stack |
-| Resend (default OTP email provider) | <https://resend.com/> | API key supplied at deploy time via environment configuration |
-| DM Sans | <https://fonts.google.com/specimen/DM+Sans> | SIL Open Font License, license file included in `packages/cloud/assets/fonts/` |
-| Noto Sans CJK | <https://fonts.google.com/noto> | SIL Open Font License, license file included in `packages/cloud/assets/fonts/` |
-| Synthetic demo profiles | Authored in this repository | Reserved `.invalid` addresses, isolated from normal matching by explicit test metadata |
-
-No API keys, tokens, or personal data are committed to this repository; all credentials are
-supplied through deployment-time environment configuration. No source conversation history
-is sent to any of these services.
-
-本儲存庫未提交任何金鑰、Token 或個人資料。
-
-## 團隊成員｜Team
-
-| 姓名 | 分工 |
-| --- | --- |
-| 陳睨 | UI/UX、簡報｜UI/UX, presentation |
-| 呂守洵 | 專案管理｜Product management |
-| Jeremy | 其餘所有工作｜Everything else |
-| Yili | 協助 Jeremy｜Assisting Jeremy |
-
-## License
-
-MIT — see [`LICENSE`](LICENSE).
+PitchYourOwner 產品介紹
+
+在這個隨機可以配對到一堆人，但是難找到高契合朋友的時代，PitchYourOwner 是一個以「真實」興趣、正在做的事情與思考方式為核心的 AI 社交配對平台。使用者不必從空白自介開始，而是讓熟悉自己的 AI Agent 從本人授權的對話中整理線索，所有內容經本人核對後，才用於產生匿名介紹、尋找聊得來的人與解釋配對理由。更重要的是再也不會有一般交友平台自己寫介紹的尷尬和不真誠了，你的 Agent 會幫助你挖掘最真實的自己。
+
+ AI Agent不是替人決定「你是誰」，而是幫助一個人更容易說出，「我最近在做什麼、我為什麼在意，以及我想遇見什麼樣的人」。
+
+PitchYourOwner 由三位夥伴一起打造，同時具有技術背景、心理學與 UX 背景以及高中生交友與開發經驗，裡面兩位創辦人皆成功在 30 歲就靠著興趣和愛好找到最棒的人生伴侶和永遠的朋友，其中一位甚至已婚七年育有小孩，兩位都是智性戀。事實證明，興趣和熱情帶來關係總是更加緊密，也更經得住時間考驗，因為互動關係中「真誠」和「總是在新的事物中被點亮價值」是這個時代自娛自洽的永遠命題，畢竟，唯有愛自己也有所愛事務的人，可以永遠生機勃勃也永遠有新的維持熱度話題。
+
+產品的三位創辦人分別來自不同背景，皆有開發經驗，從三個角度把關產品的設計與邏輯。
+Jeremy 開發暨測試工程師，長期研究如何讓 Agent 走入一般人的生活，讓每個人都可以輕易地感受到 Agent 的強大。
+Stanley 最近我特別投入在創業、行銷、社群、AI／Vibe Coding、私募股權（PE）／創投（VC），以及美食這些領域。
+Casey 同時具有諮商心理學背景和 UX 背景的設計師，熱愛找到產品和人互動時的 sweet spot.
+
+
+一、問題定義與社會影響
+1. 我們不缺社交平台，缺的是開始一段有內容的關係
+現有交友產品多半從照片、年齡、職業與簡短標籤開始。這些資訊適合快速篩選，卻不一定能回答真正影響一段關係的問題：兩個人有沒有想一起深入討論的題目？做事節奏是否相近？能否把一次聊天延伸成共同活動？
+Pew Research Center 的調查顯示，美國網路交友使用者對整體經驗的評價幾乎正反各半，研究也特別指出倦怠、訊息壓力、騷擾與信任問題。這表示「擴大可選人數」本身，未必能改善連結品質。Pew Research Center：The Experiences of U.S. Online Daters
+同時，OECD 2025 年跨國報告指出，人們面對面往來的頻率長期下降，年輕人與男性更是社會連結惡化較明顯的群體。社交連結也與健康、教育、就業及公民參與密切相關。OECD：Social Connections and Loneliness in OECD Countries
+PitchYourOwner 因此不把問題定義成「找不到更多人」，而是：
+在資訊很多、關係很薄的環境裡，人們缺少能自然開啟一段深度互動的共同脈絡。
+
+2. 很多人不是沒有內容，只是不擅長自我推銷
+傳統個人檔案要求使用者立即將自己濃縮成幾個標籤。這對擅長包裝的人有利，卻可能低估慢熱、跨領域、語言表達較保守，或需要透過作品和問題才能被理解的人。
+PitchYourOwner 將 AI 定位成「整理者」而不是「評審」：它從使用者明確授權的資料中找出反覆出現的興趣、做過的專案、思考脈絡、真實用語與最近關心的問題，再交回本人確認。
+這讓個人介紹從一次性的自我行銷，轉變成可以持續修正的「動態身份紀錄」。
+3. 社會價值：讓不擅長搶話的人也能被看見
+美國衛生總署將社會連結視為公共健康的重要條件，並主張科技公司應將促進安全、健康的連結納入產品設計。U.S. Surgeon General：Social Connection
+PitchYourOwner 希望降低三種社交門檻：
+表達門檻：AI 協助整理，但不能越過本人授權。
+開場門檻：以共同問題產生具體話題，而不是制式寒暄。
+信任門檻：匿名開始、理由可檢查、雙方同意才解鎖聯絡方式。
+二、為什麼「興趣圈」可能成為下一代交友方式？
+這裡的「興趣」不是「喜歡電影、旅行、美食」這類靜態標籤，而是帶有行動脈絡的題目，例如：
+想把百老匯音樂劇製作成台語版。
+想把畫冊做成電子出版品。
+正在收集城市裡的深夜聲音。
+想用 AI Agent 做一個解決日常問題的小工具。
+1. 共同興趣比抽象身份更容易產生第一個行動
+一項陌生人互動研究發現，共同的文化品味與休閒興趣，比部分職業或身分特徵更一致地預測彼此好感與納入群體的意願。Playing with Strangers: Which Shared Traits Attract Us Most to New People?
+大型隨機實驗也發現，在社交介面中呈現雙方共同點，可以降低發現彼此共通性的資訊成本，進而促進關係建立。Displaying Things in Common to Encourage Friendship Formation
+產品上的意義是：比起告訴使用者「你們有 87% 相似」，直接顯示「你們最近都在研究低光如何改變情緒感受」，更容易轉化成一個可以回應的開場。
+2. 關係不只來自相似，也來自一起做事
+社會網絡研究顯示，相似性確實會影響友誼形成，但共同參與活動本身，也能在既有相似性之外增加建立關係的機會。The Contribution of Extracurricular Activities to Adolescent Friendships
+因此，PitchYourOwner 的興趣圈不是單純把相似的人堆在一起，而是把人帶向可共同進行的微型行動：
+交換一個作品版本。
+一起走一段路線。
+比較兩種觀察方法。
+合作做一個小型原型。
+約一次有明確題目的對話。
+3. 從個人頁面走向「以題目為中心」的社交
+社會學上的同質性原則指出，人們容易與擁有相近特徵的人建立關係；多個面向同時相似時，形成連結的機率可能更高。Multidimensional Homophily in Friendship Networks
+但完全依靠相似性也可能形成封閉圈層。因此 PitchYourOwner 不只尋找「和我一樣的人」，也尋找：
+關心同一題目，但具有不同方法的人。
+目標相近，但能力可以互補的人。
+社交節奏不同，卻能尊重彼此界線的人。
+這是從「人物目錄」轉向「題目網絡」：人不是先被分類，再去尋找話題；而是先因一個值得討論或實作的題目相遇，再慢慢理解彼此。
+4. AI 讓興趣身份可以持續更新
+過去的興趣社群依賴使用者手動填寫標籤，資料很快就會失真。生成式 AI 能把分散在對話中的近期專案、反覆問題和表達習慣整理成可修改的草稿，使身份呈現從固定履歷變成「最近的我」。
+這部分是 PitchYourOwner 的核心產品假設，必須透過實驗驗證：
+AI 整理、本人確認的動態介紹，是否比自行填寫的固定自介，更能促成有回應且能持續的對話？
+
+三、產品運作方式
+1. 授權，而不是無限制讀取
+使用者選擇一個平常最熟悉自己的 AI，並明確決定可供分析的對話範圍。系統不得聲稱讀取未授權資料，也不得推測敏感屬性。
+2. Agent 整理線索
+Agent 從資料中整理：
+具體興趣與作品
+最近正在解決的問題
+反覆回來討論的主題
+做事方式與合作偏好
+使用者實際說過、足以呈現個性的句子
+想認識的人與期待的互動形式
+每一項觀察都必須附上依據、出現情境與信心程度。
+3. 互動風格觀察
+系統以三種模型提供不同角度的描述：
+BFI-2：人格方向與五大特質。
+Social Styles：對話中的主導性、回應性與互動方式。
+FIRO-B：參與、控制、親近等人際需求，以及主動表現和期待回應的差異。
+BFI-2 經過正式的量表發展與驗證，包含五個領域及十五個細分特質。Soto & John：The Next Big Five Inventory-2
+但必須清楚說明：由 Agent 觀察對話不等同正式施測。正式結果仍應使用經授權的完整題目、標準程序與本人作答。Social Styles 與 FIRO-B 若要宣稱為正式測驗，也需要確認量表授權、計分方式與商業使用條件。
+現階段產品應將這三組結果稱為：
+Agent 提出的互動風格觀察，等待本人確認。
+
+4. Owner Review
+使用者可以逐項：
+保留
+修改
+刪除
+設為不公開
+標記不像自己
+自行完成正式問卷以取代 Agent 推測
+未確認內容不進入配對資料庫。
+5. 產生一頁式公開介紹
+核准後產生可分享的長頁與名片 QR Code，包含：
+匿名動物角色
+三大關鍵字
+三句本人真實發言
+近期興趣與作品
+正在解決的問題
+想認識的人
+三組互動風格摘要
+Owner 親自確認標記
+6. 可解釋配對
+Agent 先依興趣、問題與合作意圖建立候選人，再使用經確認的互動風格作為輔助排序。
+配對不公開抽象百分比，而是呈現三層理由：
+興趣交集：正在關心什麼共同題目。
+互動節奏：哪些地方相近或互補。
+現在能做什麼：一個可立即開始的小行動。
+語言風格研究顯示，對話雙方的語言協調程度與關係建立及穩定性有關，但這類結果多為相關關係，不能直接當成關係成功的因果保證。Language Style Matching and Relationship Initiation
+7. 雙方同意後才解鎖
+邀請送出後，聯絡方式保持隱藏。只有雙方接受，才會解鎖 Email 或其他聯絡管道，並由 Agent 根據雙方核准資料提供數個開場題目。
+四、產品規格
+模組 MVP 規格
+帳號 Email 驗證、帳號復原、登出與刪除
+AI 串接 可複製的標準 Prompt、結構化 JSON 匯入
+資料授權 指定資料範圍、顯示資料來源、禁止未授權推論
+Agent 分析 興趣、作品、問題、動機、真實語句與互動觀察
+心理模型 BFI-2、Social Styles、FIRO-B 輔助觀察與自行作答入口
+本人審查 逐項保留、修改、刪除與隱私設定
+公開頁 一頁式介紹、QR Code、分享長圖
+配對 興趣候選生成、互動風格輔助排序、理由說明
+邀請 送出、等待、接受、拒絕與狀態管理
+聯絡解鎖 雙方同意後才顯示聯絡方式
+配對管理 自訂資料夾、拖放分類、重新命名
+隱私 公開／私人切換、資料刪除、匯出與重新授權
+裝置 手機優先響應式介面、鍵盤操作與基本無障礙支援
+
+
+五、技術架構
+現有 Demo
+目前 Demo 採用單一 HTML、CSS 與 JavaScript 實作，使用 URL hash 管理完整流程，可在沒有網路或後端服務的情況下展示：
+登入驗證
+→ 選擇 AI
+→ 複製分析指令
+→ AI 整理結果
+→ 匯入結構化資料
+→ Owner 審查
+→ 公開介紹
+→ 配對
+→ 邀請
+→ 雙方接受
+→ 聯絡與配對管理
+此架構適合黑客松展示，因為流程可控、部署簡單，也能在沒有真實個資的情況下測試互動。
+下一階段正式架構
+授權資料
+   ↓
+內容抽取模型
+   ↓
+結構化 Schema 驗證
+   ↓
+Owner Review 與隱私過濾
+   ↓
+加密個人資料庫
+   ↓
+興趣候選檢索
+   ↓
+互動風格與互補性排序
+   ↓
+可解釋理由生成
+   ↓
+雙方同意與聯絡解鎖
+建議的技術元件：
+前端：響應式 Web App／PWA。
+資料格式：具版本管理的 JSON Schema。
+語意檢索：將核准後的興趣、專案與問題轉成向量。
+候選生成：語意相近、主題重疊與近期活躍度。
+重新排序：共同目標、互補能力、互動偏好與使用者回饋。
+解釋生成：只能引用雙方已核准欄位。
+安全：傳輸及靜態加密、最小權限、可撤回授權與完整刪除。
+稽核：記錄資料來源、模型版本、使用範圍及本人修改歷程。
+防護：敏感屬性過濾、提示注入防護、Schema 驗證與輸出約束。
+心理觀察不應成為主要配對權重，也不能用於推測疾病、智力、政治立場、創傷、性傾向或其他敏感資料。
+六、如何用實證方法驗證產品
+PitchYourOwner 不應以註冊量或滑卡次數作為主要成功指標，而應測量「是否形成有內容且雙方願意延續的互動」。
+核心指標
+Agent 草稿被本人保留、修改與刪除的比例。
+使用者認為介紹「像自己」的程度。
+公開資料中出現未授權內容的比例。
+查看配對後送出邀請的比例。
+邀請被雙方接受的比例。
+第一則訊息得到回覆的比例。
+7 天及 30 天後仍有互動的比例。
+是否產生一次通話、見面或共同作品。
+封鎖、檢舉與不適配事件比例。
+建議實驗
+將受試者隨機分成三組：
+傳統自填個人介紹。
+AI 整理介紹，但不顯示配對理由。
+AI 整理介紹，並顯示共同興趣與具體開場。
+主要結果不是「點擊較多」，而是雙方接受率、實際回覆率與後續互動品質。
+另一組實驗則比較：
+高度相似配對
+共同問題但能力互補
+隨機推薦
+如此才能確認「興趣圈」真正有效的原因，是相似性、互補性，還是共同活動提供的互動情境。
+七、產品定位
+PitchYourOwner 不是另一個用 AI 包裝履歷或計算人格百分比的平台。
+它的核心主張是：
+人不應該只靠照片、職稱或一句自我推銷被決定是否值得認識。
+你做過的事、反覆思考的問題，以及你看世界的方法，本身就能成為一段關係的入口。
+
+「興趣圈會是下一代交友風潮」目前仍是一個需要驗證的市場判斷；但研究已經提供了合理基礎：共同品味有助於陌生人建立好感，共同活動能促進友誼，而清楚呈現共同點可以降低關係開始時的資訊成本。
+PitchYourOwner 要做的，就是把這些原本散落在生活與 AI 對話裡的訊號，轉化成一個安全、可修改、能開始行動的社交入口。
