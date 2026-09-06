@@ -11,13 +11,14 @@ Jeremy 開發暨測試工程師，長期研究如何讓 Agent 走入一般人的
 Stanley 最近我特別投入在創業、行銷、社群、AI／Vibe Coding、私募股權（PE）／創投（VC），以及美食這些領域。
 Casey 同時具有諮商心理學背景和 UX 背景的設計師，熱愛找到產品和人互動時的 sweet spot.
 
+感興趣的話，先來看看[影片 demo](https://drive.google.com/drive/folders/1NUBQp61KP8kwFqyGVky9axzt4uf2X7Vg?usp=drive_link)
 
 ## **一、問題定義與社會影響**
 1. 我們不缺社交平台，缺的是開始一段有內容的關係
 現有交友產品多半從照片、年齡、職業與簡短標籤開始。這些資訊適合快速篩選，卻不一定能回答真正影響一段關係的問題：兩個人有沒有想一起深入討論的題目？做事節奏是否相近？能否把一次聊天延伸成共同活動？
 Pew Research Center 的調查顯示，美國網路交友使用者對整體經驗的評價幾乎正反各半，研究也特別指出倦怠、訊息壓力、騷擾與信任問題。這表示「擴大可選人數」本身，未必能改善連結品質。（Pew Research Center：The Experiences of U.S. Online Daters）同時，OECD 2025 年跨國報告指出，人們面對面往來的頻率長期下降，年輕人與男性更是社會連結惡化較明顯的群體。社交連結也與健康、教育、就業及公民參與密切相關。（OECD：Social Connections and Loneliness in OECD Countries）
 
-**PitchYourOwner 因此不把問題定義成「找不到更多人」，而是在資訊很多、關係很薄的環境裡，人們缺少能自然開啟一段深度互動的共同脈絡。**
+**PitchYourOwner 因此不把問題定義成「找不到更多人」，而是在資訊很多、關係很薄的環境裡，嘗試解決明明通訊錄很多人的頭像都亮著，我卻找不到真正想要花時間在一起的朋友，也缺少能自然開啟一段深度互動的共同脈絡的問題。**
 
 **2. 很多人不是沒有內容，只是不擅長自我推銷**
 今天，一個人最準確、最持續更新的「自我描述」，可能早已不在 LinkedIn、Instagram 或任何 Profile 裡，而是在他每天使用的 AI 助理裡。
@@ -202,6 +203,8 @@ Owner Review 與隱私過濾
 稽核：記錄資料來源、模型版本、使用範圍及本人修改歷程。
 防護：敏感屬性過濾、提示注入防護、Schema 驗證與輸出約束。
 
+歡迎了解我們的 UX 驗證，看看我們做了什麼有趣的[思考過程]([url](https://drive.google.com/drive/folders/1rxbLVVw8jCjVeMOWXErS7_E22Lv4iNub?usp=drive_link))
+
 ### **Meaning-based Matching**
 PitchYourOwner 不以 category 或 keyword 作為主要匹配方法。
 Profile 使用 **Amazon Bedrock Cohere `embed-v4`** 建立 embeddings，再透過 **DynamoDB native vector search** 找出語意相近的候選人。
@@ -271,6 +274,7 @@ PitchYourOwner 不是另一個用 AI 包裝履歷或計算人格百分比的平�
 你做過的事、反覆思考的問題，以及你看世界的方法，本身就能成為一段關係的入口。
 
 「興趣圈會是下一代交友風潮」目前仍是一個需要驗證的市場判斷，但研究已經提供了合理基礎，共同品味有助於陌生人建立好感，共同活動能促進友誼，而清楚呈現共同點可以降低關係開始時的資訊成本。PitchYourOwner 要做的，就是把這些原本散落在生活與 AI 對話裡的訊號，轉化成一個安全、可修改、能開始行動的社交入口。
+下一階段或許我們會引用更多有真正科學信效度的心理測驗，[來看看我們目前的發想]([url](https://drive.google.com/drive/folders/15AK2ufs4aBD4C297nNRZy-d-Z2km82IH?usp=drive_link))
 
 ## **我們真正想改變的事情｜What We Want to Change**
 
