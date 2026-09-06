@@ -203,7 +203,7 @@ Owner Review 與隱私過濾
 稽核：記錄資料來源、模型版本、使用範圍及本人修改歷程。
 防護：敏感屬性過濾、提示注入防護、Schema 驗證與輸出約束。
 
-歡迎了解我們的 UX 驗證，看看我們做了什麼有趣的[思考過程]([url](https://drive.google.com/drive/folders/1rxbLVVw8jCjVeMOWXErS7_E22Lv4iNub?usp=drive_link))
+歡迎了解我們的 UX 驗證，看看我們做了什麼有趣的[思考過程](https://drive.google.com/drive/folders/1rxbLVVw8jCjVeMOWXErS7_E22Lv4iNub?usp=drive_link)
 
 ### **Meaning-based Matching**
 PitchYourOwner 不以 category 或 keyword 作為主要匹配方法。
@@ -274,7 +274,7 @@ PitchYourOwner 不是另一個用 AI 包裝履歷或計算人格百分比的平�
 你做過的事、反覆思考的問題，以及你看世界的方法，本身就能成為一段關係的入口。
 
 「興趣圈會是下一代交友風潮」目前仍是一個需要驗證的市場判斷，但研究已經提供了合理基礎，共同品味有助於陌生人建立好感，共同活動能促進友誼，而清楚呈現共同點可以降低關係開始時的資訊成本。PitchYourOwner 要做的，就是把這些原本散落在生活與 AI 對話裡的訊號，轉化成一個安全、可修改、能開始行動的社交入口。
-下一階段或許我們會引用更多有真正科學信效度的心理測驗，[來看看我們目前的發想]([url](https://drive.google.com/drive/folders/15AK2ufs4aBD4C297nNRZy-d-Z2km82IH?usp=drive_link))
+下一階段或許我們會引用更多有真正科學信效度的心理測驗，[來看看我們目前的發想](https://drive.google.com/drive/folders/15AK2ufs4aBD4C297nNRZy-d-Z2km82IH?usp=drive_link)
 
 ## **我們真正想改變的事情｜What We Want to Change**
 
