@@ -476,6 +476,9 @@ export class PitchYourOwnerCloudStack extends cdk.Stack {
     addRoute("/v1/matching-runs", apigwv2.HttpMethod.POST, triggerMatching);
     addRoute("/v1/manual-test/bootstrap", apigwv2.HttpMethod.POST, manualTestBootstrap);
     addRoute("/v1/manual-test/inbox", apigwv2.HttpMethod.GET, pairing);
+    addRoute("/v1/interest-intents", apigwv2.HttpMethod.POST, pairing);
+    addRoute("/v1/interests/claim", apigwv2.HttpMethod.POST, pairing);
+    addRoute("/v1/interests/{targetProfileId}", apigwv2.HttpMethod.DELETE, pairing);
     addRoute("/v1/matches", apigwv2.HttpMethod.GET, pairing);
     addRoute("/v1/matches/refresh", apigwv2.HttpMethod.POST, pairing);
     addRoute("/v1/matches/{matchId}", apigwv2.HttpMethod.GET, pairing);

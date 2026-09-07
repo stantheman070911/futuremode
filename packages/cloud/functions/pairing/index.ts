@@ -1,4 +1,4 @@
-import { GetCommand, PutCommand, QueryCommand, TransactWriteCommand } from "@aws-sdk/lib-dynamodb";
+import { DeleteCommand, GetCommand, PutCommand, QueryCommand, TransactWriteCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import type { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from "aws-lambda";
 import { loadSession, profileIdForEmailHash } from "../shared/auth.js";
 import { profileAnimalPersona, publicProfile, type OwnerPitchProfile } from "../shared/contracts.js";
@@ -17,6 +17,8 @@ interface Edge extends Record<string, unknown> {
 interface ResultSetItem { candidateId: string; candidateVersionId: string; edgeSk: string; pairId: string }
 
 const DAY = 86_400;
+const INTEREST_INTENT_LIFETIME_SECONDS = 30 * DAY;
+const INTEREST_INTENT_HOURLY_LIMIT = 30;
 const RESULT_SET_FRESHNESS_SECONDS = 60;
 const genericAnimal = "帶著好奇心探索的水獺";
 
@@ -136,6 +138,137 @@ async function loadResultSet(tableName: string, owner: CurrentProfile, requested
 
 async function invitation(tableName: string, pairId: string) {
   return (await documentDynamo.send(new GetCommand({ TableName: tableName, Key: { pk: `INVITATION#${pairId}`, sk: "META" }, ConsistentRead: true }))).Item;
+}
+
+function validPublicSlug(value: unknown): string {
+  const slug = String(value ?? "").trim();
+  if (!/^[A-Za-z0-9_-]{10,80}$/.test(slug)) throw new Error("interest_target_not_found");
+  return slug;
+}
+
+async function publicTargetForSlug(tableName: string, slug: string): Promise<CurrentProfile> {
+  const pointer = (await documentDynamo.send(new GetCommand({ TableName: tableName, Key: { pk: `PUBLIC_SLUG#${slug}`, sk: "PROFILE" }, ConsistentRead: true }))).Item;
+  if (!pointer?.profileId) throw new Error("interest_target_not_found");
+  const target = await getCurrent(tableName, String(pointer.profileId));
+  if (!profileIsPublic(target)) throw new Error("interest_target_unavailable");
+  return target;
+}
+
+async function publicTargetPresentation(tableName: string, target: CurrentProfile, publicSlug = target.publicSlug) {
+  const version = await getVersion(tableName, target.profileId, target.versionId);
+  if (!version?.profile) throw new Error("interest_target_not_found");
+  const profile = publicProfile(version.profile);
+  return {
+    profile_id: target.profileId,
+    public_slug: publicSlug,
+    display_name: profileAnimalPersona(version.profile),
+    animal_persona: profileAnimalPersona(version.profile),
+    summary: profile.summary,
+    profile_image_url: profileImageUrl(target, requiredEnvironment("PUBLIC_SITE_ORIGIN"), "thumbnail"),
+  };
+}
+
+async function reserveInterestIntent(tableName: string, sourceIp: string) {
+  const hour = Math.floor(Date.now() / 3_600_000);
+  try {
+    await documentDynamo.send(new UpdateCommand({
+      TableName: tableName,
+      Key: { pk: `RATE#INTEREST#${sha256(sourceIp || "unknown")}`, sk: `HOUR#${hour}` },
+      UpdateExpression: "SET expiresAt = if_not_exists(expiresAt, :expires) ADD requests :one",
+      ConditionExpression: "attribute_not_exists(requests) OR requests < :limit",
+      ExpressionAttributeValues: { ":expires": Math.floor(Date.now() / 1000) + 2 * 3_600, ":one": 1, ":limit": INTEREST_INTENT_HOURLY_LIMIT },
+    }));
+  } catch (error) {
+    if (error instanceof Error && /ConditionalCheckFailed/.test(error.name + error.message)) throw new Error("interest_rate_limited");
+    throw error;
+  }
+}
+
+async function createInterestIntent(tableName: string, rawSlug: unknown, sourceIp: string) {
+  const slug = validPublicSlug(rawSlug);
+  await reserveInterestIntent(tableName, sourceIp);
+  const target = await publicTargetForSlug(tableName, slug);
+  const token = randomOpaqueToken(32);
+  const tokenHash = sha256(token);
+  const now = new Date().toISOString();
+  const expiresAt = Math.floor(Date.now() / 1000) + INTEREST_INTENT_LIFETIME_SECONDS;
+  await documentDynamo.send(new PutCommand({
+    TableName: tableName,
+    Item: {
+      pk: `INTEREST_INTENT#${tokenHash}`,
+      sk: "META",
+      entityType: "INTEREST_INTENT",
+      targetProfileId: target.profileId,
+      publicSlug: slug,
+      source: "public_profile",
+      status: "active",
+      createdAt: now,
+      expiresAt,
+    },
+    ConditionExpression: "attribute_not_exists(pk)",
+  }));
+  return {
+    token,
+    expires_at: new Date(expiresAt * 1000).toISOString(),
+    target: await publicTargetPresentation(tableName, target, slug),
+  };
+}
+
+async function claimInterest(tableName: string, ownerProfileId: string, rawToken: unknown) {
+  const token = String(rawToken ?? "").trim();
+  if (!token) throw new Error("interest_intent_invalid");
+  const tokenHash = sha256(token);
+  const key = { pk: `INTEREST_INTENT#${tokenHash}`, sk: "META" };
+  const intent = (await documentDynamo.send(new GetCommand({ TableName: tableName, Key: key, ConsistentRead: true }))).Item;
+  const nowEpoch = Math.floor(Date.now() / 1000);
+  if (!intent || Number(intent.expiresAt) <= nowEpoch) throw new Error("interest_intent_invalid");
+  if (intent.status === "claimed" && intent.ownerProfileId === ownerProfileId) {
+    const target = await getCurrent(tableName, String(intent.targetProfileId));
+    return { claimed: true, idempotent_replay: true, target: profileIsPublic(target) ? await publicTargetPresentation(tableName, target, String(intent.publicSlug ?? target.publicSlug ?? "")) : undefined };
+  }
+  if (intent.status !== "active") throw new Error("interest_intent_invalid");
+  const target = await getCurrent(tableName, String(intent.targetProfileId));
+  if (!profileIsPublic(target) || (target.publicSlug && target.publicSlug !== intent.publicSlug)) throw new Error("interest_target_unavailable");
+  if (target.profileId === ownerProfileId) throw new Error("interest_self_not_allowed");
+  const now = new Date().toISOString();
+  try {
+    await documentDynamo.send(new TransactWriteCommand({ TransactItems: [
+      { Update: {
+        TableName: tableName,
+        Key: key,
+        UpdateExpression: "SET #status = :claimed, ownerProfileId = :owner, claimedAt = :now",
+        ConditionExpression: "#status = :active AND expiresAt > :epoch",
+        ExpressionAttributeNames: { "#status": "status" },
+        ExpressionAttributeValues: { ":claimed": "claimed", ":active": "active", ":owner": ownerProfileId, ":now": now, ":epoch": nowEpoch },
+      } },
+      { Put: {
+        TableName: tableName,
+        Item: {
+          pk: `PROFILE#${ownerProfileId}`,
+          sk: `INTEREST#${target.profileId}`,
+          entityType: "PROFILE_INTEREST",
+          ownerProfileId,
+          targetProfileId: target.profileId,
+          publicSlug: String(intent.publicSlug),
+          source: String(intent.source ?? "public_profile"),
+          createdAt: now,
+        },
+      } },
+    ] }));
+  } catch (error) {
+    if (!(error instanceof Error) || !/ConditionalCheckFailed|TransactionCanceled/.test(error.name + error.message)) throw error;
+    const replay = (await documentDynamo.send(new GetCommand({ TableName: tableName, Key: key, ConsistentRead: true }))).Item;
+    if (replay?.status !== "claimed" || replay.ownerProfileId !== ownerProfileId) throw error;
+    return { claimed: true, idempotent_replay: true, target: await publicTargetPresentation(tableName, target, String(intent.publicSlug)) };
+  }
+  return { claimed: true, idempotent_replay: false, target: await publicTargetPresentation(tableName, target, String(intent.publicSlug)) };
+}
+
+async function removeInterest(tableName: string, ownerProfileId: string, targetProfileId: unknown) {
+  const target = String(targetProfileId ?? "").trim();
+  if (!/^[a-f0-9]{32}$/.test(target)) throw new Error("interest_target_not_found");
+  await documentDynamo.send(new DeleteCommand({ TableName: tableName, Key: { pk: `PROFILE#${ownerProfileId}`, sk: `INTEREST#${target}` } }));
+  return { removed: true, target_profile_id: target };
 }
 
 function stateFor(invite: Record<string, unknown> | undefined, ownerId: string): string {
@@ -340,6 +473,7 @@ async function sendInvite(tableName: string, owner: CurrentProfile, pairId: stri
     { Put: { TableName: tableName, Item: { pk: `PROFILE#${owner.profileId}`, sk: `INVITE#${now}#${pairId}`, entityType: "INVITATION_POINTER", pairId, role: "sender", createdAt: now, expiresAt, ...fixtureMeta } } },
     { Put: { TableName: tableName, Item: { pk: `PROFILE#${peer.profileId}`, sk: `INVITE#${now}#${pairId}`, entityType: "INVITATION_POINTER", pairId, role: "recipient", createdAt: now, expiresAt, ...fixtureMeta } } },
     { Put: { TableName: tableName, Item: { pk: `OUTBOX#${eventId}`, sk: "META", entityType: "EMAIL_OUTBOX", eventId, kind: "invitation", status: capturedTestDelivery ? "CAPTURED" : "PENDING", to: peer.email, ...email, createdAt: now, expiresAt: expiresAt + 7 * DAY, ...fixtureMeta }, ConditionExpression: "attribute_not_exists(pk)" } },
+    { Delete: { TableName: tableName, Key: { pk: `PROFILE#${owner.profileId}`, sk: `INTEREST#${peer.profileId}` } } },
   ];
   if (capturedTestDelivery) writes.push({ Put: { TableName: tableName, Item: {
     pk: `PROFILE#${peer.profileId}`,
@@ -462,8 +596,38 @@ async function invitationLists(tableName: string, ownerId: string) {
     const displayName = profile ? profileAnimalPersona(profile) : connectedSnapshot?.display_name ?? permittedSenderSnapshot?.display_name ?? "另一位 owner";
     return { match_id: item.pairId, connection_id: state === "connected" ? item.pairId : undefined, state, peer: { display_name: displayName, animal_persona: profileAnimalPersona(profile), summary: profile?.summary ?? "", profile_image_url: profileImageUrl(peer, requiredEnvironment("PUBLIC_SITE_ORIGIN"), "thumbnail") }, explanation: { what_we_both_care_about: (item.explanation as Record<string, unknown>)?.whatWeBothCareAbout ?? "你們有一個值得深入聊的共同關注。", evidence_labels: (item.explanation as Record<string, unknown>)?.evidenceLabels ?? [] } };
   };
+  const invitationPeerIds = new Set(items.flatMap((item) => {
+    if (!item) return [];
+    return [String(item.senderProfileId) === ownerId ? String(item.recipientProfileId) : String(item.senderProfileId)];
+  }));
+  const interestPointers = await documentDynamo.send(new QueryCommand({
+    TableName: tableName,
+    KeyConditionExpression: "pk = :pk AND begins_with(sk, :prefix)",
+    ExpressionAttributeValues: { ":pk": `PROFILE#${ownerId}`, ":prefix": "INTEREST#" },
+    ScanIndexForward: false,
+    ConsistentRead: true,
+  }));
+  const owner = await getCurrent(tableName, ownerId);
+  const edges = owner && profileIsPublic(owner) ? await validEdges(tableName, owner) : [];
+  const interested = (await Promise.all((interestPointers.Items ?? []).map(async (interest) => {
+    const targetProfileId = String(interest.targetProfileId ?? "");
+    if (!targetProfileId || invitationPeerIds.has(targetProfileId)) return undefined;
+    const target = await getCurrent(tableName, targetProfileId);
+    if (!profileIsPublic(target) || !ownerCanSeeCandidate(owner ?? {}, target)) return undefined;
+    const version = await getVersion(tableName, target.profileId, target.versionId);
+    if (!version?.profile) return undefined;
+    const edge = edges.find((candidate) => candidate.candidateProfileId === target.profileId);
+    if (edge && owner) {
+      const match = await edgeView(tableName, owner, { candidateId: target.profileId, candidateVersionId: target.versionId, edgeSk: edge.sk, pairId: edge.pairId });
+      if (match.unavailable) return undefined;
+      return { ...match, state: "interested", target_profile_id: target.profileId, interested_at: interest.createdAt, source: interest.source };
+    }
+    const peer = await publicTargetPresentation(tableName, target, String(interest.publicSlug ?? target.publicSlug ?? ""));
+    return { target_profile_id: target.profileId, state: "preparing", interested_at: interest.createdAt, source: interest.source, peer };
+  }))).filter(Boolean);
   return {
     incoming: await Promise.all(items.filter((item) => item?.recipientProfileId === ownerId && item.status === "pending").map((item) => view(item!, "incoming"))),
+    interested,
     outgoing: await Promise.all(items.filter((item) => item?.senderProfileId === ownerId && item.status === "pending").map((item) => view(item!, "outgoing"))),
     connected: await Promise.all(items.filter((item) => item?.status === "connected").map((item) => view(item!, "connected"))),
   };
@@ -473,6 +637,10 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
   try {
     const tableName = requiredEnvironment("TABLE_NAME");
     const method = event.requestContext.http.method;
+    if (method === "POST" && event.rawPath === "/v1/interest-intents") {
+      const body = parseJsonBody(event.body) as { public_slug?: unknown };
+      return json(201, await createInterestIntent(tableName, body.public_slug, event.requestContext.http.sourceIp));
+    }
     if (method === "POST" && event.rawPath === "/v1/invitation-tokens/preview") {
       const body = parseJsonBody(event.body) as { token?: unknown };
       const { invite } = await previewToken(tableName, String(body.token ?? ""));
@@ -487,6 +655,13 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
     }
     const session = await loadSession(event.headers.authorization);
     const profileId = profileIdForEmailHash(session.emailHash);
+    if (method === "POST" && event.rawPath === "/v1/interests/claim") {
+      const body = parseJsonBody(event.body) as { token?: unknown };
+      return json(200, await claimInterest(tableName, profileId, body.token));
+    }
+    if (method === "DELETE" && event.pathParameters?.targetProfileId) {
+      return json(200, await removeInterest(tableName, profileId, event.pathParameters.targetProfileId));
+    }
     const pairId = event.pathParameters?.matchId || event.pathParameters?.connectionId;
     if (method === "GET" && event.rawPath === "/v1/invitations") return json(200, await invitationLists(tableName, profileId));
     if (method === "GET" && event.rawPath === "/v1/manual-test/inbox") {
@@ -510,7 +685,11 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
   } catch (error) {
     const message = error instanceof Error ? error.message : "pairing_failed";
     if (/session|bearer/.test(message)) return json(401, { error: "invalid_cloud_session" });
-    if (["profile_required", "public_profile_required", "fixture_invitation_unavailable"].includes(message)) return json(409, { error: message });
+    if (["profile_required", "public_profile_required", "fixture_invitation_unavailable", "interest_self_not_allowed"].includes(message)) return json(409, { error: message });
+    if (message === "interest_target_not_found") return json(404, { error: message });
+    if (message === "interest_target_unavailable") return json(410, { error: message });
+    if (message === "interest_intent_invalid") return json(410, { error: message });
+    if (message === "interest_rate_limited") return json(429, { error: message, retryAfterSeconds: 3600 });
     if (message === "manual_test_inbox_unavailable") return json(404, { error: message });
     if (["match_not_found", "peer_profile_not_found", "result_set_not_found", "connection_not_found"].includes(message)) return json(404, { error: message });
     if (message.includes("invitation_token_invalid")) return json(410, { error: "invitation_token_invalid" });

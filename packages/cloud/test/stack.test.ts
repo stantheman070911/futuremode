@@ -43,6 +43,7 @@ test("exposes phone paste-back, draft API, pairing, and invitation routes", () =
   const routes = template().findResources("AWS::ApiGatewayV2::Route");
   const routeKeys = Object.values(routes).map((resource) => resource.Properties.RouteKey).sort();
   assert.deepEqual(routeKeys, [
+    "DELETE /v1/interests/{targetProfileId}",
     "DELETE /v1/profiles/me",
     "GET /og/profile/{slug}",
     "GET /og/{slug}",
@@ -61,6 +62,8 @@ test("exposes phone paste-back, draft API, pairing, and invitation routes", () =
     "PATCH /v1/profiles/me",
     "POST /v1/email-verifications",
     "POST /v1/email-verifications/{challengeId}/confirm",
+    "POST /v1/interest-intents",
+    "POST /v1/interests/claim",
     "POST /v1/invitation-tokens/preview",
     "POST /v1/invitation-tokens/respond",
     "POST /v1/manual-test/bootstrap",

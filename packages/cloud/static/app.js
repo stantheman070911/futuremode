@@ -11,6 +11,8 @@ const DEMO_DRAFT_KEY = "pitchyourowner.demo-draft.v1";
 const DEMO_MATCH_KEY = "pitchyourowner.demo-match.v1";
 const DEMO_PROFILE_KEY = "pitchyourowner.demo-profile.v1";
 const LAST_PUBLISH_KEY = "pitchyourowner.last-publish.v1";
+const INTEREST_INTENT_KEY = "pitchyourowner.interest-intent.v1";
+const INTEREST_RETURN_KEY = "pitchyourowner.interest-return.v1";
 const MATCH_SEARCH_WINDOW_MS = 3 * 60 * 1000;
 const MATCH_POLL_INTERVAL_MS = 6 * 1000;
 let CONFIDENCE_FIELDS = ["summary", "interests", "motivations", "active_problems", "recurring_topics", "friend_intent"];
@@ -295,6 +297,54 @@ Object.assign(COPY["zh-Hant"], {
   "share.afterPublish": "查看／分享公開介紹"
 });
 
+Object.assign(COPY.en, {
+  "interest.loading": "Saving the owner you want to meet",
+  "interest.eyebrow": "SAVED INTEREST",
+  "interest.header": "Create profile",
+  "interest.title": "We remembered the Owner you want to meet",
+  "interest.body": "Create your own introduction first. After publishing, this Owner will be waiting under Interested in Invitations, where you can decide whether to send an invitation.",
+  "interest.profileTitle": "Let your agent introduce you first.",
+  "interest.profileBody": "Continue with the existing email sign-in, AI handoff, JSON paste, visual edit, and publish flow.",
+  "interest.start": "Create my introduction",
+  "interest.back": "Back to the public introduction",
+  "interest.ready": "Your introduction is ready. This Owner is now under Interested in Invitations.",
+  "interest.open": "View Interested",
+  "interest.preparing": "Preparing match",
+  "interest.remove": "Remove",
+  "interest.removed": "Removed from Interested.",
+  "invites.interested": "Interested",
+  "state.interested": "Interested",
+  "state.preparing": "Preparing",
+  "error.interestExpired": "This saved link has expired. Return to the public introduction and try again.",
+  "error.interestUnavailable": "This introduction is no longer available.",
+  "error.interestSelf": "You cannot add your own introduction to Interested.",
+  "error.interestRate": "Too many saved-profile requests. Try again later."
+});
+
+Object.assign(COPY["zh-Hant"], {
+  "interest.loading": "正在記住你想認識的 Owner",
+  "interest.eyebrow": "想認識",
+  "interest.header": "建立介紹",
+  "interest.title": "已記住你想認識的 Owner",
+  "interest.body": "先完成自己的介紹。發布後，這位 Owner 會保留在邀請頁的「想認識」，再由你親自決定是否寄送邀請。",
+  "interest.profileTitle": "先讓你的 Agent 介紹你。",
+  "interest.profileBody": "接下來沿用 Email 登入、AI 整理、JSON 貼回、視覺化編輯與確認上傳流程。",
+  "interest.start": "開始建立我的介紹",
+  "interest.back": "返回公開介紹",
+  "interest.ready": "你的介紹已完成。這位 Owner 已加入邀請頁的「想認識」。",
+  "interest.open": "查看想認識",
+  "interest.preparing": "配對準備中",
+  "interest.remove": "移除想認識",
+  "interest.removed": "已從想認識移除。",
+  "invites.interested": "想認識",
+  "state.interested": "想認識",
+  "state.preparing": "準備中",
+  "error.interestExpired": "這個保存連結已失效。請返回公開介紹後再試一次。",
+  "error.interestUnavailable": "這份公開介紹目前無法使用。",
+  "error.interestSelf": "不能把自己的介紹加入想認識。",
+  "error.interestRate": "儲存公開介紹的操作太頻繁，請稍後再試。"
+});
+
 let activeLocale = "zh-Hant";
 
 function t(key, variables = {}) {
@@ -395,6 +445,8 @@ const SAVED_DRAFT = readJson(DRAFT_KEY);
 const SAVED_IMPORT_MODE = readJson(IMPORT_MODE_KEY);
 const SAVED_DEMO_PROFILE = readJson(DEMO_PROFILE_KEY);
 const SAVED_LAST_PUBLISH_AT = Number(readJson(LAST_PUBLISH_KEY)) || 0;
+const SAVED_INTEREST_INTENT = readJson(INTEREST_INTENT_KEY);
+const SAVED_INTEREST_RETURN = readJson(INTEREST_RETURN_KEY) === true;
 const SAVED_HANDOFF = readJson(HANDOFF_KEY);
 const SAVED_AUTH_FLOW = readJson(AUTH_FLOW_KEY);
 const SAVED_PUBLISH_ATTEMPT = readJson(PUBLISH_ATTEMPT_KEY);
@@ -451,6 +503,9 @@ const runtime = {
   profileLoading: false,
   lastPublishAt: SAVED_LAST_PUBLISH_AT,
   matchesPollError: false,
+  interestIntent: SAVED_INTEREST_INTENT,
+  interestClaimed: SAVED_INTEREST_RETURN,
+  interestLoading: false,
 };
 
 let matchesPollTimer = null;
@@ -459,6 +514,8 @@ let nextMatchCheckAt = 0;
 let otpCountdownTimer = null;
 let profileImagePollTimer = null;
 let profileImagePollStartedAt = 0;
+let interestPollTimer = null;
+let interestPollStartedAt = 0;
 
 function readJson(key) {
   try { return JSON.parse(localStorage.getItem(key) || "null"); } catch { return null; }
@@ -741,6 +798,11 @@ const ERROR_DEFINITIONS = {
   profile_access_failed: ["error.profileLoad", "retry", "common.try"],
   profile_draft_failed: ["error.draftLoad", "retry", "common.try"],
   matching_unavailable: ["error.matchingUnavailable", "retry", "common.try"],
+  interest_intent_invalid: ["error.interestExpired", "dismiss", "action.backForm"],
+  interest_target_not_found: ["error.interestUnavailable", "dismiss", "action.backForm"],
+  interest_target_unavailable: ["error.interestUnavailable", "dismiss", "action.backForm"],
+  interest_self_not_allowed: ["error.interestSelf", "dismiss", "action.backForm"],
+  interest_rate_limited: ["error.interestRate", "dismiss", "action.backForm"],
 };
 
 function userFacingError(message, action = "retry", actionLabel = t("common.try"), options = {}) {
@@ -871,6 +933,64 @@ async function api(path, options = {}) {
     throw mapError(body.error, response.status, body);
   }
   return body;
+}
+
+function interestSlugFromPath(path = location.pathname) {
+  const match = path.match(/^\/interest\/([A-Za-z0-9_-]{10,80})\/?$/);
+  return match ? decodeURIComponent(match[1]) : "";
+}
+
+function savedInterestIntentFor(slug) {
+  const intent = runtime.interestIntent;
+  if (!intent || intent.slug !== slug || !intent.token || !intent.target) return null;
+  const expiresAt = Date.parse(String(intent.expires_at || ""));
+  if (!Number.isFinite(expiresAt) || expiresAt <= Date.now()) {
+    runtime.interestIntent = null;
+    writeJson(INTEREST_INTENT_KEY, null);
+    return null;
+  }
+  return intent;
+}
+
+async function claimPendingInterest() {
+  const intent = runtime.interestIntent;
+  if (!runtime.session || !intent?.token) return null;
+  const result = await api("/v1/interests/claim", { method: "POST", body: JSON.stringify({ token: intent.token }) });
+  runtime.interestIntent = { slug: intent.slug, target: result.target || intent.target, claimed: true };
+  runtime.interestClaimed = true;
+  runtime.invitations = null;
+  writeJson(INTEREST_INTENT_KEY, null);
+  writeJson(INTEREST_RETURN_KEY, true);
+  return result;
+}
+
+async function prepareInterest(slug) {
+  if (runtime.interestLoading) return;
+  runtime.interestLoading = true;
+  runtime.error = "";
+  try {
+    let intent = savedInterestIntentFor(slug);
+    if (!intent) {
+      const result = await api("/v1/interest-intents", { method: "POST", body: JSON.stringify({ public_slug: slug }) });
+      intent = { slug, token: result.token, expires_at: result.expires_at, target: result.target };
+      runtime.interestIntent = intent;
+      writeJson(INTEREST_INTENT_KEY, intent);
+    }
+    if (runtime.session) {
+      await claimPendingInterest();
+      if (runtime.profile) {
+        runtime.interestClaimed = false;
+        writeJson(INTEREST_RETURN_KEY, null);
+        navigate("/invitations#interested", { replace: true });
+        return;
+      }
+    }
+  } catch (error) {
+    setRuntimeError(error);
+  } finally {
+    runtime.interestLoading = false;
+    if (location.pathname.startsWith("/interest/")) render();
+  }
 }
 
 function shell(content, { nav = false, active = "", action = "" } = {}) {
@@ -1255,6 +1375,23 @@ function signinScreen() {
     </form>
     ${codeStep ? `<button class="button quiet" style="margin-top:9px;width:100%" data-action="resend-code" ${runtime.busy || remaining ? "disabled" : ""}>${esc(t("signin.resend"))}</button><p class="subtle" style="text-align:center;margin:7px 0 0" data-resend-countdown aria-live="polite">${esc(remaining ? t("signin.resendIn", { seconds: remaining }) : t("signin.resendNow"))}</p><button class="button quiet" style="margin-top:9px;width:100%" data-action="change-email">${esc(t("signin.change"))}</button>` : ""}
   </div>`);
+}
+
+function interestScreen(slug) {
+  const intent = runtime.interestIntent?.slug === slug ? runtime.interestIntent : null;
+  if (!runtime.interestLoading && (!intent?.target || (runtime.session && !intent.claimed))) queueMicrotask(() => prepareInterest(slug));
+  if (!intent?.target) return shell(`<div class="loading" role="status">${esc(t("interest.loading"))}</div>`);
+  const hasProfile = Boolean(runtime.profile);
+  const primaryAction = hasProfile
+    ? `<button class="button primary" data-action="open-interested">${esc(t("interest.open"))}</button>`
+    : `<button class="button primary" data-action="start-interest-profile">${esc(t("interest.start"))}</button>`;
+  return shell(`<div class="interest-entry">
+    <p class="eyebrow">${esc(t("interest.eyebrow"))}</p>
+    <div class="notice success"><strong>${esc(hasProfile ? t("interest.ready") : t("interest.title"))}</strong>${hasProfile ? "" : `<span>${esc(t("interest.body"))}</span>`}</div>
+    <h1 class="page-title">${esc(t("interest.profileTitle"))}</h1>
+    <p class="page-intro">${esc(t("interest.profileBody"))}</p>
+    <div class="button-stack">${primaryAction}<a class="interest-back text-action" href="/p/${encodeURIComponent(slug)}">${esc(t("interest.back"))}</a></div>
+  </div>`, { action: `<span class="text-action">${esc(t("interest.header"))}</span>` });
 }
 
 function assistantScreen() {
@@ -1739,7 +1876,10 @@ function matchDetailScreen(matchId) {
     return shell(`<div class="loading">${esc(t("match.loading"))}</div>`, { nav: true, active: "matches" });
   }
   const match = runtime.match;
-  if (match.state === "outgoing") return shell(`<a href="/matches${location.search || ""}" data-link class="eyebrow" style="text-decoration:none">${esc(t("match.back"))}</a>${waitingForInvitationPanel(match)}`, { nav: true, active: "matches" });
+  const fromInterested = new URLSearchParams(location.search).get("from") === "interested";
+  const backHref = fromInterested ? "/invitations#interested" : `/matches${location.search || ""}`;
+  const backLabel = fromInterested ? t("invites.interested") : t("match.back");
+  if (match.state === "outgoing") return shell(`<a href="${backHref}" data-link class="eyebrow" style="text-decoration:none">${esc(backLabel)}</a>${waitingForInvitationPanel(match)}`, { nav: true, active: fromInterested ? "invitations" : "matches" });
   const peerName = peerPresentationName(match.peer);
   const explanation = match.explanation;
   const questions = [
@@ -1764,14 +1904,14 @@ function matchDetailScreen(matchId) {
   else if (match.peer?.is_fixture) decisionArea = `<div class="notice">${esc(t("match.fixtureOnly"))}</div>`;
   else decisionArea = "";
   const backQuery = location.search || (runtime.matchResult?.result_set_id ? `?set=${encodeURIComponent(runtime.matchResult.result_set_id)}&page=${runtime.matchResult.page}` : "");
-  return shell(`<a href="/matches${backQuery}" data-link class="eyebrow" style="text-decoration:none">${esc(t("match.back"))}</a>
+  return shell(`<a href="${fromInterested ? "/invitations#interested" : `/matches${backQuery}`}" data-link class="eyebrow" style="text-decoration:none">${esc(backLabel)}</a>
     ${demoMarker}
     <div class="person match-detail-person">${profilePortrait(match.peer, "detail")}<div><h1 class="animal-persona compact">${esc(peerName)}</h1><p>${esc(match.peer.profile?.interests?.[0] || t("match.ownerPitch"))}</p><span class="similarity-score">${esc(t("match.score", { score: match.similarity_score }))}</span></div></div>
     ${connectedBlock}
     ${publicProfileDocument(match.peer.profile)}
     <div class="question-card">${questions.map(([label, text]) => `<section class="question"><div class="step-label">${esc(label)}</div><h2>${esc(text)}</h2><div class="evidence">${explanation.evidence_labels.map((evidence) => `<span class="evidence-label">${esc(t("match.evidence", { label: evidenceLabel(evidence) }))}</span>`).join("")}</div></section>`).join("")}</div>
     <div class="provenance"><span>${esc(t("profile.conversation"))}</span><span>${esc(t("profile.approved"))}</span><span>${esc(t("profile.notVerified"))}</span></div>
-    ${decisionArea}`, { nav: true, active: "matches" });
+    ${decisionArea}`, { nav: true, active: fromInterested ? "invitations" : "matches" });
 }
 
 function waitingForInvitationPanel(match) {
@@ -1805,15 +1945,27 @@ function invitationsScreen() {
     return shell(`<div class="loading">${esc(t("invites.loading"))}</div>`, { nav: true, active: "invitations" });
   }
   const sections = [["invites.incoming", runtime.invitations.incoming], ["invites.outgoing", runtime.invitations.outgoing], ["invites.connected", runtime.invitations.connected]];
+  const interested = Array.isArray(runtime.invitations.interested) ? runtime.invitations.interested : [];
+  if (interested.some((item) => item.state === "preparing")) queueMicrotask(ensureInterestPolling);
+  else stopInterestPolling();
   const inbox = Array.isArray(runtime.invitations.test_inbox) ? runtime.invitations.test_inbox : [];
   const testInbox = runtime.profile?.manual_test ? `<div class="notice" style="margin-bottom:18px"><span class="field-label">測試收件匣 · ${inbox.length}</span>${inbox.length ? inbox.map((message) => `<p style="margin:12px 0 0"><strong>${esc(message.from_display_name || "另一位測試 owner")}</strong><br><a class="text-action" href="${esc(message.accept_url)}">開啟邀請並選擇接受或現在不要</a></p>`).join("") : `<p style="margin:8px 0 0">寄給這個測試帳號的邀請會出現在這裡，不會寄到外部信箱。</p>`}</div>` : "";
-  return shell(`<h1 class="page-title invitations-title">${esc(t("invites.title"))}</h1>${testInbox}${sections.map(([label, items]) => `<div class="divider-label">${esc(t(label))} · ${items.length}</div><div class="match-list">${items.length ? items.map((match) => `<a class="match-card" href="${match.state === "connected" ? `/connections/${encodeURIComponent(match.connection_id)}` : `/matches/${encodeURIComponent(match.match_id)}`}" data-link><div class="match-card-head"><div class="match-card-identity">${profilePortrait(match.peer, "thumbnail")}<h2 class="animal-persona compact">${esc(peerPresentationName(match.peer))}</h2></div><span class="status-label">${esc(matchStateLabel(match.state))}</span></div><p>${esc(match.explanation?.what_we_both_care_about || match.peer?.summary || "")}</p></a>`).join("") : `<div class="notice">${esc(t("invites.empty"))}</div>`}</div>`).join("")}`, { nav: true, active: "invitations" });
+  const interestedCards = interested.length ? interested.map((item) => {
+    const detailHref = item.match_id ? `/matches/${encodeURIComponent(item.match_id)}?from=interested` : `/p/${encodeURIComponent(item.peer?.public_slug || "")}`;
+    const state = item.match_id ? t("match.viewDetail") : t("interest.preparing");
+    return `<article class="match-card interest-card"><a class="interest-card-main" href="${detailHref}" ${item.match_id ? "data-link" : ""}><div class="match-card-head"><div class="match-card-identity">${profilePortrait(item.peer, "thumbnail")}<h2 class="animal-persona compact">${esc(peerPresentationName(item.peer))}</h2></div><div class="match-card-meta">${Number.isFinite(Number(item.similarity_score)) ? `<span class="similarity-score">${esc(t("match.score", { score: item.similarity_score }))}</span>` : ""}<span class="status-label">${esc(state)}</span></div></div><p>${esc(item.peer?.summary || "")}</p></a><button class="text-action interest-remove" data-action="remove-interest" data-target-profile-id="${esc(item.target_profile_id)}">${esc(t("interest.remove"))}</button></article>`;
+  }).join("") : `<div class="notice">${esc(t("invites.empty"))}</div>`;
+  const incoming = sections[0];
+  const remaining = sections.slice(1);
+  const renderSection = ([label, items]) => `<div class="divider-label">${esc(t(label))} · ${items.length}</div><div class="match-list">${items.length ? items.map((match) => `<a class="match-card" href="${match.state === "connected" ? `/connections/${encodeURIComponent(match.connection_id)}` : `/matches/${encodeURIComponent(match.match_id)}`}" data-link><div class="match-card-head"><div class="match-card-identity">${profilePortrait(match.peer, "thumbnail")}<h2 class="animal-persona compact">${esc(peerPresentationName(match.peer))}</h2></div><span class="status-label">${esc(matchStateLabel(match.state))}</span></div><p>${esc(match.explanation?.what_we_both_care_about || match.peer?.summary || "")}</p></a>`).join("") : `<div class="notice">${esc(t("invites.empty"))}</div>`}</div>`;
+  if (location.hash === "#interested") queueMicrotask(() => document.getElementById("interested")?.scrollIntoView({ block: "start" }));
+  return shell(`<h1 class="page-title invitations-title">${esc(t("invites.title"))}</h1>${testInbox}${renderSection(incoming)}<section id="interested" class="invitation-section" tabindex="-1"><div class="divider-label">${esc(t("invites.interested"))} · ${interested.length}</div><div class="match-list">${interestedCards}</div></section>${remaining.map(renderSection).join("")}`, { nav: true, active: "invitations" });
 }
 
 async function loadInvitations() {
   if (runtime.demo) {
     const match = structuredClone(runtime.demoMatch);
-    runtime.invitations = { incoming: [], outgoing: match.state === "outgoing" ? [match] : [], connected: match.state === "connected" ? [match] : [] };
+    runtime.invitations = { incoming: [], interested: [], outgoing: match.state === "outgoing" ? [match] : [], connected: match.state === "connected" ? [match] : [] };
     queueMicrotask(render);
     return;
   }
@@ -1824,8 +1976,29 @@ async function loadInvitations() {
       runtime.invitations.test_inbox = inbox.messages || [];
     }
   }
-  catch (error) { runtime.invitations = { incoming: [], outgoing: [], connected: [] }; setRuntimeError(error); }
+  catch (error) { runtime.invitations = { incoming: [], interested: [], outgoing: [], connected: [] }; setRuntimeError(error); }
   render();
+}
+
+function stopInterestPolling() {
+  clearTimeout(interestPollTimer);
+  interestPollTimer = null;
+  interestPollStartedAt = 0;
+}
+
+function ensureInterestPolling() {
+  if (location.pathname !== "/invitations" || !runtime.invitations?.interested?.some((item) => item.state === "preparing")) {
+    stopInterestPolling();
+    return;
+  }
+  if (!interestPollStartedAt) interestPollStartedAt = Date.now();
+  if (interestPollTimer || Date.now() - interestPollStartedAt >= MATCH_SEARCH_WINDOW_MS) return;
+  interestPollTimer = setTimeout(() => {
+    interestPollTimer = null;
+    if (location.pathname !== "/invitations") { stopInterestPolling(); return; }
+    runtime.invitations = null;
+    render();
+  }, MATCH_POLL_INTERVAL_MS);
 }
 
 function settingsScreen() {
@@ -1857,7 +2030,8 @@ function render() {
   const skipLink = document.querySelector(".skip-link");
   if (skipLink) skipLink.textContent = t("skip");
   let path = location.pathname.replace(/\/$/, "") || "/";
-  if (!runtime.session && !runtime.demo && !["/", "/signin", "/privacy", "/terms", "/support", "/accept"].includes(path)) {
+  const interestSlug = interestSlugFromPath(path);
+  if (!runtime.session && !runtime.demo && !interestSlug && !["/", "/signin", "/privacy", "/terms", "/support", "/accept"].includes(path)) {
     history.replaceState({}, "", "/signin");
     app.innerHTML = signinScreen();
     return;
@@ -1867,6 +2041,7 @@ function render() {
     history.replaceState({}, "", path);
   }
   const needsProfileBootstrap = ["/assistant", "/handoff", "/import", "/pitch", "/matches", "/invitations", "/settings"].includes(path)
+    || Boolean(interestSlug)
     || path.startsWith("/matches/") || path.startsWith("/connections/");
   if (runtime.session && needsProfileBootstrap && !runtime.profileLoaded) {
     app.innerHTML = shell(`<div class="loading" role="status">${esc(t("common.loading"))}</div>`);
@@ -1900,6 +2075,7 @@ function render() {
   }
   if (path === "/") app.innerHTML = startScreen();
   else if (path === "/signin") app.innerHTML = signinScreen();
+  else if (interestSlug) app.innerHTML = interestScreen(interestSlug);
   else if (path === "/assistant") app.innerHTML = assistantScreen();
   else if (path === "/handoff") app.innerHTML = handoffScreen();
   else if (path === "/import") app.innerHTML = importScreen();
@@ -1927,6 +2103,16 @@ document.addEventListener("click", async (event) => {
   try {
     runtime.error = "";
     if (action === "begin") runtime.session ? await routeReturningOwner() : navigate("/signin");
+    if (action === "start-interest-profile") runtime.session ? navigate("/assistant") : navigate("/signin");
+    if (action === "open-interested") { runtime.interestClaimed = false; writeJson(INTEREST_RETURN_KEY, null); navigate("/invitations#interested"); }
+    if (action === "remove-interest") {
+      const targetProfileId = button.dataset.targetProfileId;
+      await api(`/v1/interests/${encodeURIComponent(targetProfileId)}`, { method: "DELETE" });
+      if (runtime.invitations?.interested) runtime.invitations.interested = runtime.invitations.interested.filter((item) => item.target_profile_id !== targetProfileId);
+      runtime.notice = t("interest.removed");
+      announce(runtime.notice);
+      render();
+    }
     if (action === "demo-flow") { runtime.demo = true; clearDraftState(); clearHandoff(); runtime.demoDraft = false; runtime.profile = null; runtime.profileLoaded = false; runtime.matches = null; runtime.invitations = null; runtime.match = null; runtime.lastPublishAt = 0; resetDemoMatch(); writeJson(DEMO_KEY, { enabled: true }); writeJson(DEMO_DRAFT_KEY, null); writeJson(DEMO_PROFILE_KEY, null); writeJson(LAST_PUBLISH_KEY, null); navigate("/assistant"); }
     if (action === "change-email") { clearAuthFlow(); render(); }
     if (action === "resend-code") await resendVerificationCode();
@@ -2117,6 +2303,10 @@ document.addEventListener("submit", async (event) => {
       writeJson(STORAGE_KEY, runtime.session);
       clearAuthFlow();
       runtime.profileLoaded = false;
+      if (runtime.interestIntent?.token) {
+        try { await claimPendingInterest(); }
+        catch (error) { setRuntimeError(error); }
+      }
       if (result.manualTestAccount) {
         const bootstrap = await api("/v1/manual-test/bootstrap", { method: "POST", body: "{}" });
         if (bootstrap.status === "prefilled_draft" && bootstrap.profile) {
@@ -2180,7 +2370,10 @@ async function publishProfile() {
     writeJson(DEMO_DRAFT_KEY, null);
     clearHandoff();
     runtime.busy = false;
-    navigate("/matches");
+    const returnToInterest = runtime.interestClaimed;
+    runtime.interestClaimed = false;
+    writeJson(INTEREST_RETURN_KEY, null);
+    navigate(returnToInterest ? "/invitations#interested" : "/matches");
     return;
   }
   const approvedProfile = structuredClone(runtime.draft);
@@ -2210,7 +2403,10 @@ async function publishProfile() {
   try { await api("/v1/matching-runs", { method: "POST", body: "{}" }); }
   catch (error) { matchingStarted = false; console.warn("Profile published; matching trigger will be retried from Matches", error); }
   runtime.busy = false;
-  navigate("/matches");
+  const returnToInterest = runtime.interestClaimed;
+  runtime.interestClaimed = false;
+  writeJson(INTEREST_RETURN_KEY, null);
+  navigate(returnToInterest ? "/invitations#interested" : "/matches");
   runtime.notice = t(matchingStarted ? "notice.published" : "notice.publishedMatchingPending");
   render();
 }
@@ -2296,7 +2492,10 @@ function signout() {
   writeJson(LAST_PUBLISH_KEY, null);
   runtime.lastPublishAt = 0;
   runtime.matchesPollError = false;
+  runtime.interestClaimed = false;
+  writeJson(INTEREST_RETURN_KEY, null);
   stopMatchesPolling();
+  stopInterestPolling();
   navigate("/");
 }
 
@@ -2304,7 +2503,11 @@ async function routeReturningOwner({ replace = false } = {}) {
   try {
     runtime.profile = await api("/v1/profiles/me");
     runtime.profileLoaded = true;
-    navigate(runtime.profile.visibility === "private" ? "/pitch" : "/matches", { replace });
+    if (runtime.interestClaimed) {
+      runtime.interestClaimed = false;
+      writeJson(INTEREST_RETURN_KEY, null);
+      navigate("/invitations#interested", { replace });
+    } else navigate(runtime.profile.visibility === "private" ? "/pitch" : "/matches", { replace });
   } catch (error) {
     if (error.status !== 404) throw error;
     runtime.profile = null;

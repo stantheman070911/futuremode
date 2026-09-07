@@ -169,6 +169,20 @@ button{cursor:pointer}
 .match-card p{margin:12px 0 0;line-height:1.5}
 .match-card .status-label{color:var(--blue)}
 .match-card.unavailable{color:var(--muted)}
+.interest-entry{padding-top:16px}
+.interest-entry>.eyebrow{color:var(--blue);margin:0 0 8px}
+.interest-entry .notice{margin:16px 0 24px}
+.interest-entry .notice strong,.interest-entry .notice span{display:block}
+.interest-entry .notice span{margin-top:5px;color:var(--muted)}
+.interest-entry .page-title{margin-top:0;color:var(--blue)}
+.interest-entry .button-stack{margin-top:28px}
+.interest-entry .button-stack>.button{width:100%}
+.interest-back{min-height:44px;display:flex;align-items:center;justify-content:center;text-align:center;font-weight:700;text-decoration:none}
+.invitation-section{scroll-margin-top:18px;outline:none}
+.interest-card{padding:0}
+.interest-card-main{display:block;padding:16px;color:inherit;text-decoration:none}
+.interest-card-main:focus-visible{outline:3px solid rgba(15,90,224,.2);outline-offset:-3px}
+.interest-remove{width:100%;min-height:44px;border:0;border-top:1px solid var(--line);background:transparent;padding:10px 16px;color:var(--blue);font-weight:700;text-align:left}
 .shared-signal{padding-top:10px;border-top:1px solid var(--line);color:var(--blue);font-size:13px}
 .match-title-row{display:flex;justify-content:space-between;align-items:flex-start;gap:14px}
 .match-title-row .text-action{border:0;background:transparent;padding:22px 0 10px;font-weight:700;white-space:nowrap}

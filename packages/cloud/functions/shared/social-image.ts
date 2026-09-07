@@ -71,14 +71,14 @@ export function renderSocialSvg(input: { profile?: SocialProfile; profileUrl?: s
   const fontFace = input.fontBase64 ? `<defs><style>@font-face{font-family:PyoOg;src:url(data:font/otf;base64,${input.fontBase64}) format('opentype');font-weight:700}</style></defs>` : "";
   const qr = profile && input.profileUrl ? qrSvg(input.profileUrl, 900, 205, 205) : "";
   const portrait = profile && input.portraitDataUri
-    ? `<defs><clipPath id="portrait-clip"><rect x="715" y="190" width="155" height="155" rx="22"/></clipPath></defs><rect x="710" y="185" width="165" height="165" rx="27" fill="#fff" stroke="#17213d" stroke-width="5"/><image href="${escapeXml(input.portraitDataUri)}" x="715" y="190" width="155" height="155" preserveAspectRatio="xMidYMid slice" clip-path="url(#portrait-clip)"/>`
+    ? `<defs><clipPath id="portrait-clip"><rect x="83" y="79" width="155" height="155" rx="22"/></clipPath></defs><rect x="78" y="74" width="165" height="165" rx="27" fill="#fff" stroke="#17213d" stroke-width="5"/><image href="${escapeXml(input.portraitDataUri)}" x="83" y="79" width="155" height="155" preserveAspectRatio="xMidYMid slice" clip-path="url(#portrait-clip)"/>`
     : "";
   return `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" font-family="PyoOg,Arial,sans-serif">${fontFace}
   <rect width="1200" height="630" fill="#fff6ec"/><circle cx="1080" cy="72" r="170" fill="#eee7ff"/><circle cx="92" cy="594" r="170" fill="#e8fff4"/>
   <rect x="38" y="38" width="1124" height="554" rx="34" fill="#fffdf8" stroke="#17213d" stroke-width="8"/>
-  <g transform="translate(78 74)"><rect width="292" height="58" rx="29" fill="#ffcf55" stroke="#17213d" stroke-width="4"/><text x="28" y="39" font-size="25" font-weight="700" fill="#17213d">PitchYourOwner</text></g>
-  ${titleLines.map((line, index) => `<text x="78" y="${205 + index * 57}" font-size="50" font-weight="700" fill="#17213d">${escapeXml(line)}</text>`).join("")}
-  <text x="78" y="${titleLines.length > 1 ? 325 : 270}" font-size="27" font-weight="700" fill="#7258e8">${escapeXml(clampVisualText(animal, 39))}</text>
+  <g transform="translate(${profile ? 278 : 78} 74)"><rect width="292" height="58" rx="29" fill="#ffcf55" stroke="#17213d" stroke-width="4"/><text x="28" y="39" font-size="25" font-weight="700" fill="#17213d">PitchYourOwner</text></g>
+  ${titleLines.map((line, index) => `<text x="${profile ? 278 : 78}" y="${205 + index * 57}" font-size="50" font-weight="700" fill="#17213d">${escapeXml(line)}</text>`).join("")}
+  <text x="${profile ? 278 : 78}" y="${titleLines.length > 1 ? 325 : 270}" font-size="27" font-weight="700" fill="#7258e8">${escapeXml(clampVisualText(animal, 39))}</text>
   ${summaryLines.map((line, index) => `<text x="78" y="${365 + index * 34}" font-size="23" font-weight="700" fill="#3d435f">${escapeXml(line)}</text>`).join("")}
   ${portrait}
   ${signals.map((signal, index) => `<g transform="translate(${78 + index * 255} 490)"><rect width="232" height="48" rx="24" fill="#fff" stroke="#17213d" stroke-width="3"/><text x="18" y="31" font-size="16" font-weight="700" fill="#17213d"># ${escapeXml(signal)}</text></g>`).join("")}
