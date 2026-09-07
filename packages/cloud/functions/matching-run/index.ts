@@ -19,6 +19,8 @@ interface CurrentProfile extends Record<string, unknown> {
   testRunId?: string;
   testCohortId?: string;
   testScenarioKey?: string;
+  testDisplayCode?: string;
+  testAudienceEmailHashes?: string[];
   cleanupSafe?: boolean;
   isFixtureProfile?: boolean;
   fixtureAudienceEmailHash?: string;
@@ -34,7 +36,7 @@ interface ProfileVersion extends Record<string, unknown> {
 }
 
 export interface LoadedProfile { current: CurrentProfile; version: ProfileVersion }
-interface MatchingScope { includeTestProfiles: boolean; testRunId?: string }
+interface MatchingScope { includeTestProfiles: boolean; testRunId?: string; allowedRegularEmailHashes?: string[] }
 
 const WEIGHTS = { interests: 0.30, active_problems: 0.25, motivations: 0.20, recurring_topics: 0.15, friend_intent: 0.10 } as const;
 export type SimilarityField = keyof typeof WEIGHTS;
@@ -168,11 +170,24 @@ export function configuredTestRunId(profile: Record<string, unknown>): string | 
   return undefined;
 }
 
+function stringList(value: unknown): string[] {
+  return Array.isArray(value) ? value.filter((entry): entry is string => typeof entry === "string") : [];
+}
+
+export function journeyTestVisibleToViewer(profile: Record<string, unknown>, viewerEmailHash?: string): boolean {
+  return Boolean(viewerEmailHash
+    && profile.isTestProfile === true
+    && profile.isJourneyTestProfile === true
+    && profile.cleanupSafe === true
+    && stringList(profile.testAudienceEmailHashes).includes(viewerEmailHash));
+}
+
 function inScope(profile: CurrentProfile, scope: MatchingScope, fixtureAudienceEmailHash?: string): boolean {
   if (scope.includeTestProfiles) {
-    return isVisibleManualTestCandidate(profile, scope.testRunId);
+    if (isVisibleManualTestCandidate(profile, scope.testRunId)) return true;
+    return Boolean(profile.emailHash && scope.allowedRegularEmailHashes?.includes(profile.emailHash));
   }
-  if (profile.isTestProfile === true) return false;
+  if (profile.isTestProfile === true) return journeyTestVisibleToViewer(profile, fixtureAudienceEmailHash);
   if (profile.isFixtureProfile === true) return Boolean(fixtureAudienceEmailHash && profile.fixtureAudienceEmailHash === fixtureAudienceEmailHash);
   return true;
 }
@@ -248,7 +263,13 @@ export async function persistPair(
       cleanupSafe: true,
       testRunId: owner.current.testRunId,
       ...(owner.current.isManualTestProfile === true ? { isManualTestProfile: true, testCohortId: owner.current.testCohortId } : {}),
-      ...(owner.current.isJourneyTestProfile === true ? { isJourneyTestProfile: true, testCohortId: owner.current.testCohortId, testScenarioKey: owner.current.testScenarioKey } : {}),
+      ...(owner.current.isJourneyTestProfile === true ? {
+        isJourneyTestProfile: true,
+        testCohortId: owner.current.testCohortId,
+        testScenarioKey: owner.current.testScenarioKey,
+        testDisplayCode: owner.current.testDisplayCode,
+        testAudienceEmailHashes: owner.current.testAudienceEmailHashes,
+      } : {}),
     } : {}),
   });
   const writes: ConstructorParameters<typeof TransactWriteCommand>[0]["TransactItems"] = [
@@ -277,10 +298,16 @@ export async function handler(event?: unknown): Promise<Record<string, unknown>>
   let scope = matchingScope(event);
   const items = await scanAll(tableName);
   const requestedId = event && typeof event === "object" ? String((event as Record<string, unknown>).profileId ?? "") : "";
+  const requestedCurrent = requestedId
+    ? items.find((item) => item.entityType === "PROFILE_CURRENT" && item.profileId === requestedId) as CurrentProfile | undefined
+    : undefined;
   if (!scope.includeTestProfiles && requestedId) {
-    const requestedCurrent = items.find((item) => item.entityType === "PROFILE_CURRENT" && item.profileId === requestedId) as CurrentProfile | undefined;
     const testRunId = requestedCurrent ? configuredTestRunId(requestedCurrent) : undefined;
-    if (testRunId) scope = { includeTestProfiles: true, testRunId };
+    if (testRunId) scope = {
+      includeTestProfiles: true,
+      testRunId,
+      allowedRegularEmailHashes: stringList(requestedCurrent?.testAudienceEmailHashes),
+    };
   }
   const regularProfiles = loadedProfiles(items, scope);
   const requestedOwner = requestedId ? regularProfiles.find((entry) => entry.current.profileId === requestedId) : undefined;

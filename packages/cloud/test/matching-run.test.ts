@@ -8,6 +8,7 @@ import {
   haveCompatibleMatchLanguage,
   isCurrentMatchable,
   isVisibleManualTestCandidate,
+  journeyTestVisibleToViewer,
   persistPair,
   type LoadedProfile,
   type SimilarityField,
@@ -95,6 +96,15 @@ test("manual matching includes only the cohort and explicitly safe fixtures", ()
   assert.equal(isVisibleManualTestCandidate({ profileId: "real" }, "cohort-a"), false);
   assert.equal(isVisibleManualTestCandidate({ isFixtureProfile: true, cleanupSafe: true, manualTestVisible: true }, "cohort-a"), true);
   assert.equal(isVisibleManualTestCandidate({ isFixtureProfile: true, cleanupSafe: false, manualTestVisible: true }, "cohort-a"), false);
+});
+
+test("real journey profiles are visible only to their exact approved audience", () => {
+  const journey = { isTestProfile: true, isJourneyTestProfile: true, cleanupSafe: true, testAudienceEmailHashes: ["viewer-hash"] };
+  assert.equal(journeyTestVisibleToViewer(journey, "viewer-hash"), true);
+  assert.equal(journeyTestVisibleToViewer(journey, "other-hash"), false);
+  assert.equal(journeyTestVisibleToViewer({ ...journey, cleanupSafe: false }, "viewer-hash"), false);
+  assert.equal(fixtureCandidateIsVisible(journey, "viewer-hash"), true);
+  assert.equal(fixtureCandidateIsVisible(journey, "other-hash"), false);
 });
 
 test("recognizes only configured cleanup-safe manual and journey cohorts", () => {

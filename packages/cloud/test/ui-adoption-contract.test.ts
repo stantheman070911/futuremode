@@ -36,7 +36,7 @@ test("keeps the existing handoff, schema review, navigation, and matching contra
   assert.match(app, /data-form="publish-profile" novalidate/);
   assert.match(app, /data-action="confirm-publish"/);
   assert.match(app, /const links = \[\["matches", "\/matches", "nav\.matches"\], \["invitations", "\/invitations", "nav\.invites"\], \["pitch", "\/pitch", "nav\.pitch"\], \["settings", "\/settings", "nav\.settings"\]\]/);
-  assert.match(app, /match\.peer\?\.is_synthetic \?/);
+  assert.match(app, /testDataMarker\(match\.peer\)/);
   assert.match(app, /similarity-score/);
   assert.match(app, /result\.total_pages > 1/);
   assert.match(styles, /\.match-results-list \.profile-portrait,\.match-detail-person \.profile-portrait\{border-radius:50%\}/);

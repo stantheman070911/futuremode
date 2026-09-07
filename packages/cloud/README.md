@@ -193,10 +193,13 @@ Test identity policy and production lifecycle commands are documented in
 - exactly ten `futuremode.test` accounts use fixed-code synthetic bootstrap;
 - allowlisted real-email journey accounts use real OTP and the normal external-AI profile flow.
 
-Journey accounts are marked cleanup-safe only when they publish through the configured cohort.
-They are excluded from regular-user matching, but can match within the same journey cohort and
-with explicitly safe fixtures. Use `npm run journey-test:account` for dry-run-first
-`status`/`add`/`reset`/`remove`; never edit test records by hand.
+Journey accounts are cleanup-safe only when they belong to the configured cohort. They are hidden
+from regular-user matching by default, but can be exposed to exact Host-controlled viewer emails
+through the secret-backed audience allowlist. Their cards use the common
+`測試資料•非真實人` marker plus a stable test display code. Use
+`npm run journey-test:account` for dry-run-first `status`/`add`/`reset`/`remove`, and
+`npm run journey-test:pair-reset` to clear only one approved pair's invitation state; never edit
+test records by hand.
 
 ### Publish envelope
 

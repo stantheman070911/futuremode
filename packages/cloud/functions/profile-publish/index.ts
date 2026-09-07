@@ -46,7 +46,12 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
       testRunId: testCohortId,
       testCohortId,
       ...(manualAccount ? { isManualTestProfile: true } : {}),
-      ...(journeyAccount ? { isJourneyTestProfile: true, testScenarioKey: journeyAccount.scenarioKey } : {}),
+      ...(journeyAccount ? {
+        isJourneyTestProfile: true,
+        testScenarioKey: journeyAccount.scenarioKey,
+        testDisplayCode: journeyAccount.displayCode,
+        testAudienceEmailHashes: journeyAccount.visibleToEmailHashes,
+      } : {}),
     } : {};
 
     if (event.requestContext.http.method === "GET") {

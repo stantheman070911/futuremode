@@ -1,6 +1,7 @@
 import { GetSecretValueCommand, SecretsManagerClient } from "@aws-sdk/client-secrets-manager";
 import profiles from "../../config/manual-test-profiles.json" with { type: "json" };
 import { validateOwnerPitchProfile, type OwnerPitchProfile } from "./contracts.js";
+import { sha256 } from "./security.js";
 import { requiredEnvironment } from "./storage.js";
 
 const secrets = new SecretsManagerClient({});
@@ -13,11 +14,15 @@ export interface ManualTestAccount {
 export interface JourneyTestAccount {
   email: string;
   scenarioKey: string;
+  displayCode: string;
+  visibleToEmailHashes: string[];
   cohortId: string;
 }
 
 interface JourneyTestAccountConfiguration {
   scenarioKey: string;
+  displayCode: string;
+  visibleToEmails: string[];
 }
 
 interface ManualTestConfiguration {
@@ -60,8 +65,18 @@ export function parseManualTestConfiguration(value: string): ManualTestConfigura
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized) || normalized.endsWith("@futuremode.test")) throw new Error("journey_test_email_invalid");
     if (!configuration || typeof configuration !== "object" || Array.isArray(configuration)) throw new Error("journey_test_account_invalid");
     const scenarioKey = validConfigurationId((configuration as Partial<JourneyTestAccountConfiguration>).scenarioKey, "journey_test_scenario_invalid");
-    return [normalized, { scenarioKey }];
+    const displayCode = String((configuration as Partial<JourneyTestAccountConfiguration>).displayCode ?? "").trim().toUpperCase();
+    if (!/^[A-Z][A-Z0-9-]{1,11}$/.test(displayCode)) throw new Error("journey_test_display_code_invalid");
+    const visibleToSource = (configuration as Partial<JourneyTestAccountConfiguration>).visibleToEmails;
+    if (!Array.isArray(visibleToSource) || visibleToSource.length < 1 || visibleToSource.length > 10) throw new Error("journey_test_audience_invalid");
+    const visibleToEmails = [...new Set(visibleToSource.map((value) => {
+      const audienceEmail = String(value).trim().toLowerCase();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(audienceEmail) || audienceEmail.endsWith("@futuremode.test")) throw new Error("journey_test_audience_email_invalid");
+      return audienceEmail;
+    }))];
+    return [normalized, { scenarioKey, displayCode, visibleToEmails }];
   }));
+  if (new Set(Object.values(journeyAccounts).map((account) => account.displayCode)).size !== journeyEntries.length) throw new Error("journey_test_display_code_duplicate");
   return { enabled: true, cohortId, verificationCode: raw.verificationCode, accounts, journeyCohortId, journeyAccounts };
 }
 
@@ -84,7 +99,7 @@ export async function journeyTestAccount(email: string): Promise<JourneyTestAcco
     const config = await manualTestConfiguration();
     const account = config.journeyAccounts[normalized];
     return account && config.journeyCohortId
-      ? { email: normalized, scenarioKey: account.scenarioKey, cohortId: config.journeyCohortId }
+      ? { email: normalized, scenarioKey: account.scenarioKey, displayCode: account.displayCode, visibleToEmailHashes: account.visibleToEmails.map(sha256), cohortId: config.journeyCohortId }
       : undefined;
   } catch (error) {
     if (error instanceof Error && error.message === "manual_test_accounts_disabled") return undefined;

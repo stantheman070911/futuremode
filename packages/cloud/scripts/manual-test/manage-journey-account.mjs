@@ -13,12 +13,17 @@ const value = (name) => {
   return index >= 0 ? String(args[index + 1] || "").trim() : "";
 };
 const apply = args.includes("--apply");
+const adoptExisting = args.includes("--adopt-existing");
 const email = value("--email").toLowerCase();
 const scenarioKey = value("--scenario");
+const displayCode = value("--display-code").toUpperCase();
+const visibleToEmails = [...new Set(value("--visible-to").split(",").map((entry) => entry.trim().toLowerCase()).filter(Boolean))];
 const allowedActions = new Set(["status", "add", "reset", "remove"]);
 if (!allowedActions.has(action)) throw new Error("action must be status, add, reset, or remove");
 if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.endsWith("@futuremode.test")) throw new Error("an exact real email is required");
 if (action === "add" && !/^[A-Za-z0-9_.:-]{6,120}$/.test(scenarioKey)) throw new Error("--scenario is required for add");
+if (action === "add" && !/^[A-Z][A-Z0-9-]{1,11}$/.test(displayCode)) throw new Error("--display-code is required for add");
+if (action === "add" && (!visibleToEmails.length || visibleToEmails.length > 10 || visibleToEmails.some((entry) => !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(entry) || entry.endsWith("@futuremode.test")))) throw new Error("--visible-to requires one to ten real emails");
 if (apply && process.env.PYO_JOURNEY_TEST_CONFIRM !== `${action}:${email}`) throw new Error("exact confirmation phrase is required");
 
 const region = process.env.AWS_REGION || "ap-southeast-1";
@@ -116,20 +121,65 @@ async function inspect() {
 }
 
 function summary(state) {
+  const configured = configuration.journeyAccounts[email];
   return {
     action,
     apply,
     emailHashPrefix: emailHash.slice(0, 12),
     profileId,
     registeredInJourneyAllowlist: Boolean(configuration.journeyAccounts[email]),
-    scenarioKey: configuration.journeyAccounts[email]?.scenarioKey,
+    scenarioKey: configured?.scenarioKey,
+    displayCode: configured?.displayCode,
+    visibleToCount: Array.isArray(configured?.visibleToEmails) ? configured.visibleToEmails.length : 0,
+    visibleToHashPrefixes: Array.isArray(configured?.visibleToEmails) ? configured.visibleToEmails.map((entry) => sha256(String(entry).trim().toLowerCase()).slice(0, 12)) : [],
     profilePresent: Boolean(state.current),
+    profileJourneyTagged: state.current?.isJourneyTestProfile === true,
+    profileDisplayCode: state.current?.testDisplayCode,
     relatedRecords: state.related.length,
     pairRecords: state.pairIds.size,
     resultSets: state.resultSetIds.size,
     imageObjects: state.keys.length,
     fixtureEmailConflicts: state.fixtureConflicts.length,
   };
+}
+
+async function synchronizeProfileMetadata(current, config) {
+  if (!current) return;
+  if (current.isFixtureProfile === true || current.isManualTestProfile === true) throw new Error("refusing add: current profile belongs to another test identity type");
+  if (current.isTestProfile === true && current.isJourneyTestProfile !== true) throw new Error("refusing add: current profile is an unknown test identity type");
+  if (current.isJourneyTestProfile !== true && !adoptExisting) throw new Error("refusing add: existing regular profile requires --adopt-existing");
+  const audienceHashes = config.visibleToEmails.map((entry) => sha256(entry));
+  const metadataExpression = "SET isTestProfile = :yes, isJourneyTestProfile = :yes, cleanupSafe = :yes, testRunId = :cohort, testCohortId = :cohort, testScenarioKey = :scenario, testDisplayCode = :code, testAudienceEmailHashes = :audience";
+  const metadataValues = { ":yes": true, ":cohort": journeyCohortId, ":scenario": config.scenarioKey, ":code": config.displayCode, ":audience": audienceHashes };
+  await dynamo.send(new UpdateCommand({
+    TableName: tableName,
+    Key: { pk: `PROFILE#${profileId}`, sk: "CURRENT" },
+    UpdateExpression: metadataExpression,
+    ConditionExpression: "profileId = :profile AND emailHash = :emailHash AND versionId = :version",
+    ExpressionAttributeValues: { ...metadataValues, ":profile": profileId, ":emailHash": emailHash, ":version": current.versionId },
+  }));
+  await dynamo.send(new UpdateCommand({
+    TableName: tableName,
+    Key: { pk: `PROFILE#${profileId}`, sk: `VERSION#${current.versionId}` },
+    UpdateExpression: metadataExpression,
+    ConditionExpression: "profileId = :profile AND emailHash = :emailHash AND versionId = :version",
+    ExpressionAttributeValues: { ...metadataValues, ":profile": profileId, ":emailHash": emailHash, ":version": current.versionId },
+  }));
+  if (typeof current.publicSlug === "string") {
+    await dynamo.send(new UpdateCommand({
+      TableName: tableName,
+      Key: { pk: `PUBLIC_SLUG#${current.publicSlug}`, sk: "PROFILE" },
+      UpdateExpression: metadataExpression,
+      ConditionExpression: "profileId = :profile",
+      ExpressionAttributeValues: { ...metadataValues, ":profile": profileId },
+    }));
+  }
+  await dynamo.send(new UpdateCommand({
+    TableName: tableName,
+    Key: { pk: "MATCHING_GRAPH", sk: "REVISION" },
+    UpdateExpression: "SET updatedAt = :now ADD revision :one",
+    ExpressionAttributeValues: { ":now": new Date().toISOString(), ":one": 1 },
+  }));
 }
 
 let state = await inspect();
@@ -141,13 +191,16 @@ if (action === "status") {
 if (action === "add") {
   if (state.fixtureConflicts.length) throw new Error("refusing add: the email is still assigned to a fixture");
   if (configuration.accounts[email]) throw new Error("refusing add: the email is a synthetic manual account");
-  const existing = configuration.journeyAccounts[email];
-  if (existing && existing.scenarioKey !== scenarioKey) throw new Error("refusing add: journey account exists with another scenario");
+  const duplicateCode = Object.entries(configuration.journeyAccounts).find(([configuredEmail, configured]) => configuredEmail !== email && configured?.displayCode === displayCode);
+  if (duplicateCode) throw new Error("refusing add: display code is already assigned");
+  const nextConfiguration = { scenarioKey, displayCode, visibleToEmails };
+  if (state.current && state.current.isJourneyTestProfile !== true && !adoptExisting) throw new Error("refusing add: existing regular profile requires --adopt-existing");
   if (!apply) {
-    console.log(JSON.stringify({ ...summary(state), plannedScenarioKey: scenarioKey }, null, 2));
+    console.log(JSON.stringify({ ...summary(state), plannedScenarioKey: scenarioKey, plannedDisplayCode: displayCode, plannedVisibleToHashPrefixes: visibleToEmails.map((entry) => sha256(entry).slice(0, 12)), adoptExisting }, null, 2));
     process.exit(0);
   }
-  configuration.journeyAccounts[email] = { scenarioKey };
+  await synchronizeProfileMetadata(state.current, nextConfiguration);
+  configuration.journeyAccounts[email] = nextConfiguration;
   await secrets.send(new PutSecretValueCommand({ SecretId: secretId, SecretString: JSON.stringify(configuration) }));
 } else {
   if (!configuration.journeyAccounts[email]) throw new Error("refusing reset/remove: email is not an approved journey account");
@@ -178,5 +231,6 @@ if (action === "add") {
 state = await inspect();
 const expectedAllowlist = action === "remove" ? false : true;
 if (Boolean(configuration.journeyAccounts[email]) !== expectedAllowlist) throw new Error("journey allowlist postcondition failed");
+if (action === "add" && state.current && !(state.current.isJourneyTestProfile === true && state.current.cleanupSafe === true && state.current.testDisplayCode === displayCode && state.current.testRunId === journeyCohortId)) throw new Error("journey profile metadata postcondition failed");
 if ((action === "reset" || action === "remove") && (state.related.length || state.keys.length || state.current)) throw new Error("journey reset postcondition failed");
 console.log(JSON.stringify({ ...summary(state), completed: true }, null, 2));

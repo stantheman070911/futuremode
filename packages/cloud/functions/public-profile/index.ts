@@ -64,16 +64,15 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
   if (!loaded.profile || !loaded.version || !loaded.displayName) return event.rawPath.startsWith("/v1/") ? json(404, { error: "public_profile_not_found" }) : html(404, "找不到這份介紹");
   const { profile, displayName, current, version } = loaded;
   const isTestProfile = current.isManualTestProfile === true || current.isJourneyTestProfile === true;
-  const testLabel = current.isJourneyTestProfile === true
-    ? "測試帳號 · 不進入正式配對"
-    : "測試資料 · 非真實人物";
+  const testLabel = "測試資料•非真實人";
+  const testCode = typeof current.testDisplayCode === "string" ? current.testDisplayCode : undefined;
   const image = profileSocialImageUrl(current, origin) ?? genericImage;
   const profileImage = profileImageUrl(current, origin, "detail");
-  if (event.rawPath.startsWith("/v1/")) return json(200, { visibility: "public", public_slug: slug, version_id: version.versionId, display_name: displayName, profile, profile_image_url: profileImage, test_data: isTestProfile });
+  if (event.rawPath.startsWith("/v1/")) return json(200, { visibility: "public", public_slug: slug, version_id: version.versionId, display_name: displayName, profile, profile_image_url: profileImage, test_data: isTestProfile, test_display_code: testCode });
   const portrait = profileImage
     ? `<img class="portrait" src="${escapeHtml(profileImage)}" alt="${escapeHtml(displayName)}的動物角色" width="768" height="768">`
     : `<div class="portrait portrait-placeholder" aria-label="角色圖片準備中">${escapeHtml(displayName.slice(0, 1))}</div>`;
-  const body = `<article class="content"><div class="profile-lead">${portrait}<div>${isTestProfile ? `<p class="animal test-label">${testLabel}</p>` : '<p class="animal">Owner 親自確認的公開介紹</p>'}<h1>${escapeHtml(displayName)}</h1></div></div><p class="summary">${escapeHtml(profile.summary)}</p>${list("興趣", profile.interests)}${list("動機", profile.motivations)}${list("正在處理", profile.active_problems)}${list("反覆討論", profile.recurring_topics)}<section class="profile-section"><h2>想認識的人</h2><p>${escapeHtml(profile.friend_intent)}</p></section><a class="cta" href="/interest/${encodeURIComponent(slug)}">我也想認識這位 Owner</a></article>`;
+  const body = `<article class="content"><div class="profile-lead">${portrait}<div>${isTestProfile ? `<p class="animal test-label">${testLabel}${testCode ? ` · 測試編號 ${escapeHtml(testCode)}` : ""}</p>` : '<p class="animal">Owner 親自確認的公開介紹</p>'}<h1>${escapeHtml(displayName)}</h1></div></div><p class="summary">${escapeHtml(profile.summary)}</p>${list("興趣", profile.interests)}${list("動機", profile.motivations)}${list("正在處理", profile.active_problems)}${list("反覆討論", profile.recurring_topics)}<section class="profile-section"><h2>想認識的人</h2><p>${escapeHtml(profile.friend_intent)}</p></section><a class="cta" href="/interest/${encodeURIComponent(slug)}">我也想認識這位 Owner</a></article>`;
   return html(200, shell({ title: `${displayName}｜PitchYourOwner`, description: String(profile.summary).slice(0, 180), canonical, image, body, privateProfile: isTestProfile }), {
     "cache-control": "public, max-age=0, s-maxage=60",
     "content-security-policy": "default-src 'none'; style-src 'unsafe-inline'; font-src 'self'; img-src 'self' data:; base-uri 'none'; frame-ancestors 'none'; form-action 'self'",

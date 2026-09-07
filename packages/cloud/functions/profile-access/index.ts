@@ -124,6 +124,7 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
         matching_state: current.matchingState ?? "active",
         manual_test: current.isManualTestProfile === true,
         journey_test: current.isJourneyTestProfile === true,
+        test_display_code: current.isJourneyTestProfile === true ? current.testDisplayCode : undefined,
         profile_image: profileImagePresentation(current, requiredEnvironment("PUBLIC_SITE_ORIGIN")),
         updated_at: current.updatedAt,
       });

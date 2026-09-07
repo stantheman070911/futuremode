@@ -15,9 +15,12 @@ test("exposes a unified test marker for fixture, manual, and journey match cards
     import("node:fs/promises").then(({ readFile }) => readFile(new URL("../functions/pairing/index.ts", import.meta.url), "utf8")),
     import("node:fs/promises").then(({ readFile }) => readFile(new URL("../static/app.js", import.meta.url), "utf8")),
   ]);
-  assert.match(pairing, /is_synthetic: peerCurrent\.isFixtureProfile === true \|\| peerCurrent\.isTestProfile === true/);
-  assert.match(app, /match\.peer\?\.is_synthetic/);
-  assert.match(app, /測試資料 · 非真實人物/);
+  assert.match(pairing, /function testPresentation/);
+  assert.match(pairing, /is_synthetic: true/);
+  assert.match(app, /testDataMarker\(match\.peer\)/);
+  assert.match(app, /測試資料•非真實人/);
+  assert.match(app, /測試編號 \{code\}/);
+  assert.match(pairing, /test_display_code/);
 });
 
 test("allows invitations only for explicitly enabled fixtures with deliverable email", () => {

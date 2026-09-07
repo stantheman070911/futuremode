@@ -8,7 +8,7 @@ import { randomOpaqueToken, sha256 } from "../shared/security.js";
 import { documentDynamo, requiredEnvironment } from "../shared/storage.js";
 import { MATCHING_ALGORITHM_VERSION, MATCH_PAGE_SIZE } from "../shared/matching.js";
 
-interface CurrentProfile extends Record<string, unknown> { profileId: string; versionId: string; email: string; emailHash?: string; displayName?: string; publicSlug?: string; visibility?: string; matchingState?: string; isTestProfile?: boolean; isManualTestProfile?: boolean; isJourneyTestProfile?: boolean; cleanupSafe?: boolean; testRunId?: string; testCohortId?: string; testScenarioKey?: string; isFixtureProfile?: boolean; fixtureAudienceEmailHash?: string; fixtureInvitationEnabled?: boolean; manualTestVisible?: boolean }
+interface CurrentProfile extends Record<string, unknown> { profileId: string; versionId: string; email: string; emailHash?: string; displayName?: string; publicSlug?: string; visibility?: string; matchingState?: string; isTestProfile?: boolean; isManualTestProfile?: boolean; isJourneyTestProfile?: boolean; cleanupSafe?: boolean; testRunId?: string; testCohortId?: string; testScenarioKey?: string; testDisplayCode?: string; testAudienceEmailHashes?: string[]; isFixtureProfile?: boolean; fixtureAudienceEmailHash?: string; fixtureInvitationEnabled?: boolean; manualTestVisible?: boolean }
 interface ProfileVersion extends Record<string, unknown> { profileId: string; versionId: string; displayName?: string; profile: OwnerPitchProfile }
 interface Edge extends Record<string, unknown> {
   sk: string; pairId: string; ownerProfileId: string; ownerVersionId: string; candidateProfileId: string; candidateVersionId: string;
@@ -25,6 +25,7 @@ const genericAnimal = "帶著好奇心探索的水獺";
 function escapeHtml(value: unknown): string { return String(value ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\"/g, "&quot;"); }
 function compact(value: unknown, max = 360): string { const result = String(value ?? "").replace(/\s+/g, " ").trim(); return result.length > max ? `${result.slice(0, max - 1)}…` : result; }
 function profileIsPublic(current: Record<string, unknown> | undefined): current is CurrentProfile { return Boolean(current?.profileId && current.versionId && current.email && current.visibility !== "private" && String(current.matchingState ?? "active") === "active"); }
+function stringList(value: unknown): string[] { return Array.isArray(value) ? value.filter((entry): entry is string => typeof entry === "string") : []; }
 
 export function ownerCanSeeCandidate(owner: Record<string, unknown>, candidate: Record<string, unknown>): boolean {
   if (owner.isTestProfile === true) {
@@ -32,11 +33,17 @@ export function ownerCanSeeCandidate(owner: Record<string, unknown>, candidate: 
     if (candidate.isTestProfile === true) return owner.cleanupSafe === true
       && candidate.cleanupSafe === true
       && owner.testRunId === candidate.testRunId;
-    return candidate.isFixtureProfile === true
+    return (candidate.isFixtureProfile === true
       && candidate.cleanupSafe === true
-      && candidate.manualTestVisible === true;
+      && candidate.manualTestVisible === true)
+      || (owner.isJourneyTestProfile === true
+      && typeof candidate.emailHash === "string"
+      && stringList(owner.testAudienceEmailHashes).includes(candidate.emailHash));
   }
-  if (candidate.isTestProfile === true) return false;
+  if (candidate.isTestProfile === true) return Boolean(owner.emailHash
+    && candidate.isJourneyTestProfile === true
+    && candidate.cleanupSafe === true
+    && stringList(candidate.testAudienceEmailHashes).includes(String(owner.emailHash)));
   if (candidate.isFixtureProfile === true) return Boolean(owner.emailHash && candidate.fixtureAudienceEmailHash === owner.emailHash);
   return true;
 }
@@ -49,7 +56,20 @@ function testMetadata(record: Record<string, unknown>): Record<string, unknown> 
     testRunId: record.testRunId,
     testCohortId: record.testCohortId,
     ...(record.isManualTestProfile === true ? { isManualTestProfile: true } : {}),
-    ...(record.isJourneyTestProfile === true ? { isJourneyTestProfile: true, testScenarioKey: record.testScenarioKey } : {}),
+    ...(record.isJourneyTestProfile === true ? {
+      isJourneyTestProfile: true,
+      testScenarioKey: record.testScenarioKey,
+      testDisplayCode: record.testDisplayCode,
+      testAudienceEmailHashes: record.testAudienceEmailHashes,
+    } : {}),
+  };
+}
+
+function testPresentation(record: Record<string, unknown> | undefined): Record<string, unknown> {
+  if (record?.isTestProfile !== true && record?.isFixtureProfile !== true) return {};
+  return {
+    is_synthetic: true,
+    ...(typeof record.testDisplayCode === "string" ? { test_display_code: record.testDisplayCode } : {}),
   };
 }
 
@@ -179,6 +199,7 @@ async function publicTargetPresentation(tableName: string, target: CurrentProfil
     animal_persona: profileAnimalPersona(version.profile),
     summary: profile.summary,
     profile_image_url: profileImageUrl(target, requiredEnvironment("PUBLIC_SITE_ORIGIN"), "thumbnail"),
+    ...testPresentation(target),
   };
 }
 
@@ -314,7 +335,7 @@ async function edgeView(tableName: string, owner: CurrentProfile, item: ResultSe
       summary: shareable.summary,
       profile_image_url: profileImageUrl(peerCurrent, origin, detail ? "detail" : "thumbnail"),
       is_fixture: peerCurrent.isFixtureProfile === true,
-      is_synthetic: peerCurrent.isFixtureProfile === true || peerCurrent.isTestProfile === true,
+      ...testPresentation(peerCurrent),
       ...(detail ? { profile: { ...shareable, animal_persona: profileAnimalPersona(peerVersion.profile) } } : {}),
     },
     strongest_shared_signal: edge.strongestSignal,
@@ -480,7 +501,7 @@ async function sendInvite(tableName: string, owner: CurrentProfile, pairId: stri
     && peer.isManualTestProfile === true
     && owner.testCohortId === peer.testCohortId
     && peer.email.endsWith("@futuremode.test");
-  const snapshot = { display_name: profileAnimalPersona(ownVersion.profile), public_slug: owner.publicSlug, profile_image_url: profileImageUrl(owner, origin, "detail"), profile: { ...publicProfile(ownVersion.profile), animal_persona: profileAnimalPersona(ownVersion.profile) } };
+  const snapshot = { display_name: profileAnimalPersona(ownVersion.profile), public_slug: owner.publicSlug, profile_image_url: profileImageUrl(owner, origin, "detail"), profile: { ...publicProfile(ownVersion.profile), animal_persona: profileAnimalPersona(ownVersion.profile) }, ...testPresentation(owner) };
   const writes: ConstructorParameters<typeof TransactWriteCommand>[0]["TransactItems"] = [
     { Put: { TableName: tableName, Item: { pk: `INVITATION#${pairId}`, sk: "META", entityType: "INVITATION", pairId, senderProfileId: owner.profileId, recipientProfileId: peer.profileId, senderEmail: owner.email, recipientEmail: peer.email, senderSnapshot: snapshot, explanation: { whatWeBothCareAbout: edge.whatWeBothCareAbout, whyItMattersNow: edge.whyItMattersNow, whatWeCouldDiscuss: edge.whatWeCouldDiscuss, evidenceLabels: edge.evidenceLabels }, status: "pending", tokenHash, createdAt: now, expiresAt, ...fixtureMeta }, ConditionExpression: "attribute_not_exists(pk)" } },
     { Put: { TableName: tableName, Item: { pk: `INVITE_TOKEN#${tokenHash}`, sk: "META", entityType: "INVITATION_TOKEN", pairId, status: "active", createdAt: now, expiresAt, ...fixtureMeta }, ConditionExpression: "attribute_not_exists(pk)" } },
@@ -531,7 +552,7 @@ async function respondToken(tableName: string, rawToken: string, decision: "acce
     const recipient = await getCurrent(tableName, String(invite.recipientProfileId));
     const recipientVersion = recipient ? await getVersion(tableName, recipient.profileId, recipient.versionId) : undefined;
     const recipientName = recipientVersion?.profile ? profileAnimalPersona(recipientVersion.profile) : "另一位 owner";
-    const recipientSnapshot = recipientVersion?.profile ? { display_name: recipientName, public_slug: recipient?.publicSlug, profile_image_url: profileImageUrl(recipient, origin, "detail"), profile: { ...publicProfile(recipientVersion.profile), animal_persona: profileAnimalPersona(recipientVersion.profile) } } : { display_name: recipientName, profile: { animal_persona: genericAnimal } };
+    const recipientSnapshot = recipientVersion?.profile ? { display_name: recipientName, public_slug: recipient?.publicSlug, profile_image_url: profileImageUrl(recipient, origin, "detail"), profile: { ...publicProfile(recipientVersion.profile), animal_persona: profileAnimalPersona(recipientVersion.profile) }, ...testPresentation(recipient) } : { display_name: recipientName, profile: { animal_persona: genericAnimal } };
     const connectionUrl = `${origin}/connections/${encodeURIComponent(String(token.pairId))}`;
     const emailA = renderConnectionEmail(recipientName, String(invite.recipientEmail), connectionUrl);
     const emailB = renderConnectionEmail(senderName, String(invite.senderEmail), connectionUrl);
@@ -589,7 +610,7 @@ async function connectionView(tableName: string, ownerId: string, pairId: string
     connection_id: pairId,
     connected_at: connection.connectedAt,
     self: selfSnapshot,
-    peer: { ...peerSnapshot, ...(peer ? { public_slug: peer.publicSlug, profile_image_url: profileImageUrl(peer, origin, "detail") } : {}), contact_email: connection.peerEmail },
+    peer: { ...peerSnapshot, ...(peer ? { public_slug: peer.publicSlug, profile_image_url: profileImageUrl(peer, origin, "detail"), ...testPresentation(peer) } : {}), contact_email: connection.peerEmail },
     explanation: connection.explanation,
     first_email_prompt: buildFirstEmailPrompt({ sender: selfSnapshot, recipient: peerSnapshot, explanation: connection.explanation as Record<string, unknown> | undefined }),
   };
@@ -608,7 +629,7 @@ async function invitationLists(tableName: string, ownerId: string) {
     const permittedSenderSnapshot = peerId === item.senderProfileId ? senderSnapshot : undefined;
     const profile = version?.profile ?? connectedSnapshot?.profile ?? permittedSenderSnapshot?.profile;
     const displayName = profile ? profileAnimalPersona(profile) : connectedSnapshot?.display_name ?? permittedSenderSnapshot?.display_name ?? "另一位 owner";
-    return { match_id: item.pairId, connection_id: state === "connected" ? item.pairId : undefined, state, peer: { display_name: displayName, animal_persona: profileAnimalPersona(profile), summary: profile?.summary ?? "", profile_image_url: profileImageUrl(peer, requiredEnvironment("PUBLIC_SITE_ORIGIN"), "thumbnail") }, explanation: { what_we_both_care_about: (item.explanation as Record<string, unknown>)?.whatWeBothCareAbout ?? "你們有一個值得深入聊的共同關注。", evidence_labels: (item.explanation as Record<string, unknown>)?.evidenceLabels ?? [] } };
+    return { match_id: item.pairId, connection_id: state === "connected" ? item.pairId : undefined, state, peer: { display_name: displayName, animal_persona: profileAnimalPersona(profile), summary: profile?.summary ?? "", profile_image_url: profileImageUrl(peer, requiredEnvironment("PUBLIC_SITE_ORIGIN"), "thumbnail"), ...testPresentation(peer) }, explanation: { what_we_both_care_about: (item.explanation as Record<string, unknown>)?.whatWeBothCareAbout ?? "你們有一個值得深入聊的共同關注。", evidence_labels: (item.explanation as Record<string, unknown>)?.evidenceLabels ?? [] } };
   };
   const invitationPeerIds = new Set(items.flatMap((item) => {
     if (!item) return [];
@@ -659,7 +680,7 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
       const body = parseJsonBody(event.body) as { token?: unknown };
       const { invite } = await previewToken(tableName, String(body.token ?? ""));
       const sender = await getCurrent(tableName, String(invite.senderProfileId));
-      const inviter = { ...(invite.senderSnapshot as Record<string, unknown>), ...(sender ? { public_slug: sender.publicSlug, profile_image_url: profileImageUrl(sender, requiredEnvironment("PUBLIC_SITE_ORIGIN"), "detail") } : {}) };
+      const inviter = { ...(invite.senderSnapshot as Record<string, unknown>), ...(sender ? { public_slug: sender.publicSlug, profile_image_url: profileImageUrl(sender, requiredEnvironment("PUBLIC_SITE_ORIGIN"), "detail"), ...testPresentation(sender) } : {}) };
       return json(200, { invitation_id: invite.pairId, expires_at: new Date(Number(invite.expiresAt) * 1000).toISOString(), inviter, explanation: invite.explanation });
     }
     if (method === "POST" && event.rawPath === "/v1/invitation-tokens/respond") {
