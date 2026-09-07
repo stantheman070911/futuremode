@@ -174,7 +174,7 @@ All responses are JSON. Owner routes require
 | `GET /og/{slug}` | Public | Render the generic social-card PNG (`site.png`) |
 | `GET /og/profile/{slug}?version=…&image=…` | Public profile with READY portrait only | Render a profile-and-portrait-revision-checked social-card PNG with QR; reject missing or stale revisions |
 | `POST /v1/manual-test/bootstrap` | Allowlisted synthetic owner session | Return that first-time owner's complete prefilled profile draft without publishing it |
-| `GET /v1/matches` | Public owner session | Read one stable result set capped at five candidates |
+| `GET /v1/matches` | Public owner session | Read one stable result set, ten candidates per page |
 | `POST /v1/matches/refresh` | Public owner session | Reuse or replace the set according to graph revision |
 | `GET /v1/matches/{matchId}` | Public owner session in the result set | Read one match detail |
 | `POST /v1/matches/{matchId}/invitations` | Public owner session | Explicitly send one idempotent invitation |
@@ -183,6 +183,20 @@ All responses are JSON. Owner routes require
 | `POST /v1/invitation-tokens/respond` | Public possession token | Explicitly Accept or Not now once |
 | `GET /v1/connections/{connectionId}` | Connected owner session | Read only that owner's peer snapshot and peer email |
 | `POST /v1/support-requests` | Public, IP-hash rate-limited | Store and forward a support request |
+
+### Test identities
+
+Test identity policy and production lifecycle commands are documented in
+[`docs/test_account.md`](../../docs/test_account.md). Keep these classes separate:
+
+- fixture profiles are non-login candidates;
+- exactly ten `futuremode.test` accounts use fixed-code synthetic bootstrap;
+- allowlisted real-email journey accounts use real OTP and the normal external-AI profile flow.
+
+Journey accounts are marked cleanup-safe only when they publish through the configured cohort.
+They are excluded from regular-user matching, but can match within the same journey cohort and
+with explicitly safe fixtures. Use `npm run journey-test:account` for dry-run-first
+`status`/`add`/`reset`/`remove`; never edit test records by hand.
 
 ### Publish envelope
 

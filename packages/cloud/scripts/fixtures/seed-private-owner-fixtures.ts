@@ -32,7 +32,6 @@ const rawProfiles = JSON.parse(await readFile(new URL("./private-owner-profiles.
 const profiles = rawProfiles.map(({ key, profile }) => ({ key, profile: validateOwnerPitchProfile(profile) }));
 if (profiles.length !== 3 || new Set(profiles.map(({ key }) => key)).size !== 3) throw new Error("expected three unique fixtures");
 const invitationEmails = new Map([
-  ["public-finance-analyst", required("PYO_E2E_EMAIL_B").toLowerCase()],
   ["documentary-filmmaker-cinematographer", required("PYO_E2E_EMAIL_C").toLowerCase()],
 ]);
 for (const email of invitationEmails.values()) {
@@ -57,8 +56,8 @@ for (const { key, profile } of profiles) {
   const fixtureMeta = { isFixtureProfile: true, fixtureAudienceEmailHash: viewerEmailHash, fixtureSetId, fixtureInvitationEnabled: Boolean(controlledEmail), manualTestVisible: true, cleanupSafe: true };
   if (existing?.versionId === versionId) {
     await dynamo.send(new TransactWriteCommand({ TransactItems: [
-      { Update: { TableName: tableName, Key: currentKey, UpdateExpression: "SET manualTestVisible = :yes", ConditionExpression: "isFixtureProfile = :yes AND fixtureSetId = :set", ExpressionAttributeValues: { ":yes": true, ":set": fixtureSetId } } },
-      { Update: { TableName: tableName, Key: { pk: `PROFILE#${profileId}`, sk: `VERSION#${versionId}` }, UpdateExpression: "SET manualTestVisible = :yes", ConditionExpression: "isFixtureProfile = :yes AND fixtureSetId = :set", ExpressionAttributeValues: { ":yes": true, ":set": fixtureSetId } } },
+      { Update: { TableName: tableName, Key: currentKey, UpdateExpression: "SET manualTestVisible = :yes, fixtureInvitationEnabled = :enabled, email = :email, emailHash = :emailHash", ConditionExpression: "isFixtureProfile = :yes AND fixtureSetId = :set", ExpressionAttributeValues: { ":yes": true, ":enabled": Boolean(controlledEmail), ":email": email, ":emailHash": sha256(email), ":set": fixtureSetId } } },
+      { Update: { TableName: tableName, Key: { pk: `PROFILE#${profileId}`, sk: `VERSION#${versionId}` }, UpdateExpression: "SET manualTestVisible = :yes, fixtureInvitationEnabled = :enabled, emailHash = :emailHash", ConditionExpression: "isFixtureProfile = :yes AND fixtureSetId = :set", ExpressionAttributeValues: { ":yes": true, ":enabled": Boolean(controlledEmail), ":emailHash": sha256(email), ":set": fixtureSetId } } },
     ] }));
     installed.push({ key, profileId, animalPersona: profile.animal_persona, operation: "metadata-only" });
     continue;

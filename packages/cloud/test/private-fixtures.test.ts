@@ -13,7 +13,8 @@ test("private owner fixtures are three valid, distinct profiles", async () => {
 
 test("controlled fixture recipients come from environment variables, never committed addresses", async () => {
   const source = await readFile(new URL("../scripts/fixtures/seed-private-owner-fixtures.ts", import.meta.url), "utf8");
-  assert.match(source, /PYO_E2E_EMAIL_B/);
+  assert.doesNotMatch(source, /PYO_E2E_EMAIL_B/);
   assert.match(source, /PYO_E2E_EMAIL_C/);
   assert.match(source, /fixtureInvitationEnabled/);
+  assert.match(source, /email = :email, emailHash = :emailHash/);
 });

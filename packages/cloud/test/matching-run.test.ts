@@ -3,6 +3,7 @@ import test from "node:test";
 import type { TransactWriteCommand } from "@aws-sdk/lib-dynamodb";
 import {
   embeddingExplanation,
+  configuredTestRunId,
   fixtureCandidateIsVisible,
   haveCompatibleMatchLanguage,
   isCurrentMatchable,
@@ -94,6 +95,22 @@ test("manual matching includes only the cohort and explicitly safe fixtures", ()
   assert.equal(isVisibleManualTestCandidate({ profileId: "real" }, "cohort-a"), false);
   assert.equal(isVisibleManualTestCandidate({ isFixtureProfile: true, cleanupSafe: true, manualTestVisible: true }, "cohort-a"), true);
   assert.equal(isVisibleManualTestCandidate({ isFixtureProfile: true, cleanupSafe: false, manualTestVisible: true }, "cohort-a"), false);
+});
+
+test("recognizes only configured cleanup-safe manual and journey cohorts", () => {
+  const previousManual = process.env.MANUAL_TEST_COHORT_ID;
+  const previousJourney = process.env.JOURNEY_TEST_COHORT_ID;
+  process.env.MANUAL_TEST_COHORT_ID = "manual-cohort";
+  process.env.JOURNEY_TEST_COHORT_ID = "journey-cohort";
+  try {
+    assert.equal(configuredTestRunId({ isTestProfile: true, isManualTestProfile: true, cleanupSafe: true, testRunId: "manual-cohort", testCohortId: "manual-cohort" }), "manual-cohort");
+    assert.equal(configuredTestRunId({ isTestProfile: true, isJourneyTestProfile: true, cleanupSafe: true, testRunId: "journey-cohort", testCohortId: "journey-cohort" }), "journey-cohort");
+    assert.equal(configuredTestRunId({ isTestProfile: true, isJourneyTestProfile: true, cleanupSafe: true, testRunId: "other", testCohortId: "other" }), undefined);
+    assert.equal(configuredTestRunId({ isTestProfile: true, isJourneyTestProfile: true, cleanupSafe: false, testRunId: "journey-cohort", testCohortId: "journey-cohort" }), undefined);
+  } finally {
+    if (previousManual === undefined) delete process.env.MANUAL_TEST_COHORT_ID; else process.env.MANUAL_TEST_COHORT_ID = previousManual;
+    if (previousJourney === undefined) delete process.env.JOURNEY_TEST_COHORT_ID; else process.env.JOURNEY_TEST_COHORT_ID = previousJourney;
+  }
 });
 
 test("unchanged fixture versions update metadata without regenerating embeddings", async () => {

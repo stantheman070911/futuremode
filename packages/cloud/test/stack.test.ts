@@ -17,6 +17,7 @@ function template() {
       embeddingDimensions: 1024,
       matchingSchedule: "cron(0 1 ? * MON *)",
       monthlyBudgetUsd: 100,
+      journeyTestCohortId: "journey-cohort",
     },
   });
   synthesized = Template.fromStack(new PitchYourOwnerCloudStack(app, "TestPitchYourOwner", {
@@ -96,7 +97,7 @@ test("keeps profile images private and isolates the Gemini secret to the worker"
   });
   template().hasResourceProperties("AWS::Lambda::Function", {
     FunctionName: "pitchyourowner-dev-profile-image-worker",
-    Environment: { Variables: Match.objectLike({ GEMINI_IMAGE_MODEL_ID: "gemini-3.1-flash-lite-image", GEMINI_IMAGE_REVIEW_MODEL_ID: "gemini-3.5-flash-lite", GEMINI_IMAGE_SECRET_ARN: Match.anyValue(), PROFILE_IMAGE_BUCKET_NAME: Match.anyValue() }) },
+    Environment: { Variables: Match.objectLike({ GEMINI_IMAGE_MODEL_ID: "gemini-3.1-flash-lite-image", GEMINI_IMAGE_REVIEW_MODEL_ID: "gemini-3.5-flash-lite", GEMINI_IMAGE_SECRET_ARN: Match.anyValue(), PROFILE_IMAGE_BUCKET_NAME: Match.anyValue(), JOURNEY_TEST_COHORT_ID: "journey-cohort" }) },
   });
   const policies = Object.values(template().findResources("AWS::IAM::Policy"));
   const profileImageSecretPolicies = policies.filter((resource) => {

@@ -47,6 +47,7 @@ export class PitchYourOwnerCloudStack extends cdk.Stack {
     const matchingEmailDeliveryEnabled = String(this.node.tryGetContext("matchingEmailDeliveryEnabled") ?? "false") === "true";
     const manualTestAccountsEnabled = String(this.node.tryGetContext("manualTestAccountsEnabled") ?? "false") === "true";
     const manualTestCohortId = String(this.node.tryGetContext("manualTestCohortId") ?? "hackathon-manual-20260905");
+    const journeyTestCohortId = String(this.node.tryGetContext("journeyTestCohortId") ?? "hackathon-journey-20260907");
     const emailProvider = String(this.node.tryGetContext("emailProvider") ?? "resend").trim().toLowerCase();
     if (!["ses", "resend"].includes(emailProvider)) throw new Error("emailProvider must be ses or resend");
     const vectorIndexName = "profile-matching-v1";
@@ -301,6 +302,7 @@ export class PitchYourOwnerCloudStack extends cdk.Stack {
         EMBEDDING_MODEL_ID: embeddingModelId,
         EMBEDDING_DIMENSIONS: String(embeddingDimensions),
         MANUAL_TEST_COHORT_ID: manualTestCohortId,
+        JOURNEY_TEST_COHORT_ID: journeyTestCohortId,
         MANUAL_TEST_ACCOUNTS_ENABLED: String(manualTestAccountsEnabled),
         MANUAL_TEST_ACCOUNTS_SECRET_ARN: manualTestAccountsSecret.secretArn,
       },
@@ -357,6 +359,7 @@ export class PitchYourOwnerCloudStack extends cdk.Stack {
         GEMINI_IMAGE_SECRET_ARN: geminiImageSecret.secretArn,
         PROFILE_IMAGE_BUCKET_NAME: profileImageBucket.bucketName,
         MANUAL_TEST_COHORT_ID: manualTestCohortId,
+        JOURNEY_TEST_COHORT_ID: journeyTestCohortId,
       },
     });
     const profileImage = functionFor("ProfileImage", "profile-image", {
@@ -374,6 +377,7 @@ export class PitchYourOwnerCloudStack extends cdk.Stack {
         PUBLIC_SITE_ORIGIN: publicSiteOrigin,
         ENVIRONMENT: environment,
         MANUAL_TEST_COHORT_ID: manualTestCohortId,
+        JOURNEY_TEST_COHORT_ID: journeyTestCohortId,
       },
     });
     const manualTestBootstrap = functionFor("ManualTestBootstrap", "manual-test-bootstrap", {

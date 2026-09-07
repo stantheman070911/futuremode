@@ -142,12 +142,18 @@ export async function generateCurrentProfileImage(input: DirectProfileImageEvent
   if (!current || !version?.profile) return { status: "STALE" };
   if (current.isFixtureProfile === true) return { status: "SKIPPED_FIXTURE" };
   if (current.isTestProfile === true) {
-    const cohortId = process.env.MANUAL_TEST_COHORT_ID;
-    const allowed = Boolean(cohortId
+    const manualCohortId = process.env.MANUAL_TEST_COHORT_ID;
+    const journeyCohortId = process.env.JOURNEY_TEST_COHORT_ID;
+    const allowed = Boolean((manualCohortId
       && current.isManualTestProfile === true
       && current.cleanupSafe === true
-      && current.testCohortId === cohortId
-      && current.testRunId === cohortId);
+      && current.testCohortId === manualCohortId
+      && current.testRunId === manualCohortId)
+      || (journeyCohortId
+        && current.isJourneyTestProfile === true
+        && current.cleanupSafe === true
+        && current.testCohortId === journeyCohortId
+        && current.testRunId === journeyCohortId));
     if (!allowed) return { status: "SKIPPED_FIXTURE" };
   }
   const existing = current.profileImage as { status?: string; versionId?: string } | undefined;

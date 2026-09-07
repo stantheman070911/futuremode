@@ -10,19 +10,36 @@ export interface ManualTestAccount {
   personaKey: keyof typeof profiles;
 }
 
+export interface JourneyTestAccount {
+  email: string;
+  scenarioKey: string;
+  cohortId: string;
+}
+
+interface JourneyTestAccountConfiguration {
+  scenarioKey: string;
+}
+
 interface ManualTestConfiguration {
   enabled: boolean;
   cohortId: string;
   verificationCode: string;
   accounts: Record<string, keyof typeof profiles>;
+  journeyCohortId?: string;
+  journeyAccounts: Record<string, JourneyTestAccountConfiguration>;
 }
 
 let cachedConfiguration: Promise<ManualTestConfiguration> | undefined;
 
-function parseConfiguration(value: string): ManualTestConfiguration {
+function validConfigurationId(value: unknown, error: string): string {
+  if (typeof value !== "string" || !/^[A-Za-z0-9_.:-]{6,120}$/.test(value)) throw new Error(error);
+  return value;
+}
+
+export function parseManualTestConfiguration(value: string): ManualTestConfiguration {
   const raw = JSON.parse(value) as Partial<ManualTestConfiguration>;
   if (raw.enabled !== true) throw new Error("manual_test_accounts_disabled");
-  if (typeof raw.cohortId !== "string" || !/^[A-Za-z0-9_.:-]{6,120}$/.test(raw.cohortId)) throw new Error("manual_test_cohort_invalid");
+  const cohortId = validConfigurationId(raw.cohortId, "manual_test_cohort_invalid");
   if (typeof raw.verificationCode !== "string" || !/^\d{6}$/.test(raw.verificationCode)) throw new Error("manual_test_code_invalid");
   if (!raw.accounts || typeof raw.accounts !== "object" || Array.isArray(raw.accounts)) throw new Error("manual_test_accounts_invalid");
   const accounts = Object.fromEntries(Object.entries(raw.accounts).map(([email, personaKey]) => {
@@ -32,20 +49,47 @@ function parseConfiguration(value: string): ManualTestConfiguration {
     return [normalized, personaKey as keyof typeof profiles];
   }));
   if (Object.keys(accounts).length !== 10) throw new Error("manual_test_account_count_invalid");
-  return { enabled: true, cohortId: raw.cohortId, verificationCode: raw.verificationCode, accounts };
+  const journeySource = raw.journeyAccounts ?? {};
+  if (typeof journeySource !== "object" || Array.isArray(journeySource)) throw new Error("journey_test_accounts_invalid");
+  const journeyEntries = Object.entries(journeySource);
+  const journeyCohortId = journeyEntries.length
+    ? validConfigurationId(raw.journeyCohortId, "journey_test_cohort_invalid")
+    : undefined;
+  const journeyAccounts = Object.fromEntries(journeyEntries.map(([email, configuration]) => {
+    const normalized = email.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized) || normalized.endsWith("@futuremode.test")) throw new Error("journey_test_email_invalid");
+    if (!configuration || typeof configuration !== "object" || Array.isArray(configuration)) throw new Error("journey_test_account_invalid");
+    const scenarioKey = validConfigurationId((configuration as Partial<JourneyTestAccountConfiguration>).scenarioKey, "journey_test_scenario_invalid");
+    return [normalized, { scenarioKey }];
+  }));
+  return { enabled: true, cohortId, verificationCode: raw.verificationCode, accounts, journeyCohortId, journeyAccounts };
 }
 
 export async function manualTestConfiguration(): Promise<ManualTestConfiguration> {
   if (process.env.MANUAL_TEST_ACCOUNTS_ENABLED !== "true") throw new Error("manual_test_accounts_disabled");
   if (!cachedConfiguration) {
     cachedConfiguration = secrets.send(new GetSecretValueCommand({ SecretId: requiredEnvironment("MANUAL_TEST_ACCOUNTS_SECRET_ARN") }))
-      .then((result) => parseConfiguration(result.SecretString ?? ""))
+      .then((result) => parseManualTestConfiguration(result.SecretString ?? ""))
       .catch((error) => {
         cachedConfiguration = undefined;
         throw error;
       });
   }
   return cachedConfiguration;
+}
+
+export async function journeyTestAccount(email: string): Promise<JourneyTestAccount | undefined> {
+  const normalized = email.trim().toLowerCase();
+  try {
+    const config = await manualTestConfiguration();
+    const account = config.journeyAccounts[normalized];
+    return account && config.journeyCohortId
+      ? { email: normalized, scenarioKey: account.scenarioKey, cohortId: config.journeyCohortId }
+      : undefined;
+  } catch (error) {
+    if (error instanceof Error && error.message === "manual_test_accounts_disabled") return undefined;
+    throw error;
+  }
 }
 
 export async function manualTestAccount(email: string): Promise<(ManualTestAccount & { cohortId: string; verificationCode: string }) | undefined> {

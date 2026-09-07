@@ -1,7 +1,7 @@
 import { GetCommand, PutCommand, TransactWriteCommand } from "@aws-sdk/lib-dynamodb";
 import type { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from "aws-lambda";
 import { json, parseJsonBody } from "../shared/http.js";
-import { manualTestAccount } from "../shared/manual-test.js";
+import { journeyTestAccount, manualTestAccount } from "../shared/manual-test.js";
 import { normalizeEmail, randomOpaqueToken, sha256 } from "../shared/security.js";
 import { documentDynamo, requiredEnvironment } from "../shared/storage.js";
 
@@ -77,8 +77,13 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
         },
       ],
     }));
-    const testAccount = await manualTestAccount(email);
-    return json(200, { accessToken, expiresInSeconds: 30 * 24 * 60 * 60, manualTestAccount: Boolean(testAccount) });
+    const [testAccount, journeyAccount] = await Promise.all([manualTestAccount(email), journeyTestAccount(email)]);
+    return json(200, {
+      accessToken,
+      expiresInSeconds: 30 * 24 * 60 * 60,
+      manualTestAccount: Boolean(testAccount),
+      journeyTestAccount: Boolean(journeyAccount),
+    });
   } catch {
     return json(503, { error: "verification_confirmation_failed" });
   }

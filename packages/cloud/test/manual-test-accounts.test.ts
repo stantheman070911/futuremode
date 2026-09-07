@@ -5,6 +5,19 @@ import profiles from "../config/manual-test-profiles.json" with { type: "json" }
 import { validateOwnerPitchProfile } from "../functions/shared/contracts.js";
 import { prefilledManualTestDraft } from "../functions/manual-test-bootstrap/index.js";
 import { ownerCanSeeCandidate } from "../functions/pairing/index.js";
+import { parseManualTestConfiguration } from "../functions/shared/manual-test.js";
+
+function configuration(overrides: Record<string, unknown> = {}) {
+  return JSON.stringify({
+    enabled: true,
+    cohortId: "manual-cohort",
+    verificationCode: "123456",
+    accounts: Object.fromEntries(Array.from({ length: 10 }, (_, index) => [`test10${String(index).padStart(2, "0")}@futuremode.test`, "public_finance_analyst"])),
+    journeyCohortId: "journey-cohort",
+    journeyAccounts: { "owner@example.com": { scenarioKey: "deployment-boundary-otter" } },
+    ...overrides,
+  });
+}
 
 test("ships ten distinct schema-valid manual test personas", () => {
   const entries = Object.entries(profiles);
@@ -21,6 +34,14 @@ test("manual test bootstrap returns a complete prefilled draft without publishin
   assert.deepEqual(validateOwnerPitchProfile(draft.profile), draft.profile);
 });
 
+test("separates fixed-code synthetic accounts from real-email journey accounts", () => {
+  const parsed = parseManualTestConfiguration(configuration());
+  assert.equal(Object.keys(parsed.accounts).length, 10);
+  assert.equal(parsed.journeyCohortId, "journey-cohort");
+  assert.deepEqual(parsed.journeyAccounts["owner@example.com"], { scenarioKey: "deployment-boundary-otter" });
+  assert.throws(() => parseManualTestConfiguration(configuration({ journeyAccounts: { "test1099@futuremode.test": { scenarioKey: "invalid-overlap" } } })), /journey_test_email_invalid/);
+});
+
 test("routes the prefilled draft into visual edit and assigns cohort metadata only on canonical publish", async () => {
   const [bootstrap, publish, app] = await Promise.all([
     readFile(new URL("../functions/manual-test-bootstrap/index.ts", import.meta.url), "utf8"),
@@ -29,11 +50,42 @@ test("routes the prefilled draft into visual edit and assigns cohort metadata on
   ]);
   assert.doesNotMatch(bootstrap, /InvokeCommand|PROFILE_PUBLISH_FUNCTION_NAME|MATCHING_RUN_FUNCTION_NAME/);
   assert.match(publish, /manualTestAccount\(session\.email\)/);
+  assert.match(publish, /journeyTestAccount\(session\.email\)/);
+  assert.match(publish, /isJourneyTestProfile: true/);
   assert.doesNotMatch(publish, /_manualTest/);
   assert.match(app, /bootstrap\.status === "prefilled_draft"/);
   assert.match(app, /runtime\.draft = validateProfileClient\(bootstrap\.profile\)/);
   assert.match(app, /navigate\("\/import"\)/);
   assert.match(app, /await refreshMatches\(\{ polling: true \}\)/);
+});
+
+test("real-email journey accounts retain real OTP and do not trigger prefilled bootstrap", async () => {
+  const [request, confirm, app, publicProfile] = await Promise.all([
+    readFile(new URL("../functions/verification-request/index.ts", import.meta.url), "utf8"),
+    readFile(new URL("../functions/verification-confirm/index.ts", import.meta.url), "utf8"),
+    readFile(new URL("../static/app.js", import.meta.url), "utf8"),
+    readFile(new URL("../functions/public-profile/index.ts", import.meta.url), "utf8"),
+  ]);
+  assert.match(request, /const testAccount = await manualTestAccount\(email\)/);
+  assert.doesNotMatch(request, /journeyTestAccount/);
+  assert.match(confirm, /journeyTestAccount: Boolean\(journeyAccount\)/);
+  assert.match(app, /if \(result\.manualTestAccount\)/);
+  assert.doesNotMatch(app, /if \(result\.journeyTestAccount\)/);
+  assert.match(publicProfile, /測試帳號 · 不進入正式配對/);
+});
+
+test("journey lifecycle tools are dry-run-first and scope destructive writes to an exact confirmed identity", async () => {
+  const [journeyTool, fixtureTool] = await Promise.all([
+    readFile(new URL("../scripts/manual-test/manage-journey-account.mjs", import.meta.url), "utf8"),
+    readFile(new URL("../scripts/fixtures/detach-delivery-email.mjs", import.meta.url), "utf8"),
+  ]);
+  assert.match(journeyTool, /PYO_JOURNEY_TEST_CONFIRM/);
+  assert.match(journeyTool, /only the exact Hackathon stack is allowed/);
+  assert.match(journeyTool, /current profile is not an owned cleanup-safe journey profile/);
+  assert.match(journeyTool, /Prefix: `profiles\/\$\{profileId\}\//);
+  assert.match(fixtureTool, /PYO_FIXTURE_DETACH_CONFIRM/);
+  assert.match(fixtureTool, /expected exactly one fixture using the email/);
+  assert.match(fixtureTool, /cleanupSafe/);
 });
 
 test("manual test owners can see only their cohort and explicitly safe fixtures", () => {
@@ -48,4 +100,10 @@ test("manual test owners can see only their cohort and explicitly safe fixtures"
   assert.equal(ownerCanSeeCandidate(cohort, { isFixtureProfile: true, cleanupSafe: false, manualTestVisible: true }), false);
   assert.equal(ownerCanSeeCandidate(real, cohort), false);
   assert.equal(ownerCanSeeCandidate(real, { profileId: "other-real" }), true);
+  const journey = { isTestProfile: true, isJourneyTestProfile: true, cleanupSafe: true, testRunId: "journey-a" };
+  assert.equal(ownerCanSeeCandidate(journey, { ...journey, profileId: "journey-peer" }), true);
+  assert.equal(ownerCanSeeCandidate(journey, cohort), false);
+  assert.equal(ownerCanSeeCandidate(journey, real), false);
+  assert.equal(ownerCanSeeCandidate(journey, { isFixtureProfile: true, cleanupSafe: true, manualTestVisible: true }), true);
+  assert.equal(ownerCanSeeCandidate({ isTestProfile: true, testRunId: "journey-a" }, { isFixtureProfile: true, cleanupSafe: true, manualTestVisible: true }), false);
 });

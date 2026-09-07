@@ -8,7 +8,7 @@ import { randomOpaqueToken, sha256 } from "../shared/security.js";
 import { documentDynamo, requiredEnvironment } from "../shared/storage.js";
 import { MATCHING_ALGORITHM_VERSION, MATCH_PAGE_SIZE } from "../shared/matching.js";
 
-interface CurrentProfile extends Record<string, unknown> { profileId: string; versionId: string; email: string; emailHash?: string; displayName?: string; publicSlug?: string; visibility?: string; matchingState?: string; isTestProfile?: boolean; isManualTestProfile?: boolean; cleanupSafe?: boolean; testRunId?: string; testCohortId?: string; isFixtureProfile?: boolean; fixtureAudienceEmailHash?: string; fixtureInvitationEnabled?: boolean; manualTestVisible?: boolean }
+interface CurrentProfile extends Record<string, unknown> { profileId: string; versionId: string; email: string; emailHash?: string; displayName?: string; publicSlug?: string; visibility?: string; matchingState?: string; isTestProfile?: boolean; isManualTestProfile?: boolean; isJourneyTestProfile?: boolean; cleanupSafe?: boolean; testRunId?: string; testCohortId?: string; testScenarioKey?: string; isFixtureProfile?: boolean; fixtureAudienceEmailHash?: string; fixtureInvitationEnabled?: boolean; manualTestVisible?: boolean }
 interface ProfileVersion extends Record<string, unknown> { profileId: string; versionId: string; displayName?: string; profile: OwnerPitchProfile }
 interface Edge extends Record<string, unknown> {
   sk: string; pairId: string; ownerProfileId: string; ownerVersionId: string; candidateProfileId: string; candidateVersionId: string;
@@ -28,15 +28,29 @@ function profileIsPublic(current: Record<string, unknown> | undefined): current 
 
 export function ownerCanSeeCandidate(owner: Record<string, unknown>, candidate: Record<string, unknown>): boolean {
   if (owner.isTestProfile === true) {
-    if (candidate.isTestProfile === true) return owner.testRunId === candidate.testRunId;
-    return owner.isManualTestProfile === true
-      && candidate.isFixtureProfile === true
+    if (owner.cleanupSafe !== true || typeof owner.testRunId !== "string") return false;
+    if (candidate.isTestProfile === true) return owner.cleanupSafe === true
+      && candidate.cleanupSafe === true
+      && owner.testRunId === candidate.testRunId;
+    return candidate.isFixtureProfile === true
       && candidate.cleanupSafe === true
       && candidate.manualTestVisible === true;
   }
   if (candidate.isTestProfile === true) return false;
   if (candidate.isFixtureProfile === true) return Boolean(owner.emailHash && candidate.fixtureAudienceEmailHash === owner.emailHash);
   return true;
+}
+
+function testMetadata(record: Record<string, unknown>): Record<string, unknown> {
+  if (record.isTestProfile !== true || record.cleanupSafe !== true || typeof record.testRunId !== "string") return {};
+  return {
+    isTestProfile: true,
+    cleanupSafe: true,
+    testRunId: record.testRunId,
+    testCohortId: record.testCohortId,
+    ...(record.isManualTestProfile === true ? { isManualTestProfile: true } : {}),
+    ...(record.isJourneyTestProfile === true ? { isJourneyTestProfile: true, testScenarioKey: record.testScenarioKey } : {}),
+  };
 }
 
 export function candidateCanReceiveInvitation(candidate: Record<string, unknown>): boolean {
@@ -111,7 +125,7 @@ async function createResultSet(tableName: string, owner: CurrentProfile) {
   const resultSetId = randomOpaqueToken(18);
   const now = new Date().toISOString();
   const expiresAt = Math.floor(Date.now() / 1000) + 30 * DAY;
-  const fixtureMeta = owner.isTestProfile === true && owner.cleanupSafe === true && owner.testRunId ? { isTestProfile: true, cleanupSafe: true, testRunId: owner.testRunId, ...(owner.isManualTestProfile === true ? { isManualTestProfile: true, testCohortId: owner.testCohortId } : {}) } : {};
+  const fixtureMeta = testMetadata(owner);
   const items: ResultSetItem[] = edges.map((edge) => ({ candidateId: edge.candidateProfileId, candidateVersionId: edge.candidateVersionId, edgeSk: edge.sk, pairId: edge.pairId }));
   await documentDynamo.send(new TransactWriteCommand({ TransactItems: [
     { Put: { TableName: tableName, Item: { pk: `RESULT_SET#${resultSetId}`, sk: "META", entityType: "MATCH_RESULT_SET", resultSetId, ownerProfileId: owner.profileId, ownerVersionId: owner.versionId, graphRevision: revision, matchingAlgorithm: MATCHING_ALGORITHM_VERSION, items, createdAt: now, expiresAt, ...fixtureMeta }, ConditionExpression: "attribute_not_exists(pk)" } },
@@ -300,7 +314,7 @@ async function edgeView(tableName: string, owner: CurrentProfile, item: ResultSe
       summary: shareable.summary,
       profile_image_url: profileImageUrl(peerCurrent, origin, detail ? "detail" : "thumbnail"),
       is_fixture: peerCurrent.isFixtureProfile === true,
-      is_synthetic: peerCurrent.isFixtureProfile === true || peerCurrent.isManualTestProfile === true,
+      is_synthetic: peerCurrent.isFixtureProfile === true || peerCurrent.isTestProfile === true,
       ...(detail ? { profile: { ...shareable, animal_persona: profileAnimalPersona(peerVersion.profile) } } : {}),
     },
     strongest_shared_signal: edge.strongestSignal,
@@ -461,7 +475,7 @@ async function sendInvite(tableName: string, owner: CurrentProfile, pairId: stri
     reason: String(edge.whatWeBothCareAbout ?? edge.strongestSignal ?? "你們有值得深入聊的共同關注。"), acceptUrl: `${origin}/accept#token=${encodeURIComponent(rawToken)}`,
     profileUrl: owner.publicSlug ? `${origin}/p/${encodeURIComponent(owner.publicSlug)}` : undefined,
   });
-  const fixtureMeta = owner.isTestProfile === true && owner.cleanupSafe === true && owner.testRunId ? { isTestProfile: true, cleanupSafe: true, testRunId: owner.testRunId, ...(owner.isManualTestProfile === true ? { isManualTestProfile: true, testCohortId: owner.testCohortId } : {}) } : {};
+  const fixtureMeta = testMetadata(owner);
   const capturedTestDelivery = owner.isManualTestProfile === true
     && peer.isManualTestProfile === true
     && owner.testCohortId === peer.testCohortId
@@ -472,7 +486,7 @@ async function sendInvite(tableName: string, owner: CurrentProfile, pairId: stri
     { Put: { TableName: tableName, Item: { pk: `INVITE_TOKEN#${tokenHash}`, sk: "META", entityType: "INVITATION_TOKEN", pairId, status: "active", createdAt: now, expiresAt, ...fixtureMeta }, ConditionExpression: "attribute_not_exists(pk)" } },
     { Put: { TableName: tableName, Item: { pk: `PROFILE#${owner.profileId}`, sk: `INVITE#${now}#${pairId}`, entityType: "INVITATION_POINTER", pairId, role: "sender", createdAt: now, expiresAt, ...fixtureMeta } } },
     { Put: { TableName: tableName, Item: { pk: `PROFILE#${peer.profileId}`, sk: `INVITE#${now}#${pairId}`, entityType: "INVITATION_POINTER", pairId, role: "recipient", createdAt: now, expiresAt, ...fixtureMeta } } },
-    { Put: { TableName: tableName, Item: { pk: `OUTBOX#${eventId}`, sk: "META", entityType: "EMAIL_OUTBOX", eventId, kind: "invitation", status: capturedTestDelivery ? "CAPTURED" : "PENDING", to: peer.email, ...email, createdAt: now, expiresAt: expiresAt + 7 * DAY, ...fixtureMeta }, ConditionExpression: "attribute_not_exists(pk)" } },
+    { Put: { TableName: tableName, Item: { pk: `OUTBOX#${eventId}`, sk: "META", entityType: "EMAIL_OUTBOX", eventId, kind: "invitation", pairId, ownerProfileId: owner.profileId, peerProfileId: peer.profileId, status: capturedTestDelivery ? "CAPTURED" : "PENDING", to: peer.email, ...email, createdAt: now, expiresAt: expiresAt + 7 * DAY, ...fixtureMeta }, ConditionExpression: "attribute_not_exists(pk)" } },
     { Delete: { TableName: tableName, Key: { pk: `PROFILE#${owner.profileId}`, sk: `INTEREST#${peer.profileId}` } } },
   ];
   if (capturedTestDelivery) writes.push({ Put: { TableName: tableName, Item: {
@@ -509,7 +523,7 @@ async function respondToken(tableName: string, rawToken: string, decision: "acce
     { Update: { TableName: tableName, Key: { pk: `INVITATION#${token.pairId}`, sk: "META" }, UpdateExpression: "SET #status = :decision, respondedAt = :now", ConditionExpression: "#status = :pending AND tokenHash = :hash", ExpressionAttributeNames: { "#status": "status" }, ExpressionAttributeValues: { ":decision": decision === "accept" ? "connected" : "not_now", ":pending": "pending", ":hash": hash, ":now": now } } },
   ];
   if (decision === "accept") {
-    const fixtureMeta = invite.isTestProfile === true && invite.cleanupSafe === true && invite.testRunId ? { isTestProfile: true, cleanupSafe: true, testRunId: invite.testRunId, ...(invite.isManualTestProfile === true ? { isManualTestProfile: true, testCohortId: invite.testCohortId } : {}) } : {};
+    const fixtureMeta = testMetadata(invite);
     const capturedTestDelivery = invite.isManualTestProfile === true;
     const eventA = randomOpaqueToken(18); const eventB = randomOpaqueToken(18);
     const origin = requiredEnvironment("PUBLIC_SITE_ORIGIN").replace(/\/$/, "");
@@ -524,8 +538,8 @@ async function respondToken(tableName: string, rawToken: string, decision: "acce
     transaction.push(
       { Put: { TableName: tableName, Item: { pk: `PROFILE#${invite.senderProfileId}`, sk: `CONNECTION#${token.pairId}`, entityType: "CONNECTION", pairId: token.pairId, peerProfileId: invite.recipientProfileId, peerEmail: invite.recipientEmail, peerDisplayName: recipientName, peerSnapshot: recipientSnapshot, explanation: invite.explanation, connectedAt: now, ...fixtureMeta }, ConditionExpression: "attribute_not_exists(pk)" } },
       { Put: { TableName: tableName, Item: { pk: `PROFILE#${invite.recipientProfileId}`, sk: `CONNECTION#${token.pairId}`, entityType: "CONNECTION", pairId: token.pairId, peerProfileId: invite.senderProfileId, peerEmail: invite.senderEmail, peerDisplayName: senderName, peerSnapshot: invite.senderSnapshot, explanation: invite.explanation, connectedAt: now, ...fixtureMeta }, ConditionExpression: "attribute_not_exists(pk)" } },
-      { Put: { TableName: tableName, Item: { pk: `OUTBOX#${eventA}`, sk: "META", entityType: "EMAIL_OUTBOX", eventId: eventA, kind: "connection", status: capturedTestDelivery ? "CAPTURED" : "PENDING", to: invite.senderEmail, ...emailA, createdAt: now, expiresAt: Math.floor(Date.now() / 1000) + 21 * DAY, ...fixtureMeta }, ConditionExpression: "attribute_not_exists(pk)" } },
-      { Put: { TableName: tableName, Item: { pk: `OUTBOX#${eventB}`, sk: "META", entityType: "EMAIL_OUTBOX", eventId: eventB, kind: "connection", status: capturedTestDelivery ? "CAPTURED" : "PENDING", to: invite.recipientEmail, ...emailB, createdAt: now, expiresAt: Math.floor(Date.now() / 1000) + 21 * DAY, ...fixtureMeta }, ConditionExpression: "attribute_not_exists(pk)" } },
+      { Put: { TableName: tableName, Item: { pk: `OUTBOX#${eventA}`, sk: "META", entityType: "EMAIL_OUTBOX", eventId: eventA, kind: "connection", pairId: token.pairId, ownerProfileId: invite.senderProfileId, peerProfileId: invite.recipientProfileId, status: capturedTestDelivery ? "CAPTURED" : "PENDING", to: invite.senderEmail, ...emailA, createdAt: now, expiresAt: Math.floor(Date.now() / 1000) + 21 * DAY, ...fixtureMeta }, ConditionExpression: "attribute_not_exists(pk)" } },
+      { Put: { TableName: tableName, Item: { pk: `OUTBOX#${eventB}`, sk: "META", entityType: "EMAIL_OUTBOX", eventId: eventB, kind: "connection", pairId: token.pairId, ownerProfileId: invite.recipientProfileId, peerProfileId: invite.senderProfileId, status: capturedTestDelivery ? "CAPTURED" : "PENDING", to: invite.recipientEmail, ...emailB, createdAt: now, expiresAt: Math.floor(Date.now() / 1000) + 21 * DAY, ...fixtureMeta }, ConditionExpression: "attribute_not_exists(pk)" } },
     );
   }
   await documentDynamo.send(new TransactWriteCommand({ TransactItems: transaction }));

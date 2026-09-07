@@ -15,8 +15,10 @@ interface CurrentProfile extends Record<string, unknown> {
   emailHash?: string;
   isTestProfile?: boolean;
   isManualTestProfile?: boolean;
+  isJourneyTestProfile?: boolean;
   testRunId?: string;
   testCohortId?: string;
+  testScenarioKey?: string;
   cleanupSafe?: boolean;
   isFixtureProfile?: boolean;
   fixtureAudienceEmailHash?: string;
@@ -159,6 +161,13 @@ export function isVisibleManualTestCandidate(profile: Record<string, unknown>, t
   return profile.isFixtureProfile === true && profile.cleanupSafe === true && profile.manualTestVisible === true;
 }
 
+export function configuredTestRunId(profile: Record<string, unknown>): string | undefined {
+  if (profile.isTestProfile !== true || profile.cleanupSafe !== true || typeof profile.testRunId !== "string" || profile.testRunId !== profile.testCohortId) return undefined;
+  if (profile.isManualTestProfile === true && profile.testRunId === process.env.MANUAL_TEST_COHORT_ID) return profile.testRunId;
+  if (profile.isJourneyTestProfile === true && profile.testRunId === process.env.JOURNEY_TEST_COHORT_ID) return profile.testRunId;
+  return undefined;
+}
+
 function inScope(profile: CurrentProfile, scope: MatchingScope, fixtureAudienceEmailHash?: string): boolean {
   if (scope.includeTestProfiles) {
     return isVisibleManualTestCandidate(profile, scope.testRunId);
@@ -239,6 +248,7 @@ export async function persistPair(
       cleanupSafe: true,
       testRunId: owner.current.testRunId,
       ...(owner.current.isManualTestProfile === true ? { isManualTestProfile: true, testCohortId: owner.current.testCohortId } : {}),
+      ...(owner.current.isJourneyTestProfile === true ? { isJourneyTestProfile: true, testCohortId: owner.current.testCohortId, testScenarioKey: owner.current.testScenarioKey } : {}),
     } : {}),
   });
   const writes: ConstructorParameters<typeof TransactWriteCommand>[0]["TransactItems"] = [
@@ -269,15 +279,8 @@ export async function handler(event?: unknown): Promise<Record<string, unknown>>
   const requestedId = event && typeof event === "object" ? String((event as Record<string, unknown>).profileId ?? "") : "";
   if (!scope.includeTestProfiles && requestedId) {
     const requestedCurrent = items.find((item) => item.entityType === "PROFILE_CURRENT" && item.profileId === requestedId) as CurrentProfile | undefined;
-    const cohortId = process.env.MANUAL_TEST_COHORT_ID;
-    if (cohortId
-      && requestedCurrent?.isTestProfile === true
-      && requestedCurrent.isManualTestProfile === true
-      && requestedCurrent.cleanupSafe === true
-      && requestedCurrent.testCohortId === cohortId
-      && requestedCurrent.testRunId === cohortId) {
-      scope = { includeTestProfiles: true, testRunId: cohortId };
-    }
+    const testRunId = requestedCurrent ? configuredTestRunId(requestedCurrent) : undefined;
+    if (testRunId) scope = { includeTestProfiles: true, testRunId };
   }
   const regularProfiles = loadedProfiles(items, scope);
   const requestedOwner = requestedId ? regularProfiles.find((entry) => entry.current.profileId === requestedId) : undefined;

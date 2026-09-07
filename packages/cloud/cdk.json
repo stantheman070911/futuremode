@@ -18,6 +18,7 @@
     "matchingEmailDeliveryEnabled": true,
     "manualTestAccountsEnabled": true,
     "manualTestCohortId": "hackathon-manual-20260905",
+    "journeyTestCohortId": "hackathon-journey-20260907",
     "matchingSchedule": "cron(0 1 ? * MON *)",
     "customDomains": {
       "hackathon": {

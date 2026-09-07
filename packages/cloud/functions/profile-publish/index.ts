@@ -4,7 +4,7 @@ import { embedText } from "../../lib/reusable/bedrock.js";
 import { loadSession, profileIdForEmailHash } from "../shared/auth.js";
 import { canonicalMatchingDocument, payloadHash, PROFILE_SCHEMA, validatePublishPayload } from "../shared/contracts.js";
 import { json, parseJsonBody } from "../shared/http.js";
-import { manualTestAccount } from "../shared/manual-test.js";
+import { journeyTestAccount, manualTestAccount } from "../shared/manual-test.js";
 import { randomPublicSlug } from "../shared/security.js";
 import { documentDynamo, requiredEnvironment } from "../shared/storage.js";
 
@@ -32,16 +32,21 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
     const session = await loadSession(event.headers.authorization);
     const tableName = requiredEnvironment("TABLE_NAME");
     const profileId = profileIdForEmailHash(session.emailHash);
-    const configuredTestCohort = process.env.MANUAL_TEST_COHORT_ID;
-    const testAccount = session.email.endsWith("@futuremode.test") ? await manualTestAccount(session.email) : undefined;
-    if (testAccount && (!configuredTestCohort || testAccount.cohortId !== configuredTestCohort)) throw new Error("manual_test_context_invalid");
+    const [manualAccount, journeyAccount] = await Promise.all([
+      session.email.endsWith("@futuremode.test") ? manualTestAccount(session.email) : undefined,
+      session.email.endsWith("@futuremode.test") ? undefined : journeyTestAccount(session.email),
+    ]);
+    const configuredTestCohort = manualAccount ? process.env.MANUAL_TEST_COHORT_ID : process.env.JOURNEY_TEST_COHORT_ID;
+    const testAccount = manualAccount ?? journeyAccount;
+    if (testAccount && (!configuredTestCohort || testAccount.cohortId !== configuredTestCohort)) throw new Error("test_account_context_invalid");
     const testCohortId = testAccount?.cohortId;
     const testMetadata = testCohortId ? {
       isTestProfile: true,
-      isManualTestProfile: true,
       cleanupSafe: true,
       testRunId: testCohortId,
       testCohortId,
+      ...(manualAccount ? { isManualTestProfile: true } : {}),
+      ...(journeyAccount ? { isJourneyTestProfile: true, testScenarioKey: journeyAccount.scenarioKey } : {}),
     } : {};
 
     if (event.requestContext.http.method === "GET") {
