@@ -3,6 +3,7 @@ import { fileURLToPath } from "node:url";
 import * as cdk from "aws-cdk-lib";
 import * as apigwv2 from "aws-cdk-lib/aws-apigatewayv2";
 import * as integrations from "aws-cdk-lib/aws-apigatewayv2-integrations";
+import * as acm from "aws-cdk-lib/aws-certificatemanager";
 import * as budgets from "aws-cdk-lib/aws-budgets";
 import * as cloudfront from "aws-cdk-lib/aws-cloudfront";
 import * as origins from "aws-cdk-lib/aws-cloudfront-origins";
@@ -50,6 +51,16 @@ export class PitchYourOwnerCloudStack extends cdk.Stack {
     if (!["ses", "resend"].includes(emailProvider)) throw new Error("emailProvider must be ses or resend");
     const vectorIndexName = "profile-matching-v1";
     const monthlyBudgetUsd = Number(this.node.tryGetContext("monthlyBudgetUsd") ?? 100);
+    const customDomains = this.node.tryGetContext("customDomains") as Record<string, unknown> | undefined;
+    const customDomain = customDomains?.[environment] as { domainName?: unknown; certificateId?: unknown } | undefined;
+    const customDomainName = customDomain ? String(customDomain.domainName ?? "").trim().toLowerCase() : undefined;
+    const customDomainCertificateId = customDomain ? String(customDomain.certificateId ?? "").trim() : undefined;
+    if (customDomain && !/^[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?$/.test(customDomainName ?? "")) {
+      throw new Error(`customDomains.${environment}.domainName must be a hostname without a scheme or path`);
+    }
+    if (customDomain && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(customDomainCertificateId ?? "")) {
+      throw new Error(`customDomains.${environment}.certificateId must be an ACM certificate UUID`);
+    }
 
     const senderEmail = new cdk.CfnParameter(this, "SenderEmail", {
       type: "String",
@@ -226,7 +237,18 @@ export class PitchYourOwnerCloudStack extends cdk.Stack {
   return request;
 }`),
     });
+    const websiteCertificate = customDomainCertificateId
+      ? acm.Certificate.fromCertificateArn(this, "CloudWebsiteCertificate", this.formatArn({
+        service: "acm",
+        region: "us-east-1",
+        resource: "certificate",
+        resourceName: customDomainCertificateId,
+        arnFormat: cdk.ArnFormat.SLASH_RESOURCE_NAME,
+      }))
+      : undefined;
     const distribution = new cloudfront.Distribution(this, "CloudWebsiteDistribution", {
+      certificate: websiteCertificate,
+      domainNames: customDomainName ? [customDomainName] : undefined,
       defaultRootObject: "index.html",
       defaultBehavior: {
         origin: origins.S3BucketOrigin.withOriginAccessControl(websiteBucket),
@@ -236,7 +258,9 @@ export class PitchYourOwnerCloudStack extends cdk.Stack {
         functionAssociations: [{ function: cleanRouteRewrite, eventType: cloudfront.FunctionEventType.VIEWER_REQUEST }],
       },
     });
-    const publicSiteOrigin = `https://${distribution.distributionDomainName}`;
+    const publicSiteOrigin = customDomainName
+      ? `https://${customDomainName}`
+      : `https://${distribution.distributionDomainName}`;
 
     const outboxDlq = new sqs.Queue(this, "EmailOutboxDlq", {
       queueName: `${prefix}-email-outbox-dlq`,

@@ -132,6 +132,41 @@ test("serves app and API through one CloudFront distribution", () => {
   assert.equal(behaviors.find((behavior) => behavior.PathPattern === "/og/*")?.CachePolicyId, apiPolicy);
 });
 
+test("uses the environment-scoped custom hostname for CloudFront and public URLs", () => {
+  const app = new cdk.App({
+    context: {
+      emailProvider: "resend",
+      verificationEmailEnabled: true,
+      matchingEmailDeliveryEnabled: true,
+      embeddingModelId: "global.cohere.embed-v4:0",
+      embeddingDimensions: 1024,
+      matchingSchedule: "cron(0 1 ? * MON *)",
+      monthlyBudgetUsd: 100,
+      customDomains: {
+        hackathon: {
+          domainName: "pitchyourowner.oysterun.com",
+          certificateId: "fe139684-ee15-4d6a-b3ac-bb56584a612a",
+        },
+      },
+    },
+  });
+  const customTemplate = Template.fromStack(new PitchYourOwnerCloudStack(app, "CustomDomainPitchYourOwner", {
+    environment: "hackathon",
+    env: { account: "111111111111", region: "ap-southeast-1" },
+  }));
+
+  customTemplate.hasResourceProperties("AWS::CloudFront::Distribution", {
+    DistributionConfig: Match.objectLike({
+      Aliases: ["pitchyourowner.oysterun.com"],
+      ViewerCertificate: Match.objectLike({ AcmCertificateArn: Match.anyValue() }),
+    }),
+  });
+  customTemplate.hasOutput("CloudWebsiteUrl", { Value: "https://pitchyourowner.oysterun.com" });
+  customTemplate.hasResourceProperties("AWS::Lambda::Function", {
+    Environment: { Variables: Match.objectLike({ PUBLIC_SITE_ORIGIN: "https://pitchyourowner.oysterun.com" }) },
+  });
+});
+
 test("grants matching trigger access only to the matching runner", () => {
   const functions = template().findResources("AWS::Lambda::Function");
   const trigger = Object.values(functions).find((resource) => resource.Properties.FunctionName === "pitchyourowner-dev-matching-trigger");

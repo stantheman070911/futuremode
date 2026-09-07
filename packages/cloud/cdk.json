@@ -18,6 +18,12 @@
     "matchingEmailDeliveryEnabled": true,
     "manualTestAccountsEnabled": true,
     "manualTestCohortId": "hackathon-manual-20260905",
-    "matchingSchedule": "cron(0 1 ? * MON *)"
+    "matchingSchedule": "cron(0 1 ? * MON *)",
+    "customDomains": {
+      "hackathon": {
+        "domainName": "pitchyourowner.oysterun.com",
+        "certificateId": "fe139684-ee15-4d6a-b3ac-bb56584a612a"
+      }
+    }
   }
 }

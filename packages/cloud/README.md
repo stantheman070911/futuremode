@@ -347,6 +347,7 @@ CDK context lives in `cdk.json`. These values are consumed by the application:
 | `verificationIpHourlyLimit` | `20` | Per-source-IP hourly reservation count |
 | `matchingSchedule` | weekly cron expression | Expression only; schedule state is hard-coded `DISABLED` |
 | `monthlyBudgetUsd` | `100` | Tagged AWS cost budget |
+| `customDomains` | Hackathon hostname and ACM certificate UUID | Environment-scoped CloudFront alternate hostname; the certificate ARN is assembled for `us-east-1` without storing an AWS account identifier |
 
 `sesDailyQuota` and `sesDailyWarningThreshold` are present in `cdk.json` but are not
 read by the stack.
@@ -403,7 +404,8 @@ product's stack.
 
 The current manually deployed Hackathon environment is:
 
-- App: <https://d1vuzznd4gxltu.cloudfront.net>
+- App: <https://pitchyourowner.oysterun.com>
+- CloudFront fallback: <https://d1vuzznd4gxltu.cloudfront.net>
 - API: <https://be1tnhx22c.execute-api.ap-southeast-1.amazonaws.com>
 - Stack: `PitchYourOwner-hackathon`
 - Region: `ap-southeast-1`
