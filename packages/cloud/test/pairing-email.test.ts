@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { buildFirstEmailPrompt, candidateCanReceiveInvitation, ownerCanSeeCandidate, publicSimilarityScore, renderConnectionEmail, renderInvitationEmail, resultSetNeedsRevisionCheck } from "../functions/pairing/index.js";
+import { buildFirstEmailPrompt, candidateCanReceiveInvitation, invitationEventAt, ownerCanSeeCandidate, publicSimilarityScore, renderConnectionEmail, renderInvitationEmail, resultSetNeedsRevisionCheck, sortInvitationEntries } from "../functions/pairing/index.js";
 
 test("authorizes fixture edges only for their intended owner", () => {
   const fixture = { isFixtureProfile: true, fixtureAudienceEmailHash: "owner-hash" };
@@ -44,6 +44,37 @@ test("keeps non-empty pinned pages stable but lets an empty pending snapshot rec
   assert.equal(resultSetNeedsRevisionCheck({ requested: false, refresh: false, createdAt: "2026-09-05T12:00:01.000Z", nowMs }), false);
   assert.equal(resultSetNeedsRevisionCheck({ requested: false, refresh: false, createdAt: "2026-09-05T12:00:00.000Z", nowMs }), true);
   assert.equal(resultSetNeedsRevisionCheck({ requested: false, refresh: true, createdAt: "2026-09-05T12:00:59.000Z", nowMs }), true);
+});
+
+test("uses the correct event time for every invitation section and sorts newest first", () => {
+  const createdAt = "2026-09-07T10:00:00.000Z";
+  const respondedAt = "2026-09-07T11:00:00.000Z";
+  const connectedAt = "2026-09-07T12:00:00.000Z";
+  assert.equal(invitationEventAt({ createdAt }, "incoming"), createdAt);
+  assert.equal(invitationEventAt({ createdAt }, "outgoing"), createdAt);
+  assert.equal(invitationEventAt({ createdAt, respondedAt }, "connected", { connectedAt }), connectedAt);
+  assert.equal(invitationEventAt({ createdAt, respondedAt }, "connected"), respondedAt);
+  assert.equal(invitationEventAt({ createdAt: "invalid" }, "incoming"), undefined);
+  assert.deepEqual(sortInvitationEntries([
+    { id: "older", event_at: createdAt },
+    { id: "missing" },
+    { id: "newer", event_at: connectedAt },
+  ]).map((entry) => entry.id), ["newer", "older", "missing"]);
+});
+
+test("renders accessible local event times on every invitation card", async () => {
+  const [pairing, app, styles] = await Promise.all([
+    import("node:fs/promises").then(({ readFile }) => readFile(new URL("../functions/pairing/index.ts", import.meta.url), "utf8")),
+    import("node:fs/promises").then(({ readFile }) => readFile(new URL("../static/app.js", import.meta.url), "utf8")),
+    import("node:fs/promises").then(({ readFile }) => readFile(new URL("../static/styles.css", import.meta.url), "utf8")),
+  ]);
+  assert.match(pairing, /event_type: state === "incoming" \? "received" : state === "outgoing" \? "sent" : "connected"/);
+  assert.match(pairing, /event_at: interest\.createdAt, event_type: "interested"/);
+  assert.match(app, /function invitationEventTime/);
+  assert.match(app, /<time class="invitation-event-time" datetime=/);
+  assert.match(app, /invitationEventTimeHtml\(item\)/);
+  assert.match(app, /invitationEventTimeHtml\(match\)/);
+  assert.match(styles, /\.invitation-event-time\{/);
 });
 
 test("invitation email uses the site style and does not expose contact data", () => {

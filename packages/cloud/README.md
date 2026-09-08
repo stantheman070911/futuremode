@@ -178,7 +178,7 @@ All responses are JSON. Owner routes require
 | `POST /v1/matches/refresh` | Public owner session | Reuse or replace the set according to graph revision |
 | `GET /v1/matches/{matchId}` | Public owner session in the result set | Read one match detail |
 | `POST /v1/matches/{matchId}/invitations` | Public owner session | Explicitly send one idempotent invitation |
-| `GET /v1/invitations` | Owner session | Group incoming, outgoing, and connected matches |
+| `GET /v1/invitations` | Owner session | Group interested, incoming, outgoing, and connected matches with state-specific event times |
 | `POST /v1/invitation-tokens/preview` | Public possession token | Read invitation preview without mutation |
 | `POST /v1/invitation-tokens/respond` | Public possession token | Explicitly Accept or Not now once |
 | `GET /v1/connections/{connectionId}` | Connected owner session | Read only that owner's peer snapshot and peer email |

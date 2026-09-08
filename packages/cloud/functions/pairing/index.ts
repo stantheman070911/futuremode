@@ -96,6 +96,21 @@ export function resultSetNeedsRevisionCheck(input: { requested: boolean; refresh
   return (input.nowMs ?? Date.now()) - createdAt >= RESULT_SET_FRESHNESS_SECONDS * 1_000;
 }
 
+export function invitationEventAt(item: Record<string, unknown>, state: string, connection?: Record<string, unknown>): string | undefined {
+  const value = state === "connected"
+    ? connection?.connectedAt ?? item.respondedAt ?? item.createdAt
+    : item.createdAt;
+  return typeof value === "string" && Number.isFinite(Date.parse(value)) ? value : undefined;
+}
+
+export function sortInvitationEntries<T extends Record<string, unknown>>(entries: T[]): T[] {
+  return [...entries].sort((left, right) => {
+    const leftTime = Date.parse(String(left.event_at ?? ""));
+    const rightTime = Date.parse(String(right.event_at ?? ""));
+    return (Number.isFinite(rightTime) ? rightTime : 0) - (Number.isFinite(leftTime) ? leftTime : 0);
+  });
+}
+
 async function getCurrent(tableName: string, profileId: string): Promise<CurrentProfile | undefined> {
   return (await documentDynamo.send(new GetCommand({ TableName: tableName, Key: { pk: `PROFILE#${profileId}`, sk: "CURRENT" }, ConsistentRead: true }))).Item as CurrentProfile | undefined;
 }
@@ -629,7 +644,15 @@ async function invitationLists(tableName: string, ownerId: string) {
     const permittedSenderSnapshot = peerId === item.senderProfileId ? senderSnapshot : undefined;
     const profile = version?.profile ?? connectedSnapshot?.profile ?? permittedSenderSnapshot?.profile;
     const displayName = profile ? profileAnimalPersona(profile) : connectedSnapshot?.display_name ?? permittedSenderSnapshot?.display_name ?? "另一位 owner";
-    return { match_id: item.pairId, connection_id: state === "connected" ? item.pairId : undefined, state, peer: { display_name: displayName, animal_persona: profileAnimalPersona(profile), summary: profile?.summary ?? "", profile_image_url: profileImageUrl(peer, requiredEnvironment("PUBLIC_SITE_ORIGIN"), "thumbnail"), ...testPresentation(peer) }, explanation: { what_we_both_care_about: (item.explanation as Record<string, unknown>)?.whatWeBothCareAbout ?? "你們有一個值得深入聊的共同關注。", evidence_labels: (item.explanation as Record<string, unknown>)?.evidenceLabels ?? [] } };
+    return {
+      match_id: item.pairId,
+      connection_id: state === "connected" ? item.pairId : undefined,
+      state,
+      event_at: invitationEventAt(item, state, connection),
+      event_type: state === "incoming" ? "received" : state === "outgoing" ? "sent" : "connected",
+      peer: { display_name: displayName, animal_persona: profileAnimalPersona(profile), summary: profile?.summary ?? "", profile_image_url: profileImageUrl(peer, requiredEnvironment("PUBLIC_SITE_ORIGIN"), "thumbnail"), ...testPresentation(peer) },
+      explanation: { what_we_both_care_about: (item.explanation as Record<string, unknown>)?.whatWeBothCareAbout ?? "你們有一個值得深入聊的共同關注。", evidence_labels: (item.explanation as Record<string, unknown>)?.evidenceLabels ?? [] },
+    };
   };
   const invitationPeerIds = new Set(items.flatMap((item) => {
     if (!item) return [];
@@ -655,16 +678,21 @@ async function invitationLists(tableName: string, ownerId: string) {
     if (edge && owner) {
       const match = await edgeView(tableName, owner, { candidateId: target.profileId, candidateVersionId: target.versionId, edgeSk: edge.sk, pairId: edge.pairId });
       if (match.unavailable) return undefined;
-      return { ...match, state: "interested", target_profile_id: target.profileId, interested_at: interest.createdAt, source: interest.source };
+      return { ...match, state: "interested", target_profile_id: target.profileId, interested_at: interest.createdAt, event_at: interest.createdAt, event_type: "interested", source: interest.source };
     }
     const peer = await publicTargetPresentation(tableName, target, String(interest.publicSlug ?? target.publicSlug ?? ""));
-    return { target_profile_id: target.profileId, state: "preparing", interested_at: interest.createdAt, source: interest.source, peer };
-  }))).filter(Boolean);
+    return { target_profile_id: target.profileId, state: "preparing", interested_at: interest.createdAt, event_at: interest.createdAt, event_type: "interested", source: interest.source, peer };
+  }))).filter(Boolean) as Array<Record<string, unknown>>;
+  const [incoming, outgoing, connected] = await Promise.all([
+    Promise.all(items.filter((item) => item?.recipientProfileId === ownerId && item.status === "pending").map((item) => view(item!, "incoming"))),
+    Promise.all(items.filter((item) => item?.senderProfileId === ownerId && item.status === "pending").map((item) => view(item!, "outgoing"))),
+    Promise.all(items.filter((item) => item?.status === "connected").map((item) => view(item!, "connected"))),
+  ]);
   return {
-    incoming: await Promise.all(items.filter((item) => item?.recipientProfileId === ownerId && item.status === "pending").map((item) => view(item!, "incoming"))),
-    interested,
-    outgoing: await Promise.all(items.filter((item) => item?.senderProfileId === ownerId && item.status === "pending").map((item) => view(item!, "outgoing"))),
-    connected: await Promise.all(items.filter((item) => item?.status === "connected").map((item) => view(item!, "connected"))),
+    incoming: sortInvitationEntries(incoming),
+    interested: sortInvitationEntries(interested),
+    outgoing: sortInvitationEntries(outgoing),
+    connected: sortInvitationEntries(connected),
   };
 }
 

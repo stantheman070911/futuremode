@@ -313,6 +313,8 @@ Object.assign(COPY.en, {
   "interest.remove": "Remove",
   "interest.removed": "Removed from Interested.",
   "invites.interested": "Interested",
+  "invites.timeToday": "Today",
+  "invites.timeYesterday": "Yesterday",
   "state.interested": "Interested",
   "state.preparing": "Preparing",
   "error.interestExpired": "This saved link has expired. Return to the public introduction and try again.",
@@ -337,6 +339,8 @@ Object.assign(COPY["zh-Hant"], {
   "interest.remove": "移除想認識",
   "interest.removed": "已從想認識移除。",
   "invites.interested": "想認識",
+  "invites.timeToday": "今天",
+  "invites.timeYesterday": "昨天",
   "state.interested": "想認識",
   "state.preparing": "準備中",
   "error.interestExpired": "這個保存連結已失效。請返回公開介紹後再試一次。",
@@ -599,6 +603,27 @@ function testDataMarker(peer, forced = false) {
   if (!forced && !peer?.is_synthetic) return "";
   const code = typeof peer?.test_display_code === "string" && peer.test_display_code ? `<span class="evidence-label">${esc(t("match.testCode", { code: peer.test_display_code }))}</span>` : "";
   return `<div class="evidence"><span class="evidence-label">${esc(t("match.demoData"))}</span>${code}</div>`;
+}
+
+function invitationEventTime(value, now = new Date()) {
+  const event = new Date(String(value || ""));
+  if (!Number.isFinite(event.getTime())) return null;
+  const dayNumber = (date) => Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()) / 86_400_000;
+  const dayDifference = dayNumber(now) - dayNumber(event);
+  const clock = new Intl.DateTimeFormat("zh-TW", { hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(event);
+  let label;
+  if (dayDifference === 0) label = `${t("invites.timeToday")} ${clock}`;
+  else if (dayDifference === 1) label = `${t("invites.timeYesterday")} ${clock}`;
+  else if (event.getFullYear() === now.getFullYear()) label = new Intl.DateTimeFormat("zh-TW", { month: "long", day: "numeric", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(event);
+  else label = new Intl.DateTimeFormat("zh-TW", { year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(event);
+  const exact = new Intl.DateTimeFormat("zh-TW", { year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23" }).format(event);
+  return { iso: event.toISOString(), label, exact };
+}
+
+function invitationEventTimeHtml(item) {
+  const event = invitationEventTime(item?.event_at);
+  if (!event) return "";
+  return `<time class="invitation-event-time" datetime="${esc(event.iso)}" title="${esc(event.exact)}" aria-label="${esc(event.exact)}">${esc(event.label)}</time>`;
 }
 
 function profileImageFor(presentation, variant = "detail") {
@@ -1960,11 +1985,11 @@ function invitationsScreen() {
   const interestedCards = interested.length ? interested.map((item) => {
     const detailHref = item.match_id ? `/matches/${encodeURIComponent(item.match_id)}?from=interested` : `/p/${encodeURIComponent(item.peer?.public_slug || "")}`;
     const state = item.match_id ? t("match.viewDetail") : t("interest.preparing");
-    return `<article class="match-card interest-card"><a class="interest-card-main" href="${detailHref}" ${item.match_id ? "data-link" : ""}><div class="match-card-head"><div class="match-card-identity">${profilePortrait(item.peer, "thumbnail")}<h2 class="animal-persona compact">${esc(peerPresentationName(item.peer))}</h2></div><div class="match-card-meta">${Number.isFinite(Number(item.similarity_score)) ? `<span class="similarity-score">${esc(t("match.score", { score: item.similarity_score }))}</span>` : ""}<span class="status-label">${esc(state)}</span></div></div>${testDataMarker(item.peer)}<p>${esc(item.peer?.summary || "")}</p></a><button class="text-action interest-remove" data-action="remove-interest" data-target-profile-id="${esc(item.target_profile_id)}">${esc(t("interest.remove"))}</button></article>`;
+    return `<article class="match-card interest-card"><a class="interest-card-main" href="${detailHref}" ${item.match_id ? "data-link" : ""}><div class="match-card-head"><div class="match-card-identity">${profilePortrait(item.peer, "thumbnail")}<h2 class="animal-persona compact">${esc(peerPresentationName(item.peer))}</h2></div><div class="match-card-meta">${Number.isFinite(Number(item.similarity_score)) ? `<span class="similarity-score">${esc(t("match.score", { score: item.similarity_score }))}</span>` : ""}<span class="status-label">${esc(state)}</span>${invitationEventTimeHtml(item)}</div></div>${testDataMarker(item.peer)}<p>${esc(item.peer?.summary || "")}</p></a><button class="text-action interest-remove" data-action="remove-interest" data-target-profile-id="${esc(item.target_profile_id)}">${esc(t("interest.remove"))}</button></article>`;
   }).join("") : `<div class="notice">${esc(t("invites.empty"))}</div>`;
   const incoming = sections[0];
   const remaining = sections.slice(1);
-  const renderSection = ([label, items]) => `<div class="divider-label">${esc(t(label))} · ${items.length}</div><div class="match-list">${items.length ? items.map((match) => `<a class="match-card" href="${match.state === "connected" ? `/connections/${encodeURIComponent(match.connection_id)}` : `/matches/${encodeURIComponent(match.match_id)}`}" data-link><div class="match-card-head"><div class="match-card-identity">${profilePortrait(match.peer, "thumbnail")}<h2 class="animal-persona compact">${esc(peerPresentationName(match.peer))}</h2></div><span class="status-label">${esc(matchStateLabel(match.state))}</span></div>${testDataMarker(match.peer)}<p>${esc(match.explanation?.what_we_both_care_about || match.peer?.summary || "")}</p></a>`).join("") : `<div class="notice">${esc(t("invites.empty"))}</div>`}</div>`;
+  const renderSection = ([label, items]) => `<section class="invitation-section"><div class="divider-label">${esc(t(label))} · ${items.length}</div><div class="match-list">${items.length ? items.map((match) => `<a class="match-card" href="${match.state === "connected" ? `/connections/${encodeURIComponent(match.connection_id)}` : `/matches/${encodeURIComponent(match.match_id)}`}" data-link><div class="match-card-head"><div class="match-card-identity">${profilePortrait(match.peer, "thumbnail")}<h2 class="animal-persona compact">${esc(peerPresentationName(match.peer))}</h2></div><div class="match-card-meta"><span class="status-label">${esc(matchStateLabel(match.state))}</span>${invitationEventTimeHtml(match)}</div></div>${testDataMarker(match.peer)}<p>${esc(match.explanation?.what_we_both_care_about || match.peer?.summary || "")}</p></a>`).join("") : `<div class="notice">${esc(t("invites.empty"))}</div>`}</div></section>`;
   if (location.hash === "#interested") queueMicrotask(() => document.getElementById("interested")?.scrollIntoView({ block: "start" }));
   return shell(`<h1 class="page-title invitations-title">${esc(t("invites.title"))}</h1>${testInbox}${renderSection(incoming)}<section id="interested" class="invitation-section" tabindex="-1"><div class="divider-label">${esc(t("invites.interested"))} · ${interested.length}</div><div class="match-list">${interestedCards}</div></section>${remaining.map(renderSection).join("")}`, { nav: true, active: "invitations" });
 }

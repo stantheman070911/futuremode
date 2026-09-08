@@ -30,7 +30,7 @@ test("adds Interested as a private fourth invitation state without changing matc
   assert.match(app, /\/matches\/\$\{encodeURIComponent\(item\.match_id\)\}\?from=interested/);
   assert.match(app, /returnToInterest \? "\/invitations#interested" : "\/matches"/);
   assert.match(styles, /\.interest-card-main\{/);
-  assert.match(pairing, /interested,/);
+  assert.match(pairing, /interested: sortInvitationEntries\(interested\)/);
   assert.match(pairing, /INTEREST#\$\{peer\.profileId\}/);
   assert.match(pairing, /invitationPeerIds\.has\(targetProfileId\)/);
   assert.doesNotMatch(pairing.slice(pairing.indexOf("async function createResultSet"), pairing.indexOf("async function loadResultSet")), /INTEREST#/);
