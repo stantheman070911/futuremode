@@ -50,14 +50,14 @@ Email 流程測試帳號必須分開管理，避免同一個 Email 同時代表�
   `visibleToEmails` 互動。若測試需要真實邀請 Email，只能使用 allowlist 中的受控地址。
 - 真實 Email allowlist 與測試情境設定儲存在 Secrets Manager，不寫入 repository。
 - 同一個 Email 不得同時是 fixture 的收信地址與 real-email journey-test account。
-- 每個帳號都有穩定、非個資的顯示編號，例如 `R01`。所有可見的測試 profile 卡片使用
-  `測試資料•非真實人` 標籤，並另外顯示「測試編號 R01」，避免相同 animal persona
+- 每個帳號都有穩定、非個資的顯示編號，例如 `R02`。所有可見的測試 profile 卡片使用
+  `測試資料•非真實人` 標籤，並另外顯示「測試編號 R02」，避免相同 animal persona
   造成誤認。
 
-目前有兩個 Host-controlled real-email journey-test accounts：NCCU 帳號使用 `R01`，Gmail
-帳號使用 `R02`。兩者只對同一個指定 Host viewer 開放 discovery；實際 Email 與 viewer
-allowlist 只存在 Secrets Manager，不寫入 repository。測試情境名稱不是預填輸出；Animal
-persona 仍由外部 AI 根據授權內容產生，並由 owner 在視覺化編輯頁確認或修改。
+目前有一個 Host-controlled real-email journey-test account，使用 `R02`。它只對指定 Host
+viewer 開放 discovery；實際 Email 與 viewer allowlist 只存在 Secrets Manager，不寫入
+repository。測試情境名稱不是預填輸出；Animal persona 仍由外部 AI 根據授權內容產生，
+並由 owner 在視覺化編輯頁確認或修改。
 
 ## 4. Visibility and interaction matrix
 
@@ -130,16 +130,15 @@ pair 數與待刪除紀錄數，再用精確 `PYO_FIXTURE_DETACH_CONFIRM=detach:
 2. 公共財政分析師／老鷹 fixture 已脫離 Host-controlled Gmail；與舊 fixture 收件地址相關的
    invitation、connection 與 outbox 紀錄已清除。
 3. 十個 `futuremode.test` 帳號仍存在，且只使用固定碼、預填 draft 與 synthetic cohort。
-4. 兩個 Host-controlled real-email journey accounts 已加入 Secrets Manager allowlist，分別
-   使用 `R01` 與 `R02`；兩者使用正常 Email OTP，且不觸發 prefilled bootstrap。
-5. 兩個既有 profile、各自的兩個圖片物件與 matching data 均保留；它們已同步帶有
-   `hackathon-journey-20260907`、display code 與相同的單一 viewer audience hash。
-6. Production matching run 對核准 viewer 載入 13 個可見候選，並建立指向 `R01`、`R02`
-   的 edge；用另一個一般 profile 執行相同檢查時只載入 8 個一般候選，兩個 journey
-   profiles 均未進入該一般 viewer 的候選範圍。
-7. Viewer 與 `R01` 的舊 invitation、token、兩個 pointer 與 sent outbox 共五筆已用 exact
-   pair reset 清除；事後 dry-run 回報零筆，profile、圖片與 similarity edge 未刪除。
-8. Public test profile 與 production app 已顯示 `測試資料•非真實人` 及 `測試編號 R01`；
+4. 一個 Host-controlled real-email journey account 保留在 Secrets Manager allowlist，使用
+   `R02`；它使用正常 Email OTP，且不觸發 prefilled bootstrap。
+5. `R02` 的既有 profile、兩個圖片物件與 matching data 均保留，並帶有
+   `hackathon-journey-20260907`、display code 與單一 viewer audience hash。
+6. `R01` 已用受控 `remove` 完整移除：allowlist、profile、versions、圖片、pair、result
+   sets、public slug 與相關資料的 postcondition 均為零；舊 public URL 回傳 HTTP 404。
+7. Production matching run 對核准 viewer 載入 12 個可見候選，只保留指向 `R02` 的 edge；
+   先前的一般 profile isolation check 只載入 8 個一般候選，journey profile 未進入其範圍。
+8. Production app 對保留的測試 profile 顯示 `測試資料•非真實人` 與 `測試編號 R02`；
    public test profile 同時保留 `noindex, nofollow`。
 9. `status`、`add`、`reset`、`remove`、exact pair reset 與 fixture Email detach 都是
    dry-run-first；寫入時需要精確 confirmation phrase。
